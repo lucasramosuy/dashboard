@@ -68,8 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+/**
+ * useAuth es estricto: debe usarse siempre dentro de un AuthProvider.
+ * Lanzar un error ayuda a detectar fallos de configuración en el árbol de componentes (islas de Astro)
+ * y evita que la aplicación se quede en un estado de 'loading' infinito por falta de contexto.
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth debe usarse dentro de un AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth debe usarse dentro de un AuthProvider');
+  }
   return context;
 };

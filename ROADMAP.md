@@ -90,13 +90,14 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     bun add @astrojs/react react react-dom
     ```
 2.  **Integración de Oat UI:** [x]
-    - [x] Añadir enlaces de Oat (CSS/JS) en el layout base (`Base.astro`).
+    - [x] Migración exitosa de Oat UI (CSS/JS) de CDN externa a implementación local en `src/styles/theme.css`, eliminando errores de red y asegurando carga offline.
     - [x] Configurar `src/styles/theme.css` para personalización de variables.
     - [x] Alinear componentes principales (forms, badges, cards) al sistema de diseño de Oat mediante componentes reutilizables (`StatusBadge`, botones y tarjetas con clases `.oat-*`).
 3.  **Contextos y Estado:** [x]
     - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
     - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
     - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
+    - [x] La integración de `AppProviders` y `AuthContext` fue verificada y aplicada a todas las páginas que usan `useAuth()` (`/`, `/subjects`, `/tasks`, `/analytics`, `/journal`), eliminando los errores de contexto y los estados de carga infinitos.
 4.  **Cliente API:** [x]
     - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
 5.  **Páginas Principales:** [x]
@@ -105,22 +106,23 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] `/subjects`: Lista de materias consumiendo la API.
     - [x] `/tasks`: Lista de tareas con capacidad de cambio de estado.
 6.  **Próximos pasos UI:** [ ]
-    - [x] **Vistas de Detalle Dinámicas:**
+    - **Vistas de Detalle Dinámicas:**
         - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.
         - [x] Componente de visualización de métricas de asistencia (%).
         - [x] Historial de tareas y notas por materia.
-    - [x] **Formularios CRUD Completos:**
+    - **Formularios CRUD Completos:**
         - [x] Modales de creación para Subjects y Tasks.
         - [x] Flujo de edición y borrado con confirmación.
         - [x] Integración de notificaciones (Toasts) de éxito/error.
-    - [x] **Dashboard de Analíticas:**
+    - **Dashboard de Analíticas:**
         - [x] Integración de `Recharts` en el proyecto.
         - [x] Gráfico de "Semáforo de Asistencia" (riesgo de libre).
         - [x] Gráfico de cumplimiento de tareas (Burndown simple).
         - [x] Ruta dedicada `/analytics`.
-    - [x] **Registro de Journal Diario:**
+    - **Registro de Journal Diario:**
         - [x] Editor Markdown minimalista para `PracticeJournal`.
         - [x] Selector de fecha y navegación por historial de reflexiones.
+        - [x] Corregido error crítico de manejo de fechas (`Date` vs `Error`) que impedía la carga inicial del componente.
 
 ---
 

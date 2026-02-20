@@ -1,11 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import { DashboardSummary } from '../components/DashboardSummary';
 import { AppProviders } from '../components/AppProviders';
+import { DashboardSummary } from '../components/DashboardSummary';
 ---
 
 <Base title="Dashboard">
-  <AppProviders client:load>
-    <DashboardSummary client:load />
+  {/* AppProviders envuelve la isla de React para inyectar AuthContext y ThemeContext */}
+  <AppProviders client:only="react">
+    <DashboardSummary />
   </AppProviders>
 </Base>

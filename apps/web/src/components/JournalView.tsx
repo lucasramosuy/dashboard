@@ -6,7 +6,7 @@ import type { Subject, PracticeJournal } from '@dashboard/shared-types';
 export const JournalView: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Error().toISOString().split('T')[0]);
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [journal, setJournal] = useState<Partial<PracticeJournal>>({ content: '', subject_id: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

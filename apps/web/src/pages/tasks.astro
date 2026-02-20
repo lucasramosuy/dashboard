@@ -1,11 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
-import { TaskList } from '../components/TaskList';
 import { AppProviders } from '../components/AppProviders';
+import { TaskList } from '../components/TaskList';
 ---
 
 <Base title="Tareas">
-  <AppProviders client:load>
-    <TaskList client:load />
+  <AppProviders client:only="react">
+    <TaskList />
   </AppProviders>
 </Base>

@@ -1,16 +1,14 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { TaskDetail } from '../../components/TaskDetail';
 import { AppProviders } from '../../components/AppProviders';
+import { TaskDetail } from '../../components/TaskDetail';
 
-// Obtener el ID dinámico de la URL a través de Astro.params.
 const { id } = Astro.params;
-
 if (!id) return Astro.redirect('/tasks');
 ---
 
 <Base title="Detalle de Tarea">
-  <AppProviders client:load>
-    <TaskDetail id={id} client:load />
+  <AppProviders client:only="react">
+    <TaskDetail id={id} />
   </AppProviders>
 </Base>

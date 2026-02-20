@@ -37,6 +37,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme debe usarse dentro de un ThemeProvider');
+  if (!context) {
+    // Retornar un estado por defecto para evitar el error en SSR.
+    return {
+      theme: 'light',
+      toggleTheme: () => {}
+    };
+  }
   return context;
 };

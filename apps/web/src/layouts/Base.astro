@@ -2,7 +2,7 @@
 import '../styles/theme.css';
 
 interface Props {
-	title: string;
+        title: string;
 }
 
 const { title } = Astro.props;
@@ -10,42 +10,42 @@ const { title } = Astro.props;
 
 <!doctype html>
 <html lang="es">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title} | Academic Planning</title>
-		{/* Oat UI links (mock CDN) */}
-		<link rel="stylesheet" href="https://cdn.oat-ui.io/latest/oat-ui.min.css" />
-		<script src="https://cdn.oat-ui.io/latest/oat-ui.min.js" is:inline></script>
-	</head>
-	<body data-theme="light">
-		<div class="oat-shell">
-			<header class="oat-header">
-				<div class="oat-logo">
-					<strong>Academic Planning Dashboard</strong>
-				</div>
-				<nav id="top-nav">
-					<div id="theme-toggle-root"></div>
-				</nav>
-			</header>
-			<aside class="oat-sidebar">
-				<nav>
-					<ul class="oat-nav-list" style="list-style: none; padding: 0;">
-						<li><a href="/" class="oat-nav-link">Dashboard</a></li>
-						<li><a href="/subjects" class="oat-nav-link">Materias</a></li>
-						<li><a href="/tasks" class="oat-nav-link">Tareas</a></li>
-						<li><a href="/analytics" class="oat-nav-link">Analíticas</a></li>
-						<li><a href="/journal" class="oat-nav-link">Journal</a></li>
-					</ul>
-				</nav>
-			</aside>
-			<main class="oat-main">
-				<slot />
-			</main>
-		</div>
-	</body>
+        <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width" />
+                <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+                <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
+                <script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
+
+                <meta name="generator" content={Astro.generator} />
+                <title>{title} | Academic Planning</title>
+        </head>
+        <body data-theme="light">
+                <div class="oat-shell">
+                        <header class="oat-header">
+                                <div class="oat-logo">
+                                     <strong>Academic Planning Dashboard</strong>
+                                </div>
+                                <nav id="top-nav">
+                                     <div id="theme-toggle-root"></div>
+                                </nav>
+                        </header>
+                        <aside class="oat-sidebar">
+                                <nav>
+                                     <ul class="oat-nav-list" style="list-style: none; padding: 0;">
+                                     <li><a href="/" class="oat-nav-link">Dashboard</a></li>
+                                     <li><a href="/subjects" class="oat-nav-link">Materias</a></li>
+                                     <li><a href="/tasks" class="oat-nav-link">Tareas</a></li>
+                                     <li><a href="/analytics" class="oat-nav-link">Analíticas</a></li>
+                                     <li><a href="/journal" class="oat-nav-link">Journal</a></li>
+                                     </ul>
+                                </nav>
+                        </aside>
+                        <main class="oat-main">
+                                <slot />
+                        </main>
+                </div>
+        </body>
 </html>
 
 <style>

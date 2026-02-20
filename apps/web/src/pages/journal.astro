@@ -1,11 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
-import { JournalView } from '../components/JournalView';
 import { AppProviders } from '../components/AppProviders';
+import { JournalView } from '../components/JournalView';
 ---
 
 <Base title="Journal Diario">
-  <AppProviders client:load>
-    <JournalView client:load />
+  <AppProviders client:only="react">
+    <JournalView />
   </AppProviders>
 </Base>

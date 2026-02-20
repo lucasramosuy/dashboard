@@ -1,20 +1,14 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { SubjectDetail } from '../../components/SubjectDetail';
 import { AppProviders } from '../../components/AppProviders';
+import { SubjectDetail } from '../../components/SubjectDetail';
 
-// Obtener el ID dinámico de la URL a través de Astro.params.
 const { id } = Astro.params;
-
-/**
- * En Astro con modo static (por defecto), si no se proveen getStaticPaths,
- * necesitamos asegurarnos de que el ID esté presente o redirigir. 
- */
 if (!id) return Astro.redirect('/subjects');
 ---
 
 <Base title="Detalle de Materia">
-  <AppProviders client:load>
-    <SubjectDetail id={id} client:load />
+  <AppProviders client:only="react">
+    <SubjectDetail id={id} />
   </AppProviders>
 </Base>
