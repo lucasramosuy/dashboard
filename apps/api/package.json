@@ -4,10 +4,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/server.ts"
+    "dev": "bun --env-file .env --watch src/server.ts",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "typescript": "^5"

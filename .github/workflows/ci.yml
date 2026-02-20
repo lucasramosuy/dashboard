@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-tests:
+    name: Backend API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install root dependencies
+        run: bun install
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: bun install
+
+      - name: Run API tests
+        working-directory: apps/api
+        run: bun run test

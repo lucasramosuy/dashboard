@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "184b8688-c6fd-4f7b-bb22-d1341ec20517",
+    "email": "demo@example.com",
+    "name": "Demo User",
+    "passwordHash": "demo123",
+    "role": "admin"
+  }
+]
