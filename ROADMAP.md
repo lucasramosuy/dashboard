@@ -4,28 +4,27 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 
 ---
 
-## 1. Fase: Preparación (Estructura Monorepo)
+## 1. Fase: Preparación (Estructura Monorepo) [x]
 
 **Objetivo:** Configurar el esqueleto del repositorio y las herramientas de desarrollo.
 
 1.  **Inicialización del Repo:**
-    - Crear el repositorio en GitHub.
-    - Configurar `.gitignore` para Bun y Node.
-    ```bash
-    git init
-    touch .gitignore # Añadir node_modules, dist, .env, data/*.json
-    ```
+    - [x] Crear el repositorio en GitHub.
+    - [x] Configurar `.gitignore` para Bun y Node.
+    - [x] Configurar `git init` hecho y `.gitignore` configurado con `node_modules/`, `dist/` y `.env*`.
+    
 2.  **Estructura de Carpetas:**
-    - Crear los directorios definidos en `SPECS.md`.
+    - [x] Crear los directorios definidos en `SPECS.md`.
     ```bash
     mkdir -p apps/web apps/api packages/shared-types infra
     ```
 3.  **Configuración de Bun (Raíz):**
-    - Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
-    - *Tarea:* Crear un `README.md` con las instrucciones básicas.
+    - [x] Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
+    - [x] *Tarea:* Crear un `README.md` con las instrucciones básicas.
+    
 4.  **Shared Types:**
-    - Definir las interfaces base en `packages/shared-types/index.ts` (Subject, Task, Absence, PracticeJournal, User).
-    - Exponer estos tipos para que `apps/web` y `apps/api` puedan importarlos localmente.
+    - [x] Definir las interfaces base en `packages/shared-types/index.ts` (Subject, Task, Absence, PracticeJournal, User).
+    - [x] Exponer estos tipos para que `apps/web` y `apps/api` puedan importarlos localmente.
 
 ---
 

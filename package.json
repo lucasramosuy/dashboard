@@ -1,0 +1,12 @@
+{
+  "name": "dashboard",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:api": "cd apps/api && bun run dev",
+    "dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
