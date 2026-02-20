@@ -33,15 +33,15 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 **Objetivo:** Construir una API funcional con persistencia en JSON.
 
 1.  **Scaffold del Servidor:**
-    - Configurar Hono en `apps/api`.
+    - [x] Configurar Hono en `apps/api`.
     ```bash
     cd apps/api
     bun init -y
     bun add hono
     ```
 2.  **Capa de Persistencia (JSON DB):**
-    - Implementar `lib/db.ts` usando `Bun.file` y `Bun.write`.
-    - Crear la carpeta `data/` con archivos JSON iniciales (vacíos o con datos demo).
+    - [x] Implementar `lib/db.ts` usando `Bun.file` and `Bun.write`.
+    - [x] Crear la carpeta `data/` con archivos JSON iniciales (vacíos o con datos demo).
 3.  **Endpoints de Auth:**
     - Implementar `/api/auth/login` (con lógica `DEV_LOGIN_ENABLED`).
     - Implementar `/api/auth/me` y `/api/auth/logout`.
