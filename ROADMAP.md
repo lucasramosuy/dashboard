@@ -128,10 +128,15 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 
 **Objetivo:** Asegurar que el flujo completo funciona en desarrollo.
 
-1.  **Orquestación Local:**
-    - Configurar script `dev` en la raíz para correr API y Web simultáneamente.
+1.  **Orquestación Local:** [x]
+    - [x] Los scripts `dev:web`, `dev:api` y `dev` están configurados correctamente en la raíz para evitar recursión.
+    - [x] El comando estándar para desarrollo local es:
+      - `bun install` (una vez para instalar dependencias en todos los paquetes).
+      - `bun run dev` (desde la raíz para levantar API + Web en paralelo usando `concurrently`).
     ```json
-    "dev": "bunx concurrently \"cd apps/api && bun run dev\" \"cd apps/web && bun run dev\""
+    "dev:web": "cd apps/web && bun run dev",
+    "dev:api": "cd apps/api && bun run dev",
+    "dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
     ```
 2.  **Pruebas de Flujo:**
     - Login con usuario demo -> Ver dashboard -> Crear una tarea -> Ver actualización.
