@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { JournalView } from '../components/JournalView';
+import { AppProviders } from '../components/AppProviders';
+---
+
+<Base title="Journal Diario">
+  <AppProviders client:load>
+    <JournalView client:load />
+  </AppProviders>
+</Base>

@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import { LoginForm } from '../components/LoginForm';
+import { AppProviders } from '../components/AppProviders';
+---
+
+<Base title="Iniciar Sesión">
+  <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 200px);">
+    <AppProviders client:load>
+      <LoginForm client:load />
+    </AppProviders>
+  </div>
+</Base>

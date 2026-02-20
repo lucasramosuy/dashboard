@@ -78,30 +78,49 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 
 ---
 
-## 3. Fase: Frontend (Astro + React + Oat)
+## 3. Fase: Frontend (Astro + React + Oat UI)
 
 **Objetivo:** Crear una interfaz ultra-liviana y reactiva.
 
-1.  **Scaffold de Astro:**
-    - Crear el proyecto en `apps/web`.
+1.  **Scaffold de Astro:** [x]
+    - [x] Crear el proyecto en `apps/web`.
     ```bash
     cd apps/web
     bun create astro@latest . -- --template minimal
     bun add @astrojs/react react react-dom
     ```
-2.  **Integración de Oat UI:**
-    - Añadir enlaces de Oat (CSS/JS) en el layout base (`Base.astro`).
-    - Configurar `src/styles/theme.css` para personalización de variables.
-3.  **Contextos y Estado:**
-    - Implementar `AuthContext.tsx` (React) para manejar la sesión.
-    - Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
-4.  **Cliente API:**
-    - Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
-5.  **Páginas Principales:**
-    - `/login`: Formulario simple.
-    - `/`: Dashboard con resumen (materias en riesgo, tareas próximas).
-    - `/subjects`: Lista y detalle de materias.
-    - `/tasks`: Kanban/Lista de tareas.
+2.  **Integración de Oat UI:** [x]
+    - [x] Añadir enlaces de Oat (CSS/JS) en el layout base (`Base.astro`).
+    - [x] Configurar `src/styles/theme.css` para personalización de variables.
+    - [x] Alinear componentes principales (forms, badges, cards) al sistema de diseño de Oat mediante componentes reutilizables (`StatusBadge`, botones y tarjetas con clases `.oat-*`).
+3.  **Contextos y Estado:** [x]
+    - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
+    - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
+    - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
+4.  **Cliente API:** [x]
+    - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
+5.  **Páginas Principales:** [x]
+    - [x] `/login`: Formulario de acceso con `AuthContext`.
+    - [x] `/`: Dashboard con resumen (materias en riesgo, tareas próximas).
+    - [x] `/subjects`: Lista de materias consumiendo la API.
+    - [x] `/tasks`: Lista de tareas con capacidad de cambio de estado.
+6.  **Próximos pasos UI:** [ ]
+    - [x] **Vistas de Detalle Dinámicas:**
+        - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.
+        - [x] Componente de visualización de métricas de asistencia (%).
+        - [x] Historial de tareas y notas por materia.
+    - [x] **Formularios CRUD Completos:**
+        - [x] Modales de creación para Subjects y Tasks.
+        - [x] Flujo de edición y borrado con confirmación.
+        - [x] Integración de notificaciones (Toasts) de éxito/error.
+    - [x] **Dashboard de Analíticas:**
+        - [x] Integración de `Recharts` en el proyecto.
+        - [x] Gráfico de "Semáforo de Asistencia" (riesgo de libre).
+        - [x] Gráfico de cumplimiento de tareas (Burndown simple).
+        - [x] Ruta dedicada `/analytics`.
+    - [x] **Registro de Journal Diario:**
+        - [x] Editor Markdown minimalista para `PracticeJournal`.
+        - [x] Selector de fecha y navegación por historial de reflexiones.
 
 ---
 
@@ -112,7 +131,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 1.  **Orquestación Local:**
     - Configurar script `dev` en la raíz para correr API y Web simultáneamente.
     ```json
-    "dev": "bunx concurrently "cd apps/api && bun run dev" "cd apps/web && bun run dev""
+    "dev": "bunx concurrently \"cd apps/api && bun run dev\" \"cd apps/web && bun run dev\""
     ```
 2.  **Pruebas de Flujo:**
     - Login con usuario demo -> Ver dashboard -> Crear una tarea -> Ver actualización.

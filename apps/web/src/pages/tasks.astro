@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { TaskList } from '../components/TaskList';
+import { AppProviders } from '../components/AppProviders';
+---
+
+<Base title="Tareas">
+  <AppProviders client:load>
+    <TaskList client:load />
+  </AppProviders>
+</Base>

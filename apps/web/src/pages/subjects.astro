@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { SubjectList } from '../components/SubjectList';
+import { AppProviders } from '../components/AppProviders';
+---
+
+<Base title="Materias">
+  <AppProviders client:load>
+    <SubjectList client:load />
+  </AppProviders>
+</Base>

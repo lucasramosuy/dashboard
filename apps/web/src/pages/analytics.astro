@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
+import { AppProviders } from '../components/AppProviders';
+---
+
+<Base title="Analíticas">
+  <AppProviders client:load>
+    <AnalyticsDashboard client:load />
+  </AppProviders>
+</Base>
