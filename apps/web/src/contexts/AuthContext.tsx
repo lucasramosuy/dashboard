@@ -37,10 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, pass: string) => {
     try {
-      const { token: newToken, user: newUser } = await api.login(email, pass);
+      const { token: newToken } = await api.login(email, pass);
       setToken(newToken);
-      setUser(newUser);
       localStorage.setItem('dash_token', newToken);
+
+      // Obtener datos completos del usuario según recomendaciones de SPECS e integración
+      const fullUser = await api.getMe(newToken);
+      setUser(fullUser);
+
+      // Redirigir explícitamente al dashboard
+      window.location.href = '/';
     } catch (error) {
       console.error('Error al loguear:', error);
       throw error;
@@ -69,14 +75,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 /**
- * useAuth es estricto: debe usarse siempre dentro de un AuthProvider.
- * Lanzar un error ayuda a detectar fallos de configuración en el árbol de componentes (islas de Astro)
- * y evita que la aplicación se quede en un estado de 'loading' infinito por falta de contexto.
+ * useAuth es seguro para SSR: si se usa fuera de un AuthProvider (como durante el pre-renderizado de Astro),
+ * retorna un estado por defecto con loading: true para evitar errores fatales.
  */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider');
+    return {
+      user: null,
+      token: null,
+      loading: true,
+      login: async () => {},
+      logout: () => {},
+      refreshMe: async () => {},
+    };
   }
   return context;
 };

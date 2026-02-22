@@ -18,7 +18,7 @@
     "types": ["bun-types"],
     "baseUrl": ".",
     "paths": {
-      "@dashboard/shared-types": ["../../packages/shared-types"]
+      "@dashboard/shared-types": ["../../packages/shared-types/src/index.ts"]
     }
   },
   "include": [

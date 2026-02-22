@@ -22,9 +22,10 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
     - [x] *Tarea:* Crear un `README.md` con las instrucciones básicas.
 
-4.  **Shared Types:**
-    - [x] Definir las interfaces base en `packages/shared-types/index.ts` (Subject, Task, Absence, PracticeJournal, User).
-    - [x] Exponer estos tipos para que `apps/web` y `apps/api` puedan importarlos localmente.
+4.  **Shared Types:** [x]
+    - [x] Definir las interfaces base (Subject, Task, Absence, PracticeJournal, User).
+    - [x] Reestructuración a `packages/shared-types/src/index.ts` para resolución robusta en el monorepo.
+    - [x] Sincronización de dependencias de workspace en `apps/api` y `apps/web`.
 
 ---
 
@@ -91,6 +92,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Migración exitosa de Oat UI (CSS/JS) de CDN externa a implementación local en `src/styles/theme.css`, eliminando errores de red y asegurando carga offline.
     - [x] Configurar `src/styles/theme.css` para personalización de variables.
     - [x] Alinear componentes principales (forms, badges, cards) al sistema de diseño de Oat mediante componentes reutilizables (`StatusBadge`, botones y tarjetas con clases `.oat-*`).
+    - [x] Instalación de dependencias de UI críticas (`recharts`, `lucide-react`).
 3.  **Contextos y Estado:** [x]
     - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
     - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).

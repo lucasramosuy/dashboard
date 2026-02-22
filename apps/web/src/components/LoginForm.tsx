@@ -6,7 +6,14 @@ export const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
+
+  // Guardia: si el usuario ya está autenticado y no está cargando, redirigir al dashboard
+  React.useEffect(() => {
+    if (user && !authLoading) {
+      window.location.href = '/';
+    }
+  }, [user, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,7 +21,6 @@ export const LoginForm: React.FC = () => {
     setError(null);
     try {
       await login(email, password);
-      window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
