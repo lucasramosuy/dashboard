@@ -1,4 +1,4 @@
-# Roadmap de Implementación – Academic Planning Dashboard (Migración)
+# Roadmap de Implementación – Dashboard
 
 Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.space hacia una arquitectura moderna basada en Bun, Hono, Astro y React.
 
@@ -12,7 +12,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Crear el repositorio en GitHub.
     - [x] Configurar `.gitignore` para Bun y Node.
     - [x] Configurar `git init` hecho y `.gitignore` configurado con `node_modules/`, `dist/` y `.env*`.
-    
+
 2.  **Estructura de Carpetas:**
     - [x] Crear los directorios definidos en `SPECS.md`.
     ```bash
@@ -21,7 +21,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 3.  **Configuración de Bun (Raíz):**
     - [x] Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
     - [x] *Tarea:* Crear un `README.md` con las instrucciones básicas.
-    
+
 4.  **Shared Types:**
     - [x] Definir las interfaces base en `packages/shared-types/index.ts` (Subject, Task, Absence, PracticeJournal, User).
     - [x] Exponer estos tipos para que `apps/web` y `apps/api` puedan importarlos localmente.
@@ -44,7 +44,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Crear la carpeta `data/` con archivos JSON iniciales (vacíos o con datos demo).
 3.  **Configuración de imports de shared-types:**
     - **Estrategia Elegida:** Opción B (Alias de paquete `@dashboard/shared-types`).
-    - **Archivos Configurados:** 
+    - **Archivos Configurados:**
       - `packages/shared-types/package.json` (definición del paquete).
       - `apps/api/tsconfig.json` (mapping de `paths` e inclusión de rutas en `include` para evitar error TS6307).
     - **Ejemplo de Import:** `import { User } from "@dashboard/shared-types";`

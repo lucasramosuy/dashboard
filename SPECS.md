@@ -1,8 +1,8 @@
-# SPECS.md – Migración Academic Planning Dashboard
+# SPECS.md – Dashboard
 
 ## 1. Objetivo general
 
-Migrar el proyecto Academic Planning Dashboard desde Zo.space a una arquitectura basada en:
+Migrar el proyecto Dashboard desde Zo.space a una arquitectura basada en:
 
 - Repositorio en GitHub (monorepo).
 - Backend con Bun + Hono (APIs REST).
@@ -53,11 +53,11 @@ Inclusión en layout raíz de Astro (`src/layouts/Base.astro` o equivalente):
 
 (Opcional: copiar esos assets al proyecto y servirlos localmente en producción).
 
-Estilos  
+Estilos
 - Usar mayormente elementos HTML nativos (<button>, <input>, <nav>, <section>, <dialog>, etc.), ya que Oat los estiliza automáticamente sin clases adicionales.
 - Para ajustes finos, sobrescribir variables CSS de Oat en un archivo global (`src/styles/theme.css`) cargado después del CSS de Oat.
 
-Componentes dinámicos  
+Componentes dinámicos
 - Utilizar los Web Components y JS mínimo que ofrece Oat para elementos como diálogos, menús, etc.
 - Mantener React solo donde se necesite estado complejo: tablas con filtros, vistas Kanban, formularios modales, etc.
 
@@ -67,7 +67,7 @@ Tema oscuro: implementar un ThemeContext similar al actual, pero donde la acció
 
 document.body.dataset.theme = 'dark' | 'light';
 
-Oat soporta theming mediante `data-theme="dark"` en el <body> y variables CSS.  
+Oat soporta theming mediante `data-theme="dark"` en el <body> y variables CSS.
 Personalización: ajustar paleta y contrastes redefiniendo variables como `--oat-color-bg`, `--oat-color-fg`, etc., para acercar el diseño al dashboard original, sin recrear todo el sistema de diseño.
 
 ### Rutas y páginas
@@ -81,7 +81,7 @@ Rutas principales (según la app actual):
 - /tasks – Gestor de tareas (lista + Kanban).
 - /practice – Diario de prácticas.
 
-Layout  
+Layout
 - Layout raíz con sidebar colapsable:
   - Navegación: Dashboard, Materias, Tareas, Prácticas.
   - Estado de colapso manejado con React (contexto o useState en un componente envolvente).
@@ -89,12 +89,12 @@ Layout
 
 ### Estados
 
-AuthContext  
+AuthContext
 - Estado: user, isLoading.
 - Acciones: login(credentials), logout().
 - Usa fetch contra /api/auth/login, /api/auth/logout, /api/auth/me.
 
-ThemeContext  
+ThemeContext
 - Estado: theme: 'light' | 'dark'.
 - Acción: toggleTheme().
 - Persiste en localStorage y sincroniza data-theme en <body>.
@@ -132,23 +132,23 @@ Tipos importados desde packages/shared-types.
 
 Portar la lógica de Zo a las siguientes rutas (prefijo /api):
 
-Auth  
+Auth
 - POST /api/auth/login
 - POST /api/auth/logout
 - GET /api/auth/me
 - POST /api/auth/register (opcional, se puede mantener solo para desarrollo).
 
-Subjects  
+Subjects
 - GET /api/subjects
 - GET /api/subjects/:id
 - GET /api/subjects/at-risk
 
-Absences  
+Absences
 - GET /api/absences?subject_id=...
 - POST /api/absences
 - DELETE /api/absences/:id
 
-Tasks  
+Tasks
 - GET /api/tasks
 - GET /api/tasks/today
 - GET /api/tasks/week
@@ -156,13 +156,13 @@ Tasks
 - PUT /api/tasks/:id
 - DELETE /api/tasks/:id
 
-Practice  
+Practice
 - GET /api/practice
 - POST /api/practice
 - PUT /api/practice/:id
 - DELETE /api/practice/:id
 
-Utilidades  
+Utilidades
 - GET /api/db – Health check / debug.
 
 ### Persistencia
@@ -183,7 +183,7 @@ Módulo lib/db.ts en apps/api con helpers:
 readJson<T>(file: string): Promise<T>
 writeJson<T>(file: string, data: T): Promise<void>
 
-Usar APIs de Bun (Bun.file, Bun.write) para lectura/escritura.  
+Usar APIs de Bun (Bun.file, Bun.write) para lectura/escritura.
 
 Config vía env:
 
@@ -209,7 +209,7 @@ Usuario dev (solo desarrollo):
 
 ### Lógica de negocio
 
-Inasistencias  
+Inasistencias
 
 - Absence.type: 'standard' | 'justified'.
 - calculated_value: 1.0 para standard, 0.5 para justified.
@@ -249,7 +249,7 @@ Se publica dentro del monorepo (import local) y se utiliza tanto en apps/api com
 
 Render ofrece una capa free razonable para servicios web y sitios estáticos, adecuada para proyectos personales como este dashboard.
 
-Backend – apps/api  
+Backend – apps/api
 
 - Tipo: Web Service.
 - Runtime: usar Bun (vía Dockerfile si es necesario):
@@ -265,28 +265,28 @@ Variables de entorno:
 - DATA_DIR=/data (montado como volumen o usando filesystem local de Render).
 - DEV_LOGIN_ENABLED=false en producción.
 
-Frontend – apps/web  
+Frontend – apps/web
 
 - Tipo: Static Site.
 - Build:
   - Build command: cd apps/web && bun install && bun run build
   - Public dir: apps/web/dist.
 
-Ruteo /api  
+Ruteo /api
 
 - Configurar en Render que /api/* se enrute al Web Service apps/api (mismo dominio o subdominio, según setup).
 
 ### 3.2. Opción alternativa: Cloudflare Pages + otro backend
 
-Frontend  
+Frontend
 
 - Deploy de Astro a Cloudflare Pages, aprovechando su capa free muy amplia.
 
-Backend  
+Backend
 
 - Cloudflare Workers + Hono (adaptado a runtime Workers) o un Web Service en Render.
 
-Configuración  
+Configuración
 
 - Rutas de Pages que apunten /api/* a Workers o al backend correspondiente.
 
@@ -311,11 +311,11 @@ Scripts recomendados (en package.json raíz):
   }
 }
 
-apps/web  
+apps/web
 
 - Astro dev server, p. ej. http://localhost:4321.
 
-apps/api  
+apps/api
 
 - Hono + Bun, p. ej. http://localhost:8787.
 
@@ -366,37 +366,37 @@ Se busca un flujo “vibecoding” en terminal con una capa gratuita generosa.
 
 ## 6. Backlog inicial de migración
 
-Repo & estructura  
+Repo & estructura
 
 - Crear repo GitHub.
 - Crear carpetas /apps/web, /apps/api, /packages/shared-types.
 - Añadir SPECS.md y README inicial.
 
-Backend Bun + Hono  
+Backend Bun + Hono
 
 - Scaffold server Hono con Bun.
 - Implementar lib/db.ts con lectura/escritura JSON.
 - Portar endpoints /api/* desde Zo.
 - Implementar auth + usuario demo.
 
-Frontend Astro + React + Oat  
+Frontend Astro + React + Oat
 
 - Scaffold proyecto Astro.
 - Integrar Oat (CSS + JS) en layout base.
 - Implementar ThemeContext y AuthContext.
 - Portar páginas: Dashboard, Subjects, SubjectDetail, Tasks, Practice, Login.
 
-Integración  
+Integración
 
 - Configurar API_BASE y probar flujo end-to-end local.
 - Sembrar datos demo en JSON.
 
-Hosting  
+Hosting
 
 - Configurar servicios en Render (o combinación Cloudflare Pages + backend).
 - Validar login y dashboard en entorno remoto.
 
-Limpieza & docs  
+Limpieza & docs
 
 - Actualizar README con instrucciones de setup, dev y deploy.
 - Mantener SPECS.md al día ante cualquier cambio estructural.
