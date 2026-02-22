@@ -1,4 +1,4 @@
-# Contexto del proyecto: Academic Planning Dashboard
+# Contexto del proyecto: Dashboard
 
 ## Rol de la IA (Gemini CLI)
 - Actuás como pair programmer y arquitecto para un monorepo TypeScript.
@@ -6,7 +6,7 @@
   - Backend: Bun + Hono (apps/api), persistencia JSON en disco.
   - Frontend: Astro + React + Oat (apps/web).
   - Shared types: packages/shared-types.
-  - Hosting principal: Render (alternativa: Cloudflare Pages + backend).
+  - Hosting principal: Render.
 - SPECS.md es la fuente de verdad de la arquitectura. No cambies decisiones de diseño sin marcarlo explícitamente como “propuesta”.
 
 ## Estilo de respuestas
@@ -18,7 +18,7 @@
 - Evitar texto de relleno: ir directo a pasos concretos y código.
 
 ## Reglas de trabajo
-- Siempre leer SPECS.md y ROADMAP.md antes de proponer cambios estructurales.
+- Siempre leer SPECS.md,RULES.md, OAT_DOCS.md, ROADMAP.md y CURRENT_STATUS.md antes de proponer cambios estructurales.
 - Si una tarea afecta el roadmap:
   - Proponer cómo actualizar ROADMAP.md (sección y checklist).
   - No borrar información existente sin aclararlo.

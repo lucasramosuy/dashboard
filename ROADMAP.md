@@ -98,6 +98,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
     - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
     - [x] La integración de `AppProviders` y `AuthContext` fue verificada y aplicada a todas las páginas que usan `useAuth()` (`/`, `/subjects`, `/tasks`, `/analytics`, `/journal`), eliminando los errores de contexto y los estados de carga infinitos.
+    - [x] **Flujo de Redirección Corregido:** Se actualizó `AuthContext.tsx` para obtener datos completos del usuario mediante `/api/auth/me` tras el login y realizar una redirección explícita a `/`. Se añadió una guardia en `LoginForm.tsx` que redirige al dashboard si el usuario ya está autenticado, evitando que se quede atrapado en la página de login.
 4.  **Cliente API:** [x]
     - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
 5.  **Páginas Principales:** [x]
@@ -141,7 +142,9 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     "dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
     ```
 2.  **Pruebas de Flujo:**
-    - Login con usuario demo -> Ver dashboard -> Crear una tarea -> Ver actualización.
+    - [x] **Login con usuario demo:** Verificado el flujo completo desde `/login` hasta el dashboard (`/`) tras autenticación exitosa con redirección automática.
+    - [x] **Guardia de Redirección:** Verificado que usuarios ya logueados son expulsados de `/login` hacia `/`.
+    - [ ] Crear una tarea -> Ver actualización.
 3.  **Shared Types Sync:**
     - Verificar que los cambios en tipos se reflejan en ambos lados sin errores de TS.
 
