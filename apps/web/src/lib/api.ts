@@ -1,4 +1,4 @@
-import type { User, Subject, Task } from '@dashboard/shared-types';
+import type { User, Subject, Task, Absence, PracticeJournal } from '@dashboard/shared-types';
 
 /**
  * Cliente de API para el dashboard académico.
@@ -7,6 +7,32 @@ import type { User, Subject, Task } from '@dashboard/shared-types';
  * En producción, el valor será /api (relativo al dominio de despliegue).
  */
 const API_BASE = import.meta.env.PUBLIC_API_BASE || 'http://localhost:8787/api';
+
+/**
+ * Helper para convertir strings ISO a objetos Date en respuestas JSON
+ */
+function reviveDates(obj: any): any {
+  if (obj === null || typeof obj !== 'object') return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(reviveDates);
+  }
+
+  const revived: any = { ...obj };
+  for (const key in revived) {
+    const val = revived[key];
+    // Detectar campos cronológicos por nombre o formato
+    if (typeof val === 'string' && (key === 'date' || key === 'due_date' || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val))) {
+      const date = new Date(val);
+      if (!isNaN(date.getTime())) {
+        revived[key] = date;
+      }
+    } else if (typeof val === 'object') {
+      revived[key] = reviveDates(val);
+    }
+  }
+  return revived;
+}
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -19,7 +45,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
     }
     throw new Error(errorMessage);
   }
-  return response.json() as Promise<T>;
+  const data = await response.json();
+  return reviveDates(data) as T;
 }
 
 export const api = {
@@ -161,7 +188,7 @@ export const api = {
   },
 
   async updateTaskStatus(token: string, taskId: string, status: Task['status']): Promise<Task> {
-    const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const response = await fetch(`${API_BASE}/tasks/${taskId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

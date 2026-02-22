@@ -95,10 +95,10 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
     - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
     - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
-    - [x] La integración de `AppProviders` y `AuthContext` fue verificada y aplicada a todas las páginas que usan `useAuth()` (`/`, `/subjects`, `/tasks`, `/analytics`, `/journal`), eliminando los errores de contexto y los estados de carga infinitos.
-    - [x] **Flujo de Redirección Corregido:** Se actualizó `AuthContext.tsx` para obtener datos completos del usuario mediante `/api/auth/me` tras el login y realizar una redirección explícita a `/`. Se añadió una guardia en `LoginForm.tsx` que redirige al dashboard si el usuario ya está autenticado, evitando que se quede atrapado en la página de login.
+    - [x] Sincronización completa de tipos Date y cliente de API con soporte para revival automático.
 4.  **Cliente API:** [x]
     - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
+    - [x] Implementado revival de fechas automático para consistencia con `shared-types`.
 5.  **Páginas Principales:** [x]
     - [x] `/login`: Formulario de acceso con `AuthContext`.
     - [x] `/`: Dashboard con resumen (materias en riesgo, tareas próximas).
