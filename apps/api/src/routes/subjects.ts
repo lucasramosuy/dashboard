@@ -82,20 +82,18 @@ subjectsRouter.patch("/:id", async (c) => {
 
   if (!existing) return c.json({ error: "Subject not found" }, 404);
 
-  // Note: dbService doesn't have a generic update yet, 
-  // but for subjects we usually only update name or total_classes.
-  // I'll re-create for simplicity if I don't want to add update methods now, 
-  // or I can add a simple update to dbService.
-  // Let's add a simple update to dbService in the next step or do it here with db.run if I had access to db.
+  // Filter allowed fields
+  const updateData: Partial<Subject> = {};
+  if (body.name) updateData.name = body.name;
+  if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
+
+  if (Object.keys(updateData).length === 0) {
+    return c.json({ error: "No valid fields to update" }, 400);
+  }
+
+  dbService.subjects.update(id, updateData);
   
-  // Since I am re-writing the routes, I'll stick to what dbService offers.
-  // I'll add an update method to dbService later if needed, but for now let's assume PATCH 
-  // might need more support in dbService.
-  
-  // Actually, I'll just use dbService.subjects.create as an "upsert" or similar if it worked, 
-  // but it's an INSERT. 
-  
-  return c.json({ error: "Update not fully implemented in dbService" }, 501);
+  return c.json({ ...existing, ...updateData });
 });
 
 // DELETE subject

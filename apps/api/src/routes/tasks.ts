@@ -56,7 +56,31 @@ tasksRouter.post("/", async (c) => {
   return c.json(newTask, 201);
 });
 
-// PATCH update task status
+// PATCH update task (generic)
+tasksRouter.patch("/:id", async (c) => {
+  const id = c.req.param("id");
+  const body = await c.req.json();
+  const existing = dbService.tasks.getById(id);
+
+  if (!existing) return c.json({ error: "Task not found" }, 404);
+
+  // Filter allowed fields
+  const updateData: Partial<Task> = {};
+  if (body.title) updateData.title = body.title;
+  if (body.description !== undefined) updateData.description = body.description;
+  if (body.status) updateData.status = body.status;
+  if (body.due_date) updateData.due_date = new Date(body.due_date);
+
+  if (Object.keys(updateData).length === 0) {
+    return c.json({ error: "No valid fields to update" }, 400);
+  }
+
+  dbService.tasks.update(id, updateData);
+  
+  return c.json({ ...existing, ...updateData });
+});
+
+// PATCH update task status (legacy/convenience)
 tasksRouter.patch("/:id/status", async (c) => {
   const id = c.req.param("id");
   const { status } = await c.req.json();

@@ -1,11 +1,12 @@
-import { Database } from "bun:sqlite";
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { join } from "path";
 import {
   User, Subject, Task, Absence, PracticeJournal
 } from "@dashboard/shared-types";
 
-const DATA_DIR = process.env.DATA_DIR || "./data";
-const DB_PATH = process.env.NODE_ENV === "test" ? ":memory:" : join(DATA_DIR, "database.sqlite");
+const DB_PATH = process.env.NODE_ENV === "test" 
+  ? ":memory:" 
+  : (process.env.DATABASE_PATH || join(import.meta.dir, "../../data/database.sqlite"));
 
 // Singleton de la base de datos
 export const db = new Database(DB_PATH, { create: true });
@@ -88,10 +89,15 @@ function toDate<T>(row: any): T {
 }
 
 /**
- * Helper para convertir fechas de JS a strings ISO para SQLite
+ * Utility para limpiar valores antes de enviarlos a SQLite.
+ * Convierte Date a ISO string y undefined a null.
  */
-function toISO(date: Date | string): string {
-  return date instanceof Date ? date.toISOString() : date;
+function sanitizeValues(values: any[]): SQLQueryBindings[] {
+  return values.map(v => {
+    if (v instanceof Date) return v.toISOString();
+    if (v === undefined) return null;
+    return v as SQLQueryBindings;
+  });
 }
 
 export const dbService = {
@@ -105,7 +111,7 @@ export const dbService = {
     
     create: (user: User) => 
       db.prepare("INSERT INTO users (id, name, email, passwordHash, role) VALUES (?, ?, ?, ?, ?)")
-        .run(user.id, user.name, user.email, user.passwordHash, user.role || 'user'),
+        .run(...sanitizeValues([user.id, user.name, user.email, user.passwordHash, user.role || 'user'])),
   },
 
   // --- SUBJECTS ---
@@ -118,8 +124,14 @@ export const dbService = {
     
     create: (subject: Subject) => 
       db.prepare("INSERT INTO subjects (id, name, total_classes, user_id) VALUES (?, ?, ?, ?)")
-        .run(subject.id, subject.name, subject.total_classes, subject.user_id),
+        .run(...sanitizeValues([subject.id, subject.name, subject.total_classes, subject.user_id])),
     
+    update: (id: string, data: Partial<Subject>) => {
+      const sets = Object.keys(data).map(k => `${k} = ?`).join(", ");
+      const values = [...Object.values(data), id];
+      db.prepare(`UPDATE subjects SET ${sets} WHERE id = ?`).run(...sanitizeValues(values));
+    },
+
     delete: (id: string) => 
       db.prepare("DELETE FROM subjects WHERE id = ?").run(id),
   },
@@ -141,15 +153,21 @@ export const dbService = {
     
     create: (task: Task) => 
       db.prepare("INSERT INTO tasks (id, subject_id, title, description, status, due_date) VALUES (?, ?, ?, ?, ?, ?)")
-        .run(
+        .run(...sanitizeValues([
           task.id, 
           task.subject_id, 
           task.title, 
-          task.description ?? null, 
+          task.description, 
           task.status, 
-          toISO(task.due_date)
-        ),
+          task.due_date
+        ])),
     
+    update: (id: string, data: Partial<Task>) => {
+      const sets = Object.keys(data).map(k => `${k} = ?`).join(", ");
+      const values = [...Object.values(data), id];
+      db.prepare(`UPDATE tasks SET ${sets} WHERE id = ?`).run(...sanitizeValues(values));
+    },
+
     updateStatus: (id: string, status: string) => 
       db.prepare("UPDATE tasks SET status = ? WHERE id = ?").run(status, id),
     
@@ -171,7 +189,7 @@ export const dbService = {
 
     create: (absence: Absence) => 
       db.prepare("INSERT INTO absences (id, subject_id, date, type, calculated_value) VALUES (?, ?, ?, ?, ?)")
-        .run(absence.id, absence.subject_id, toISO(absence.date), absence.type, absence.calculated_value),
+        .run(...sanitizeValues([absence.id, absence.subject_id, absence.date, absence.type, absence.calculated_value])),
     
     delete: (id: string) => 
       db.prepare("DELETE FROM absences WHERE id = ?").run(id),
@@ -191,6 +209,6 @@ export const dbService = {
 
     create: (journal: PracticeJournal) => 
       db.prepare("INSERT INTO practice_journals (id, subject_id, date, content) VALUES (?, ?, ?, ?)")
-        .run(journal.id, journal.subject_id, toISO(journal.date), journal.content),
+        .run(...sanitizeValues([journal.id, journal.subject_id, journal.date, journal.content])),
   }
 };
