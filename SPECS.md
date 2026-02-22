@@ -167,24 +167,19 @@ Utilidades
 
 ### Persistencia
 
-Almacenamiento inicial: JSON en disco, similar al setup actual de Zo.
+Almacenamiento: **SQLite** gestionado a través de `bun:sqlite`.
 
-Directorio data/ dentro de apps/api:
+Módulo `lib/db.ts` en `apps/api`:
+- Singleton de `Database` que detecta el entorno (`:memory:` para tests, `database.sqlite` para dev/prod).
+- `initDB()`: Inicializa tablas con integridad referencial (`ON DELETE CASCADE`) y claves foráneas activas.
+- `dbService`: Capa de abstracción CRUD con conversión automática de tipos (ej. strings ISO de SQLite a objetos `Date` de JS).
 
-- data/users.json
-- data/subjects.json
-- data/absences.json
-- data/tasks.json
-- data/practice_journals.json
-- data/class_notes.json
-
-Módulo lib/db.ts en apps/api con helpers:
-
-readJson<T>(file: string): Promise<T>
-writeJson<T>(file: string, data: T): Promise<void>
-
-Usar APIs de Bun (Bun.file, Bun.write) para lectura/escritura.
-
+Esquema de Tablas:
+- `users`: id, name, email, passwordHash, role.
+- `subjects`: id, name, total_classes, user_id (FK).
+- `absences`: id, subject_id (FK), date, type, calculated_value.
+- `tasks`: id, subject_id (FK), title, description, status, due_date.
+- `practice_journals`: id, subject_id (FK), date, content.
 Config vía env:
 
 - DATA_DIR con default ./data.

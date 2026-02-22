@@ -1,21 +1,196 @@
+import { Database } from "bun:sqlite";
 import { join } from "path";
+import {
+  User, Subject, Task, Absence, PracticeJournal
+} from "@dashboard/shared-types";
 
-const DATA_DIR = process.env.DATA_DIR ?? "./data";
+const DATA_DIR = process.env.DATA_DIR || "./data";
+const DB_PATH = process.env.NODE_ENV === "test" ? ":memory:" : join(DATA_DIR, "database.sqlite");
 
-export async function readJson<T>(filename: string): Promise<T> {
-  const path = join(DATA_DIR, filename);
-  const file = Bun.file(path);
-  
-  if (await file.exists()) {
-    return await file.json();
+// Singleton de la base de datos
+export const db = new Database(DB_PATH, { create: true });
+
+export function initDB() {
+  db.run("PRAGMA foreign_keys = ON;");
+
+  db.transaction(() => {
+    // Users
+    db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        passwordHash TEXT NOT NULL,
+        role TEXT DEFAULT 'user'
+      )
+    `);
+
+    // Subjects
+    db.run(`
+      CREATE TABLE IF NOT EXISTS subjects (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        total_classes INTEGER DEFAULT 0,
+        user_id TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Absences
+    db.run(`
+      CREATE TABLE IF NOT EXISTS absences (
+        id TEXT PRIMARY KEY,
+        subject_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        type TEXT CHECK(type IN ('standard', 'justified')) NOT NULL,
+        calculated_value REAL NOT NULL,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Tasks
+    db.run(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        subject_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT CHECK(status IN ('todo', 'in-progress', 'done')) DEFAULT 'todo',
+        due_date TEXT NOT NULL,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Practice Journals
+    db.run(`
+      CREATE TABLE IF NOT EXISTS practice_journals (
+        id TEXT PRIMARY KEY,
+        subject_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        content TEXT NOT NULL,
+        FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+      )
+    `);
+  })();
+
+  console.log(`[DB] SQLite inicializada en: ${DB_PATH}`);
+}
+
+/**
+ * Helper para convertir fechas de SQLite (strings) a objetos Date de JS
+ */
+function toDate<T>(row: any): T {
+  if (!row) return row;
+  const target = { ...row };
+  if (target.date) target.date = new Date(target.date);
+  if (target.due_date) target.due_date = new Date(target.due_date);
+  return target as T;
+}
+
+/**
+ * Helper para convertir fechas de JS a strings ISO para SQLite
+ */
+function toISO(date: Date | string): string {
+  return date instanceof Date ? date.toISOString() : date;
+}
+
+export const dbService = {
+  // --- USERS ---
+  users: {
+    getByEmail: (email: string): User | null => 
+      db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | null,
+    
+    getById: (id: string): User | null => 
+      db.prepare("SELECT * FROM users WHERE id = ?").get(id) as User | null,
+    
+    create: (user: User) => 
+      db.prepare("INSERT INTO users (id, name, email, passwordHash, role) VALUES (?, ?, ?, ?, ?)")
+        .run(user.id, user.name, user.email, user.passwordHash, user.role || 'user'),
+  },
+
+  // --- SUBJECTS ---
+  subjects: {
+    getAll: (userId: string): Subject[] => 
+      db.prepare("SELECT * FROM subjects WHERE user_id = ?").all(userId) as Subject[],
+    
+    getById: (id: string): Subject | null => 
+      db.prepare("SELECT * FROM subjects WHERE id = ?").get(id) as Subject | null,
+    
+    create: (subject: Subject) => 
+      db.prepare("INSERT INTO subjects (id, name, total_classes, user_id) VALUES (?, ?, ?, ?)")
+        .run(subject.id, subject.name, subject.total_classes, subject.user_id),
+    
+    delete: (id: string) => 
+      db.prepare("DELETE FROM subjects WHERE id = ?").run(id),
+  },
+
+  // --- TASKS ---
+  tasks: {
+    getBySubject: (subjectId: string): Task[] => 
+      db.prepare("SELECT * FROM tasks WHERE subject_id = ?").all(subjectId).map(toDate<Task>),
+    
+    getByUser: (userId: string): Task[] =>
+      db.prepare(`
+        SELECT t.* FROM tasks t
+        JOIN subjects s ON t.subject_id = s.id
+        WHERE s.user_id = ?
+      `).all(userId).map(toDate<Task>),
+
+    getById: (id: string): Task | null => 
+      toDate<Task>(db.prepare("SELECT * FROM tasks WHERE id = ?").get(id)),
+    
+    create: (task: Task) => 
+      db.prepare("INSERT INTO tasks (id, subject_id, title, description, status, due_date) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(
+          task.id, 
+          task.subject_id, 
+          task.title, 
+          task.description ?? null, 
+          task.status, 
+          toISO(task.due_date)
+        ),
+    
+    updateStatus: (id: string, status: string) => 
+      db.prepare("UPDATE tasks SET status = ? WHERE id = ?").run(status, id),
+    
+    delete: (id: string) => 
+      db.prepare("DELETE FROM tasks WHERE id = ?").run(id),
+  },
+
+  // --- ABSENCES ---
+  absences: {
+    getBySubject: (subjectId: string): Absence[] => 
+      db.prepare("SELECT * FROM absences WHERE subject_id = ?").all(subjectId).map(toDate<Absence>),
+    
+    getByUser: (userId: string): Absence[] =>
+      db.prepare(`
+        SELECT a.* FROM absences a
+        JOIN subjects s ON a.subject_id = s.id
+        WHERE s.user_id = ?
+      `).all(userId).map(toDate<Absence>),
+
+    create: (absence: Absence) => 
+      db.prepare("INSERT INTO absences (id, subject_id, date, type, calculated_value) VALUES (?, ?, ?, ?, ?)")
+        .run(absence.id, absence.subject_id, toISO(absence.date), absence.type, absence.calculated_value),
+    
+    delete: (id: string) => 
+      db.prepare("DELETE FROM absences WHERE id = ?").run(id),
+  },
+
+  // --- JOURNALS ---
+  journals: {
+    getBySubject: (subjectId: string): PracticeJournal[] => 
+      db.prepare("SELECT * FROM practice_journals WHERE subject_id = ?").all(subjectId).map(toDate<PracticeJournal>),
+    
+    getByUser: (userId: string): PracticeJournal[] =>
+      db.prepare(`
+        SELECT j.* FROM practice_journals j
+        JOIN subjects s ON j.subject_id = s.id
+        WHERE s.user_id = ?
+      `).all(userId).map(toDate<PracticeJournal>),
+
+    create: (journal: PracticeJournal) => 
+      db.prepare("INSERT INTO practice_journals (id, subject_id, date, content) VALUES (?, ?, ?, ?)")
+        .run(journal.id, journal.subject_id, toISO(journal.date), journal.content),
   }
-  
-  // If file doesn't exist, return an empty array as default
-  // (In a more robust system, this might depend on the specific collection)
-  return [] as unknown as T;
-}
-
-export async function writeJson<T>(filename: string, data: T): Promise<void> {
-  const path = join(DATA_DIR, filename);
-  await Bun.write(path, JSON.stringify(data, null, 2));
-}
+};

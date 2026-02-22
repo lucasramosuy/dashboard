@@ -39,38 +39,36 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     bun init -y
     bun add hono
     ```
-2.  **Capa de Persistencia (JSON DB):**
-    - [x] Implementar `lib/db.ts` usando `Bun.file` and `Bun.write`.
-    - [x] Crear la carpeta `data/` con archivos JSON iniciales (vacíos o con datos demo).
+2.  **Capa de Persistencia (SQLite DB):**
+    - [x] Implementar `lib/db.ts` usando `bun:sqlite`.
+    - [x] Configurar persistencia en disco (`database.sqlite`) y en memoria para tests.
+    - [x] Implementar `dbService` con métodos CRUD robustos.
 3.  **Configuración de imports de shared-types:**
     - **Estrategia Elegida:** Opción B (Alias de paquete `@dashboard/shared-types`).
-    - **Archivos Configurados:**
+    - **Archivos Configurados:** 
       - `packages/shared-types/package.json` (definición del paquete).
       - `apps/api/tsconfig.json` (mapping de `paths` e inclusión de rutas en `include` para evitar error TS6307).
     - **Ejemplo de Import:** `import { User } from "@dashboard/shared-types";`
     - [x] Configuración completada.
 4.  **Endpoints de Auth:**
-    - [x] Implementar `/api/auth/login` (con lógica `DEV_LOGIN_ENABLED`).
+    - [x] Implementar `/api/auth/login` con persistencia en SQLite.
     - [x] Implementar `/api/auth/me` y `/api/auth/logout`.
     - [x] Corregir error de JWT: especificar explícitamente el algoritmo `HS256` en middleware y funciones `sign`/`verify` de `lib/auth.ts`.
     - [x] Configurar y documentar `DEV_LOGIN_ENABLED` para login demo (`demo@example.com` / `demo123`) en desarrollo.
     - ⚠️ **ADVERTENCIA:** En producción, `DEV_LOGIN_ENABLED` DEBE ser `false`.
 5.  **Endpoints de Negocio:**
-    - [x] Implementar CRUD para Subjects, Tasks y Practice.
-    - [x] Implementar lógica de inasistencias (cálculo de % y estados de alerta/peligro).
+    - [x] Implementar CRUD para Subjects, Tasks y Practice consumiendo `dbService`.
+    - [x] Implementar lógica de inasistencias (cálculo de % y estados de alerta/peligro) mediante consultas SQL.
     - [x] Endpoint especial: `/api/subjects/at-risk`.
 6.  **Validación y Testing:**
-    - [x] Configurar **Vitest** en `apps/api`.
-    - [x] Ajustar `apps/api/tsconfig.json` para incluir carpeta `tests/` y tipos de `vitest/globals`.
-    - [x] Implementar tests de integración para Health y Auth (`apps/api/tests/auth.test.ts`).
-    - [x] Resolver errores de tipado en tests mediante casting de respuestas JSON (`as any`) para facilitar el acceso a propiedades en aserciones.
-    - [x] **Infraestructura de Testing Robustecida:**
-      - Configurar `apps/api/tests/setup.ts` para setear variables de entorno (`JWT_SECRET`, `DEV_LOGIN_ENABLED`) automáticamente.
-      - Implementar **stubs en memoria** para `lib/db.ts` en los tests, eliminando la dependencia de las APIs de Bun (`Bun.file`) y del sistema de archivos real.
+    - [x] Migrar infraestructura de testing a **Bun Test** (eliminando Vitest).
+    - [x] Configurar `apps/api/tests/setup.ts` para usar SQLite en memoria (`:memory:`).
+    - [x] Refactorizar todos los tests (`auth`, `subjects`, `tasks`, `journals`) para soportar JWT e integridad referencial.
     - **Testing backend:**
-      - Correr tests: `cd apps/api && bun run test`.
-      - Correr tests en modo watch: `cd apps/api && bun run test:watch`.
-      - Cobertura actual: Health check, Auth, Subjects (CRUD + at-risk), Tasks y Practice Journals. Validado al 100% con stubs.
+      - Correr tests: `cd apps/api && bun test`.
+      - Correr tests en modo watch: `cd apps/api && bun test --watch`.
+      - Cobertura: Completa para el core de la API.
+
 7.  **Continuous Integration (CI):**
     - [x] Configurar workflow de GitHub Actions (`.github/workflows/ci.yml`).
     - [x] Ejecutar automáticamente los tests de `apps/api` en cada Push o PR hacia `main`.

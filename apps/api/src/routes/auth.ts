@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { jwt } from "hono/jwt";
-import { readJson, writeJson } from "../lib/db";
+import { dbService } from "../lib/db";
 import { createToken, JWT_SECRET } from "../lib/auth";
 import type { User } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
@@ -15,9 +15,8 @@ const DEMO_PASSWORD = "demo123";
 // Login endpoint
 authRouter.post("/login", async (c) => {
   const { email, password } = await c.req.json();
-  const users = await readJson<User[]>("users.json");
-
-  let user = users.find((u) => u.email === email);
+  
+  let user = dbService.users.getByEmail(email);
 
   // DEV_LOGIN_ENABLED logic: Auto-create demo user if missing
   if (DEV_LOGIN_ENABLED && email === DEMO_EMAIL && password === DEMO_PASSWORD) {
@@ -29,8 +28,7 @@ authRouter.post("/login", async (c) => {
         passwordHash: DEMO_PASSWORD, // DEV ONLY: Plain text shortcut
         role: "admin",
       };
-      users.push(user);
-      await writeJson("users.json", users);
+      dbService.users.create(user);
     }
   }
 
@@ -55,8 +53,7 @@ authRouter.post("/login", async (c) => {
 // Me endpoint (Requires JWT)
 authRouter.get("/me", jwt({ secret: JWT_SECRET, alg: "HS256" }), async (c) => {
   const payload = c.get("jwtPayload");
-  const users = await readJson<User[]>("users.json");
-  const user = users.find((u) => u.id === payload.id);
+  const user = dbService.users.getById(payload.id);
 
   if (!user) {
     return c.json({ error: "User not found" }, 404);

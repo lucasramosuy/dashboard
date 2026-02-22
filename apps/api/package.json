@@ -5,13 +5,11 @@
   "private": true,
   "scripts": {
     "dev": "bun --env-file .env --watch src/server.ts",
-    "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@vitest/coverage-v8": "^4.0.18",
-    "vitest": "^4.0.18"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
