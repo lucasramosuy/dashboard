@@ -16,13 +16,13 @@ practiceJournalsRouter.get("/", async (c) => {
 
   if (subjectId) {
     // ✅ IDOR fix
-    if (!dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+    if (!await dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
       return c.json({ error: "Not found" }, 404);
     }
-    return c.json(dbService.journals.getBySubject(subjectId));
+    return c.json(await dbService.journals.getBySubject(subjectId));
   }
 
-  return c.json(dbService.journals.getByUser(payload.id));
+  return c.json(await dbService.journals.getByUser(payload.id));
 });
 
 // GET journal by ID
@@ -31,11 +31,11 @@ practiceJournalsRouter.get("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix: verificar ownership via journalBelongsToUser
-  if (!dbService.ownership.journalBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.journalBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  return c.json(dbService.journals.getById(id));
+  return c.json(await dbService.journals.getById(id));
 });
 
 // POST create journal
@@ -48,7 +48,7 @@ practiceJournalsRouter.post("/", async (c) => {
   }
 
   // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
     return c.json({ error: "Subject not found" }, 404);
   }
 
@@ -65,7 +65,7 @@ practiceJournalsRouter.post("/", async (c) => {
     content: String(body.content).trim(),
   };
 
-  dbService.journals.create(newJournal);
+  await dbService.journals.create(newJournal);
   return c.json(newJournal, 201);
 });
 
@@ -75,7 +75,7 @@ practiceJournalsRouter.put("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.journalBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.journalBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -84,9 +84,9 @@ practiceJournalsRouter.put("/:id", async (c) => {
     return c.json({ error: "content is required" }, 400);
   }
 
-  dbService.journals.update(id, String(body.content).trim());
+  await dbService.journals.update(id, String(body.content).trim());
 
-  return c.json({ ...dbService.journals.getById(id), content: body.content });
+  return c.json({ ...await dbService.journals.getById(id), content: body.content });
 });
 
 // DELETE journal
@@ -95,11 +95,11 @@ practiceJournalsRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.journalBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.journalBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  dbService.journals.delete(id);
+  await dbService.journals.delete(id);
   return c.json({ status: "deleted" });
 });
 

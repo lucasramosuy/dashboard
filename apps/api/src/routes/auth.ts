@@ -26,7 +26,7 @@ authRouter.post("/login", async (c) => {
   const email = String(body.email).toLowerCase().trim();
   const password = body.password;
 
-  let user = dbService.users.getByEmail(email);
+  let user = await dbService.users.getByEmail(email);
 
   // 2. Auto-crear usuario demo (DEV ONLY)
   if (DEV_LOGIN_ENABLED && email === DEMO_EMAIL && password === DEMO_PASSWORD) {
@@ -38,8 +38,8 @@ authRouter.post("/login", async (c) => {
         passwordHash: await hashPassword(DEMO_PASSWORD), // ✅ hasheado
         role: "admin",
       };
-      dbService.users.create(demoUser);
-      user = dbService.users.getByEmail(DEMO_EMAIL);
+      await dbService.users.create(demoUser);
+      user = await dbService.users.getByEmail(DEMO_EMAIL);
     }
   }
 
@@ -64,7 +64,7 @@ authRouter.post("/login", async (c) => {
 // GET /api/auth/me
 authRouter.get("/me", jwt({ secret: JWT_SECRET, alg: "HS256" }), async (c) => {
   const payload = c.get("jwtPayload");
-  const user = dbService.users.getById(payload.id);
+  const user = await dbService.users.getById(payload.id);
 
   if (!user) {
     return c.json({ error: "User not found" }, 404);

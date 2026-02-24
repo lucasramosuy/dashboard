@@ -13,7 +13,7 @@ async function seed() {
   const demoPassword = "demo123";
 
   // 1. Usuario demo
-  let user = dbService.users.getById(DEMO_USER_ID);
+  let user = await dbService.users.getById(DEMO_USER_ID);
   if (!user) {
     const demoUser: UserRecord = {
       id: DEMO_USER_ID,
@@ -22,8 +22,8 @@ async function seed() {
       passwordHash: await hashPassword(demoPassword), // ✅ hasheado
       role: "admin",
     };
-    dbService.users.create(demoUser);
-    user = dbService.users.getById(DEMO_USER_ID)!;
+    await dbService.users.create(demoUser);
+    user = await dbService.users.getById(DEMO_USER_ID)!;
     console.log("✅ Usuario demo creado.");
   } else {
     console.log("ℹ️ El usuario demo ya existe.");
@@ -35,7 +35,7 @@ async function seed() {
     { id: randomUUID(), name: "Arquitectura de Software", total_classes: 32, user_id: user.id },
   ];
   for (const s of subjects) {
-    dbService.subjects.create(s);
+    await dbService.subjects.create(s);
     console.log(`✅ Materia creada: ${s.name}`);
   }
 
@@ -49,7 +49,7 @@ async function seed() {
       type: "standard",
       calculated_value: 1.0,
     };
-    dbService.absences.create(absence);
+    await dbService.absences.create(absence);
   }
 
   // 4. Tareas — due_date como Date, no como string
@@ -72,7 +72,7 @@ async function seed() {
     },
   ];
   for (const t of tasks) {
-    dbService.tasks.create(t); // ✅ sin "as any"
+    await dbService.tasks.create(t); // ✅ sin "as any"
     console.log(`✅ Tarea creada: ${t.title}`);
   }
 

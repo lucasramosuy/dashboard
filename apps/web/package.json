@@ -7,13 +7,14 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "4.16.1",
+    "@astrojs/node": "^9.5.4",
     "@astrojs/react": "3.6.2",
+    "@dashboard/shared-types": "workspace:*",
+    "astro": "4.16.1",
+    "lucide-react": "0.427.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "recharts": "2.12.7",
-    "lucide-react": "0.427.0",
-    "@dashboard/shared-types": "workspace:*"
+    "recharts": "2.12.7"
   },
   "devDependencies": {
     "@types/react": "18.3.1",

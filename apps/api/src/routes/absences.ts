@@ -19,13 +19,13 @@ absencesRouter.get("/", async (c) => {
 
   if (subjectId) {
     // ✅ IDOR fix: verificar que el subject pertenece al usuario
-    if (!dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+    if (!await dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
       return c.json({ error: "Not found" }, 404);
     }
-    return c.json(dbService.absences.getBySubject(subjectId));
+    return c.json(await dbService.absences.getBySubject(subjectId));
   }
 
-  return c.json(dbService.absences.getByUser(payload.id));
+  return c.json(await dbService.absences.getByUser(payload.id));
 });
 
 // POST create absence
@@ -43,7 +43,7 @@ absencesRouter.post("/", async (c) => {
   }
 
   // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
     return c.json({ error: "Subject not found" }, 404);
   }
 
@@ -61,7 +61,7 @@ absencesRouter.post("/", async (c) => {
     calculated_value: body.type === 'justified' ? 0.5 : 1.0,
   };
 
-  dbService.absences.create(newAbsence);
+  await dbService.absences.create(newAbsence);
   return c.json(newAbsence, 201);
 });
 
@@ -71,11 +71,11 @@ absencesRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix: verificar ownership antes de borrar
-  if (!dbService.ownership.absenceBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.absenceBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  dbService.absences.delete(id);
+  await dbService.absences.delete(id);
   return c.json({ status: "deleted" });
 });
 

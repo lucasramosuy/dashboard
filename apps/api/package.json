@@ -16,7 +16,8 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
-    "hono": "4.12.0",
-    "@dashboard/shared-types": "workspace:*"
+    "@dashboard/shared-types": "workspace:*",
+    "@libsql/client": "^0.17.0",
+    "hono": "4.12.0"
   }
 }

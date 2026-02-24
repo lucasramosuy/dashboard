@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: dashboard-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEV_LOGIN_ENABLED
+        value: "false"
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://dashboard.lucasramos.uy
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+    healthCheckPath: /api/health
+
+  - type: web
+    name: dashboard-web
+    runtime: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    buildArgs:
+      - key: PUBLIC_API_BASE
+        value: https://api.dashboard.lucasramos.uy/api
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "4321"

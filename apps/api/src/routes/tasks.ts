@@ -19,13 +19,13 @@ tasksRouter.get("/", async (c) => {
 
   if (subjectId) {
     // ✅ IDOR fix: verificar que el subject pertenece al usuario antes de filtrar
-    if (!dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+    if (!await dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
       return c.json({ error: "Not found" }, 404);
     }
-    return c.json(dbService.tasks.getBySubject(subjectId));
+    return c.json(await dbService.tasks.getBySubject(subjectId));
   }
 
-  return c.json(dbService.tasks.getByUser(payload.id));
+  return c.json(await dbService.tasks.getByUser(payload.id));
 });
 
 // GET task by ID
@@ -34,11 +34,11 @@ tasksRouter.get("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  return c.json(dbService.tasks.getById(id));
+  return c.json(await dbService.tasks.getById(id));
 });
 
 // POST create task
@@ -51,7 +51,7 @@ tasksRouter.post("/", async (c) => {
   }
 
   // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
     return c.json({ error: "Subject not found" }, 404);
   }
 
@@ -69,7 +69,7 @@ tasksRouter.post("/", async (c) => {
     status: (body.status as TaskStatus) || "todo",
   };
 
-  dbService.tasks.create(newTask);
+  await dbService.tasks.create(newTask);
   return c.json(newTask, 201);
 });
 
@@ -79,7 +79,7 @@ tasksRouter.patch("/:id/status", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -90,8 +90,8 @@ tasksRouter.patch("/:id/status", async (c) => {
     return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
   }
 
-  dbService.tasks.updateStatus(id, body.status);
-  return c.json({ ...dbService.tasks.getById(id), status: body.status });
+  await dbService.tasks.updateStatus(id, body.status);
+  return c.json({ ...await dbService.tasks.getById(id), status: body.status });
 });
 
 // PATCH /:id — actualización genérica
@@ -100,7 +100,7 @@ tasksRouter.patch("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -122,8 +122,8 @@ tasksRouter.patch("/:id", async (c) => {
     return c.json({ error: "No valid fields to update" }, 400);
   }
 
-  dbService.tasks.update(id, updateData);
-  return c.json({ ...dbService.tasks.getById(id), ...updateData });
+  await dbService.tasks.update(id, updateData);
+  return c.json({ ...await dbService.tasks.getById(id), ...updateData });
 });
 
 // DELETE task
@@ -132,11 +132,11 @@ tasksRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  dbService.tasks.delete(id);
+  await dbService.tasks.delete(id);
   return c.json({ status: "deleted" });
 });
 

@@ -12,16 +12,16 @@ subjectsRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
 // GET all subjects
 subjectsRouter.get("/", async (c) => {
   const payload = c.get("jwtPayload");
-  return c.json(dbService.subjects.getAll(payload.id));
+  return c.json(await dbService.subjects.getAll(payload.id));
 });
 
 // GET at-risk subjects
 subjectsRouter.get("/at-risk", async (c) => {
   const payload = c.get("jwtPayload");
-  const subjects = dbService.subjects.getAll(payload.id);
+  const subjects = await dbService.subjects.getAll(payload.id);
 
   const atRisk = subjects.map(s => {
-    const absences = dbService.absences.getBySubject(s.id);
+    const absences = await dbService.absences.getBySubject(s.id);
     const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
     const percentage = s.total_classes > 0
       ? (totalAbsenceValue / s.total_classes) * 100
@@ -43,11 +43,11 @@ subjectsRouter.get("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix: verificar ownership antes de devolver el recurso
-  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  return c.json(dbService.subjects.getById(id));
+  return c.json(await dbService.subjects.getById(id));
 });
 
 // POST create subject
@@ -70,7 +70,7 @@ subjectsRouter.post("/", async (c) => {
     user_id: payload.id,
   };
 
-  dbService.subjects.create(newSubject);
+  await dbService.subjects.create(newSubject);
   return c.json(newSubject, 201);
 });
 
@@ -80,7 +80,7 @@ subjectsRouter.patch("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -98,8 +98,8 @@ subjectsRouter.patch("/:id", async (c) => {
     return c.json({ error: "No valid fields to update" }, 400);
   }
 
-  dbService.subjects.update(id, updateData);
-  return c.json({ ...dbService.subjects.getById(id), ...updateData });
+  await dbService.subjects.update(id, updateData);
+  return c.json({ ...await dbService.subjects.getById(id), ...updateData });
 });
 
 // DELETE subject
@@ -108,11 +108,11 @@ subjectsRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  dbService.subjects.delete(id);
+  await dbService.subjects.delete(id);
   return c.json({ status: "deleted" });
 });
 
