@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test'; // ← beforeAll eliminado
 import { app } from '../src/server';
 import type { Task, Subject } from '@dashboard/shared-types';
 
@@ -7,8 +7,7 @@ describe('Tasks API Tests', () => {
   let subjectId: string;
   let token: string;
 
-  beforeAll(async () => {
-    // Login to get token
+  beforeEach(async () => { // ← era beforeAll
     const loginRes = await app.request('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email: 'demo@example.com', password: 'demo123' }),
@@ -17,11 +16,10 @@ describe('Tasks API Tests', () => {
     const auth = await loginRes.json() as any;
     token = auth.token;
 
-    // Create a real subject for the foreign key constraint
     const subRes = await app.request('/api/subjects', {
       method: 'POST',
       body: JSON.stringify({ name: 'Subject for Tasks', total_classes: 10 }),
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
@@ -36,10 +34,10 @@ describe('Tasks API Tests', () => {
       body: JSON.stringify({
         subject_id: subjectId,
         title: 'Estudiar para parcial',
-        due_date: '2024-03-15T10:00:00Z',
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // ← mañana
         description: 'Capítulos 1 al 5'
       }),
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
@@ -49,11 +47,26 @@ describe('Tasks API Tests', () => {
     const body = await res.json() as Task;
     expect(body.title).toBe('Estudiar para parcial');
     expect(body.subject_id).toBe(subjectId);
-    expect(body.status).toBe('todo'); // Check default value from DB
+    expect(body.status).toBe('todo');
     taskId = body.id;
   });
 
   it('GET /api/tasks should return all tasks of user', async () => {
+    // Crear tarea primero para que la lista no esté vacía
+    const createRes = await app.request('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject_id: subjectId,
+        title: 'Tarea auxiliar',
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    taskId = ((await createRes.json()) as Task).id;
+
     const res = await app.request('/api/tasks', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -63,6 +76,19 @@ describe('Tasks API Tests', () => {
   });
 
   it('GET /api/tasks?subject_id=... should filter tasks', async () => {
+    await app.request('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject_id: subjectId,
+        title: 'Tarea filtrada',
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
     const res = await app.request(`/api/tasks?subject_id=${subjectId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -72,10 +98,24 @@ describe('Tasks API Tests', () => {
   });
 
   it('PATCH /api/tasks/:id/status should update task status', async () => {
+    const createRes = await app.request('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject_id: subjectId,
+        title: 'Tarea para patchear',
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    taskId = ((await createRes.json()) as Task).id;
+
     const res = await app.request(`/api/tasks/${taskId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: 'done' }),
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
@@ -87,7 +127,21 @@ describe('Tasks API Tests', () => {
   });
 
   it('DELETE /api/tasks/:id should delete the task', async () => {
-    const res = await app.request(`/api/tasks/${taskId}`, { 
+    const createRes = await app.request('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({
+        subject_id: subjectId,
+        title: 'Tarea para borrar',
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    taskId = ((await createRes.json()) as Task).id;
+
+    const res = await app.request(`/api/tasks/${taskId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });

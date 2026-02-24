@@ -2,43 +2,36 @@ import { Hono } from "hono";
 import { jwt } from "hono/jwt";
 import { dbService } from "../lib/db";
 import { JWT_SECRET } from "../lib/auth";
-import type { Subject, Absence } from "@dashboard/shared-types";
+import type { Subject } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
 const subjectsRouter = new Hono();
 
-// Auth middleware for all subject routes
 subjectsRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
 
-// GET all subjects for current user
+// GET all subjects
 subjectsRouter.get("/", async (c) => {
   const payload = c.get("jwtPayload");
-  const subjects = dbService.subjects.getAll(payload.id);
-  return c.json(subjects);
+  return c.json(dbService.subjects.getAll(payload.id));
 });
 
 // GET at-risk subjects
 subjectsRouter.get("/at-risk", async (c) => {
   const payload = c.get("jwtPayload");
   const subjects = dbService.subjects.getAll(payload.id);
-  
+
   const atRisk = subjects.map(s => {
     const absences = dbService.absences.getBySubject(s.id);
     const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
-    
-    const percentage = s.total_classes > 0 ? (totalAbsenceValue / s.total_classes) * 100 : 0;
-    
-    // Status logic: < 15% Normal, 15-20% Alert, > 20% Danger (based on SPECS.md)
+    const percentage = s.total_classes > 0
+      ? (totalAbsenceValue / s.total_classes) * 100
+      : 0;
+
     let status: 'normal' | 'warning' | 'danger' = 'normal';
     if (percentage >= 20) status = 'danger';
     else if (percentage >= 15) status = 'warning';
-    
-    return {
-      ...s,
-      currentAbsences: totalAbsenceValue,
-      absencePercentage: percentage,
-      status
-    };
+
+    return { ...s, currentAbsences: totalAbsenceValue, absencePercentage: percentage, status };
   }).filter(s => s.status !== 'normal');
 
   return c.json(atRisk);
@@ -47,62 +40,76 @@ subjectsRouter.get("/at-risk", async (c) => {
 // GET subject by ID
 subjectsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const subject = dbService.subjects.getById(id);
-  
-  if (!subject) return c.json({ error: "Subject not found" }, 404);
-  return c.json(subject);
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix: verificar ownership antes de devolver el recurso
+  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  return c.json(dbService.subjects.getById(id));
 });
 
 // POST create subject
 subjectsRouter.post("/", async (c) => {
   const payload = c.get("jwtPayload");
   const body = await c.req.json();
-  
+
   if (!body.name || body.total_classes === undefined) {
     return c.json({ error: "Missing required fields" }, 400);
   }
 
+  if (typeof body.total_classes !== 'number' || body.total_classes < 0) {
+    return c.json({ error: "total_classes must be a non-negative number" }, 400);
+  }
+
   const newSubject: Subject = {
     id: randomUUID(),
-    name: body.name,
+    name: String(body.name).trim(),
     total_classes: body.total_classes,
-    user_id: payload.id
+    user_id: payload.id,
   };
 
   dbService.subjects.create(newSubject);
-  
   return c.json(newSubject, 201);
 });
 
 // PATCH update subject
 subjectsRouter.patch("/:id", async (c) => {
   const id = c.req.param("id");
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
   const body = await c.req.json();
-  const existing = dbService.subjects.getById(id);
-
-  if (!existing) return c.json({ error: "Subject not found" }, 404);
-
-  // Filter allowed fields
   const updateData: Partial<Subject> = {};
-  if (body.name) updateData.name = body.name;
-  if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
+  if (body.name) updateData.name = String(body.name).trim();
+  if (body.total_classes !== undefined) {
+    if (typeof body.total_classes !== 'number' || body.total_classes < 0) {
+      return c.json({ error: "total_classes must be a non-negative number" }, 400);
+    }
+    updateData.total_classes = body.total_classes;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return c.json({ error: "No valid fields to update" }, 400);
   }
 
   dbService.subjects.update(id, updateData);
-  
-  return c.json({ ...existing, ...updateData });
+  return c.json({ ...dbService.subjects.getById(id), ...updateData });
 });
 
 // DELETE subject
 subjectsRouter.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const existing = dbService.subjects.getById(id);
-  
-  if (!existing) {
-    return c.json({ error: "Subject not found" }, 404);
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
   }
 
   dbService.subjects.delete(id);

@@ -2,9 +2,9 @@ import { beforeAll, beforeEach } from "bun:test";
 import { initDB, db } from "../src/lib/db";
 
 // Force test environment
-process.env.NODE_ENV = "test";
-process.env.JWT_SECRET = "test-secret";
-process.env.DEV_LOGIN_ENABLED = "true";
+Bun.env.NODE_ENV = "test";
+Bun.env.JWT_SECRET = "test-secret";
+Bun.env.DEV_LOGIN_ENABLED = "true";
 
 beforeAll(() => {
   // Initial table creation

@@ -1,21 +1,18 @@
 {
   "compilerOptions": {
     "lib": ["ESNext"],
-    "module": "esnext",
-    "target": "esnext",
+    "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "composite": true,
     "strict": true,
-    "downlevelIteration": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "types": ["bun-types"],
+    "types": ["bun"],
     "baseUrl": ".",
     "paths": {
       "@dashboard/shared-types": ["../../packages/shared-types/src/index.ts"]

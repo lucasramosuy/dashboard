@@ -5,102 +5,135 @@ import { JWT_SECRET } from "../lib/auth";
 import type { Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
+const VALID_STATUSES = ['todo', 'in-progress', 'done'] as const;
+type TaskStatus = typeof VALID_STATUSES[number];
+
 const tasksRouter = new Hono();
 
-// Auth middleware for all task routes
 tasksRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
 
 // GET all tasks (optional filter by subject_id)
 tasksRouter.get("/", async (c) => {
   const payload = c.get("jwtPayload");
   const subjectId = c.req.query("subject_id");
-  
-  let tasks: Task[];
+
   if (subjectId) {
-    tasks = dbService.tasks.getBySubject(subjectId);
-  } else {
-    tasks = dbService.tasks.getByUser(payload.id);
+    // ✅ IDOR fix: verificar que el subject pertenece al usuario antes de filtrar
+    if (!dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+      return c.json({ error: "Not found" }, 404);
+    }
+    return c.json(dbService.tasks.getBySubject(subjectId));
   }
-  
-  return c.json(tasks);
+
+  return c.json(dbService.tasks.getByUser(payload.id));
 });
 
 // GET task by ID
 tasksRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const task = dbService.tasks.getById(id);
-  
-  if (!task) return c.json({ error: "Task not found" }, 404);
-  return c.json(task);
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  return c.json(dbService.tasks.getById(id));
 });
 
 // POST create task
 tasksRouter.post("/", async (c) => {
+  const payload = c.get("jwtPayload");
   const body = await c.req.json();
-  
+
   if (!body.subject_id || !body.title || !body.due_date) {
-    return c.json({ error: "Missing required fields" }, 400);
+    return c.json({ error: "Missing required fields (subject_id, title, due_date)" }, 400);
+  }
+
+  // ✅ IDOR fix: verificar que el subject pertenece al usuario
+  if (!dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+    return c.json({ error: "Subject not found" }, 404);
+  }
+
+  // ✅ Validar status si se provee
+  if (body.status && !VALID_STATUSES.includes(body.status)) {
+    return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
   }
 
   const newTask: Task = {
     id: randomUUID(),
     subject_id: body.subject_id,
-    title: body.title,
-    description: body.description || null,
+    title: String(body.title).trim(),
+    description: body.description ? String(body.description).trim() : undefined,
     due_date: new Date(body.due_date),
-    status: body.status || "todo"
+    status: (body.status as TaskStatus) || "todo",
   };
 
   dbService.tasks.create(newTask);
-  
   return c.json(newTask, 201);
 });
 
-// PATCH update task (generic)
+// PATCH /:id/status — debe ir ANTES que PATCH /:id
+tasksRouter.patch("/:id/status", async (c) => {
+  const id = c.req.param("id");
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
+  const body = await c.req.json();
+
+  // ✅ Validar status
+  if (!body.status || !VALID_STATUSES.includes(body.status)) {
+    return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
+  }
+
+  dbService.tasks.updateStatus(id, body.status);
+  return c.json({ ...dbService.tasks.getById(id), status: body.status });
+});
+
+// PATCH /:id — actualización genérica
 tasksRouter.patch("/:id", async (c) => {
   const id = c.req.param("id");
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
+  }
+
   const body = await c.req.json();
-  const existing = dbService.tasks.getById(id);
-
-  if (!existing) return c.json({ error: "Task not found" }, 404);
-
-  // Filter allowed fields
   const updateData: Partial<Task> = {};
-  if (body.title) updateData.title = body.title;
-  if (body.description !== undefined) updateData.description = body.description;
-  if (body.status) updateData.status = body.status;
+
+  if (body.title) updateData.title = String(body.title).trim();
+  if (body.description !== undefined) updateData.description = String(body.description).trim();
   if (body.due_date) updateData.due_date = new Date(body.due_date);
+  if (body.status) {
+    // ✅ Validar status
+    if (!VALID_STATUSES.includes(body.status)) {
+      return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
+    }
+    updateData.status = body.status as TaskStatus;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return c.json({ error: "No valid fields to update" }, 400);
   }
 
   dbService.tasks.update(id, updateData);
-  
-  return c.json({ ...existing, ...updateData });
-});
-
-// PATCH update task status (legacy/convenience)
-tasksRouter.patch("/:id/status", async (c) => {
-  const id = c.req.param("id");
-  const { status } = await c.req.json();
-  
-  if (!status) return c.json({ error: "Missing status" }, 400);
-  
-  const existing = dbService.tasks.getById(id);
-  if (!existing) return c.json({ error: "Task not found" }, 404);
-  
-  dbService.tasks.updateStatus(id, status);
-  return c.json({ ...existing, status });
+  return c.json({ ...dbService.tasks.getById(id), ...updateData });
 });
 
 // DELETE task
 tasksRouter.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const existing = dbService.tasks.getById(id);
-  
-  if (!existing) {
-    return c.json({ error: "Task not found" }, 404);
+  const payload = c.get("jwtPayload");
+
+  // ✅ IDOR fix
+  if (!dbService.ownership.taskBelongsToUser(id, payload.id)) {
+    return c.json({ error: "Not found" }, 404);
   }
 
   dbService.tasks.delete(id);
