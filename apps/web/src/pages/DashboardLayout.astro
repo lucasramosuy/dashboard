@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import { HeaderPage } from '../components/HeaderPage';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<Base title={title}>
+  <div class="oat-shell">
+    <header class="oat-header">
+      <div class="oat-logo">
+        <a href="/" style="text-decoration: none; color: inherit;">
+          <strong>Dashboard</strong>
+        </a>
+      </div>
+      <nav id="top-nav">
+        <HeaderPage client:only="react" />
+      </nav>
+    </header>
+    <aside class="oat-sidebar">
+      <nav>
+        <ul class="oat-nav-list" style="list-style: none; padding: 0;">
+          <li><a href="/" class="oat-nav-link">📊 Dashboard</a></li>
+          <li><a href="/subjects" class="oat-nav-link">📚 Materias</a></li>
+          <li><a href="/tasks" class="oat-nav-link">✅ Tareas</a></li>
+          <li><a href="/analytics" class="oat-nav-link">📈 Analíticas</a></li>
+          <li><a href="/journal" class="oat-nav-link">✍️ Journal</a></li>
+        </ul>
+      </nav>
+    </aside>
+    <main class="oat-main">
+      <slot />
+    </main>
+  </div>
+</Base>
+
+<style is:global>
+  .oat-nav-link {
+    text-decoration: none;
+    color: inherit;
+    padding: 0.75rem 0.5rem;
+    display: block;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .oat-nav-link:hover {
+    background: rgba(0,0,0,0.05);
+  }
+</style>

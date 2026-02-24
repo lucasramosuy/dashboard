@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '@dashboard/shared-types';
-import { api } from '../lib/api';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import type { UserPublic } from "@dashboard/shared-types";
+import { api } from "../lib/api";
 
 interface AuthContextType {
-  user: User | null;
+  user: UserPublic | null;
   token: string | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
@@ -13,42 +13,55 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<UserPublic | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Restaurar sesión desde localStorage al montar el provider.
   useEffect(() => {
-    const savedToken = localStorage.getItem('dash_token');
-    if (savedToken) {
-      setToken(savedToken);
-      api.getMe(savedToken)
-        .then(setUser)
-        .catch(() => {
-          localStorage.removeItem('dash_token');
-          setToken(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
+    const savedToken = localStorage.getItem("auth_token");
+
+    // Blindaje Anti-401: Si no hay token, detenerse inmediatamente sin llamar a la API
+    if (!savedToken || savedToken === "undefined" || savedToken === "null") {
       setLoading(false);
+      return;
     }
+
+    setToken(savedToken);
+    api
+      .getMe(savedToken)
+      .then(setUser)
+      .catch((err) => {
+        console.error("[AuthContext] Error validando token inicial:", err);
+        localStorage.removeItem("auth_token");
+        setToken(null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email: string, pass: string) => {
     try {
-      const { token: newToken } = await api.login(email, pass);
+      const response = await api.login(email, pass);
+      const newToken = response.token;
+
+      // Persistencia atómica
+      localStorage.setItem("auth_token", newToken);
+      const verifiedToken = localStorage.getItem("auth_token");
+      if (verifiedToken !== newToken) {
+        throw new Error(
+          "Error crítico: El token no se pudo persistir en localStorage",
+        );
+      }
+
+      // ✅ Usar user que ya viene en la respuesta del login, sin segunda llamada
       setToken(newToken);
-      localStorage.setItem('dash_token', newToken);
-
-      // Obtener datos completos del usuario según recomendaciones de SPECS e integración
-      const fullUser = await api.getMe(newToken);
-      setUser(fullUser);
-
-      // Redirigir explícitamente al dashboard
-      window.location.href = '/';
+      setUser(response.user);
     } catch (error) {
-      console.error('Error al loguear:', error);
+      console.error("[Auth Error] Error al loguear:", error);
+      localStorage.removeItem("auth_token");
       throw error;
     }
   };
@@ -56,8 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('dash_token');
-    window.location.href = '/login';
+    localStorage.removeItem("auth_token");
+    window.location.replace("/login");
   };
 
   const refreshMe = async () => {
@@ -68,19 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, refreshMe }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, logout, refreshMe }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-/**
- * useAuth es seguro para SSR: si se usa fuera de un AuthProvider (como durante el pre-renderizado de Astro),
- * retorna un estado por defecto con loading: true para evitar errores fatales.
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    if (typeof window !== 'undefined') {
+      // Solo en cliente, nunca en SSR
+      console.warn('useAuth debe usarse dentro de <AuthProvider>');
+    }
     return {
       user: null,
       token: null,
@@ -92,3 +107,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthProvider;

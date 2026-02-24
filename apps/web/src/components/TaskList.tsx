@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { api } from '../lib/api';
-import { Modal } from './Modal';
-import { TaskForm } from './TaskForm';
-import { StatusBadge } from './StatusBadge';
-import type { Task, Subject } from '@dashboard/shared-types';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { api } from "../lib/api";
+import { Modal } from "./Modal";
+import { TaskForm } from "./TaskForm";
+import { StatusBadge } from "./StatusBadge";
+import type { Task, Subject } from "@dashboard/shared-types";
+import { Toast } from "./Toast";
+import { useToast } from "../hooks/useToast";
 
 export const TaskList: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
@@ -14,26 +16,32 @@ export const TaskList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const fetchData = async () => {
     if (token) {
       try {
         const [taskData, subjectData] = await Promise.all([
           api.getTasks(token),
-          api.getSubjects(token)
+          api.getSubjects(token),
         ]);
         setTasks(taskData);
         setSubjects(subjectData);
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = '/login';
+    if (!authLoading && !user) window.location.href = "/login";
   }, [user, authLoading]);
 
-  useEffect(() => { fetchData(); }, [token]);
+  useEffect(() => {
+    fetchData();
+  }, [token]);
 
   const handleSubmit = async (data: Partial<Task>) => {
     if (!token) return;
@@ -47,50 +55,145 @@ export const TaskList: React.FC = () => {
       setModalOpen(false);
       setEditingTask(undefined);
       fetchData();
-      alert(`Tarea ${editingTask ? 'actualizada' : 'creada'} correctamente`);
-    } catch (e: any) { alert(e.message); }
-    finally { setSubmitting(false); }
+      showToast(
+        `Tarea ${editingTask ? "actualizada" : "creada"} correctamente`,
+      );
+    } catch (e: any) {
+      showToast(e.message, "error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm('¿Estás seguro de eliminar esta tarea?')) return;
+    if (!token || !confirm("¿Estás seguro de eliminar esta tarea?")) return;
     try {
       await api.deleteTask(token, id);
       fetchData();
-      alert('Tarea eliminada');
-    } catch (e: any) { alert(e.message); }
+      showToast("Tarea eliminada");
+    } catch (e: any) {
+      showToast(e.message, "error");
+    }
   };
 
-  if (authLoading || loading) return <div className="oat-spinner">Cargando tareas...</div>;
+  if (authLoading || loading) {
+    return (
+      <div className="oat-spinner-wrapper">
+        <div className="oat-spinner" />
+        <span>Cargando...</span>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0 }}>Mis Tareas</h1>
-        <button onClick={() => { setEditingTask(undefined); setModalOpen(true); }} className="oat-btn oat-btn-primary">+ Nueva</button>
-      </header>
-      
-      <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {tasks.map(t => (
-          <article key={t.id} className="oat-card">
-            <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <a href={`/tasks/${t.id}`} style={{ fontWeight: 'bold', textDecoration: 'none', color: 'inherit' }}>{t.title}</a>
-              <StatusBadge variant={t.status === 'completed' ? 'success' : t.status === 'overdue' ? 'danger' : 'warning'}>
-                {t.status}
-              </StatusBadge>
-            </header>
-            <p style={{ fontSize: '0.85rem', color: '#666' }}>Vence: {t.due_date}</p>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setEditingTask(t); setModalOpen(true); }} className="oat-btn oat-btn-outline" style={{ fontSize: '0.75rem' }}>Editar</button>
-              <button onClick={() => handleDelete(t.id)} className="oat-btn oat-btn-outline" style={{ fontSize: '0.75rem', color: 'red' }}>Borrar</button>
-            </div>
-          </article>
-        ))}
+    <>
+      <div>
+        <header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "2rem",
+          }}
+        >
+          <h1 style={{ margin: 0 }}>Mis Tareas</h1>
+          <button
+            onClick={() => {
+              setEditingTask(undefined);
+              setModalOpen(true);
+            }}
+            className="oat-btn oat-btn-primary"
+          >
+            + Nueva
+          </button>
+        </header>
+
+        <div
+          style={{
+            display: "grid",
+            gap: "1rem",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          }}
+        >
+          {tasks.map((t) => (
+            <article key={t.id} className="oat-card">
+              <header
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem",
+                }}
+              >
+                <a
+                  href={`/tasks/${t.id}`}
+                  style={{
+                    fontWeight: "bold",
+                    textDecoration: "none",
+                    color: "inherit",
+                  }}
+                >
+                  {t.title}
+                </a>
+                <StatusBadge
+                  variant={t.status === "done" ? "success" : "warning"}
+                >
+                  {t.status === "done" ? "Completada" : "Pendiente"}
+                </StatusBadge>
+              </header>
+              <p style={{ fontSize: "0.85rem", color: "#666" }}>
+                Vence:{" "}
+                {t.due_date instanceof Date
+                  ? t.due_date.toLocaleDateString()
+                  : String(t.due_date)}
+              </p>
+              <div
+                style={{
+                  marginTop: "1rem",
+                  display: "flex",
+                  gap: "0.5rem",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  onClick={() => {
+                    setEditingTask(t);
+                    setModalOpen(true);
+                  }}
+                  className="oat-btn oat-btn-outline"
+                  style={{ fontSize: "0.75rem" }}
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(t.id)}
+                  className="oat-btn oat-btn-outline"
+                  style={{ fontSize: "0.75rem", color: "red" }}
+                >
+                  Borrar
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <Modal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title={editingTask ? "Editar Tarea" : "Nueva Tarea"}
+        >
+          <TaskForm
+            initialData={editingTask}
+            subjects={subjects}
+            onSubmit={handleSubmit}
+            onCancel={() => setModalOpen(false)}
+            loading={submitting}
+          />
+        </Modal>
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingTask ? 'Editar Tarea' : 'Nueva Tarea'}>
-        <TaskForm initialData={editingTask} subjects={subjects} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} loading={submitting} />
-      </Modal>
-    </div>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+      )}
+    </>
   );
 };

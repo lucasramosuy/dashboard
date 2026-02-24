@@ -17,7 +17,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const savedTheme = localStorage.getItem('dash_theme') as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
-      document.body.dataset.theme = savedTheme;
+      document.body.dataset.theme = savedTheme; // aplica al <html>
     }
   }, []);
 

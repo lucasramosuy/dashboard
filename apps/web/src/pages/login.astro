@@ -1,14 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { LoginForm } from '../components/LoginForm';
+import { LoginPage } from '../components/LoginPage';
 ---
 
 <Base title="Iniciar Sesión">
-  <div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 200px);">
-    {/* AppProviders es la raíz de la isla de React en el cliente para el login */}
-    <AppProviders client:only="react">
-      <LoginForm />
-    </AppProviders>
+  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; background-color: var(--oat-bg);">
+    <header style="margin-bottom: 2.5rem; text-align: center;">
+      <h1 class="oat-text-bold" style="font-size: 2.5rem; margin: 0;">Dashboard</h1>
+      <p class="oat-text-secondary">Bienvenido de nuevo.</p>
+    </header>
+
+    <div style="width: 100%; max-width: 400px;">
+      <LoginPage client:only="react" />  <!-- ✅ Un solo punto de entrada React -->
+    </div>
   </div>
 </Base>

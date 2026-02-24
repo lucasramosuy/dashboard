@@ -1,11 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { TaskList } from '../components/TaskList';
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { TasksPage } from "../components/TasksPage";
 ---
 
-<Base title="Tareas">
-  <AppProviders client:only="react">
-    <TaskList />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function () {
+    const token = localStorage.getItem("auth_token");
+    if (!token) window.location.replace("/login");
+  })();
+</script>
+
+<DashboardLayout title="Tareas">
+  <TasksPage client:only="react" />
+</DashboardLayout>

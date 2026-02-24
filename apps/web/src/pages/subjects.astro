@@ -1,11 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { SubjectList } from '../components/SubjectList';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { SubjectsPage } from '../components/SubjectsPage';
 ---
 
-<Base title="Materias">
-  <AppProviders client:only="react">
-    <SubjectList />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.replace('/login');
+  })();
+</script>
+
+<DashboardLayout title="Materias">
+  <SubjectsPage client:only="react" />
+</DashboardLayout>

@@ -1,12 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { DashboardSummary } from '../components/DashboardSummary';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { DashboardPage } from '../components/DashboardPage';
 ---
 
-<Base title="Dashboard">
-  {/* AppProviders envuelve la isla de React para inyectar AuthContext y ThemeContext */}
-  <AppProviders client:only="react">
-    <DashboardSummary />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.replace('/login');
+  })();
+</script>
+
+<DashboardLayout title="Dashboard">
+  <DashboardPage client:only="react" />
+</DashboardLayout>

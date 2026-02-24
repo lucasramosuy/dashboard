@@ -1,4 +1,10 @@
-import type { User, Subject, Task, Absence, PracticeJournal } from '@dashboard/shared-types';
+import type {
+  UserPublic,
+  Subject,
+  Task,
+  Absence,
+  PracticeJournal,
+} from "@dashboard/shared-types";
 
 /**
  * Cliente de API para el dashboard académico.
@@ -6,13 +12,14 @@ import type { User, Subject, Task, Absence, PracticeJournal } from '@dashboard/s
  * En desarrollo, PUBLIC_API_BASE será http://localhost:8787/api
  * En producción, el valor será /api (relativo al dominio de despliegue).
  */
-const API_BASE = import.meta.env.PUBLIC_API_BASE || 'http://localhost:8787/api';
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "http://localhost:8787/api";
 
 /**
- * Helper para convertir strings ISO a objetos Date en respuestas JSON
+ * Helper para convertir strings de fecha a objetos Date en respuestas JSON
+ * Soporta formato ISO completo (2026-02-23T...) y formato corto (2026-02-23)
  */
 function reviveDates(obj: any): any {
-  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj === null || typeof obj !== "object") return obj;
 
   if (Array.isArray(obj)) {
     return obj.map(reviveDates);
@@ -21,13 +28,14 @@ function reviveDates(obj: any): any {
   const revived: any = { ...obj };
   for (const key in revived) {
     const val = revived[key];
-    // Detectar campos cronológicos por nombre o formato
-    if (typeof val === 'string' && (key === 'date' || key === 'due_date' || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val))) {
+
+    // Regex inclusiva para YYYY-MM-DD (corto) o YYYY-MM-DDTHH... (ISO)
+    if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}/.test(val)) {
       const date = new Date(val);
       if (!isNaN(date.getTime())) {
         revived[key] = date;
       }
-    } else if (typeof val === 'object') {
+    } else if (typeof val === "object") {
       revived[key] = reviveDates(val);
     }
   }
@@ -50,20 +58,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
-  async login(email: string, password: string): Promise<{ token: string; user: User }> {
-    const response = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    return handleResponse<{ token: string; user: User }>(response);
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ token: string; user: UserPublic }> {
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      return handleResponse<{ token: string; user: UserPublic }>(response);
+    } catch (err) {
+      console.error("ERROR DE RED O CORS EN API.login:", err);
+      throw err;
+    }
   },
 
-  async getMe(token: string): Promise<User> {
+  async getMe(token: string): Promise<UserPublic> {
     const response = await fetch(`${API_BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return handleResponse<User>(response);
+    return handleResponse<UserPublic>(response);
   },
 
   async getSubjects(token: string): Promise<Subject[]> {
@@ -75,17 +91,27 @@ export const api = {
 
   async createSubject(token: string, data: Partial<Subject>): Promise<Subject> {
     const response = await fetch(`${API_BASE}/subjects`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
     return handleResponse<Subject>(response);
   },
 
-  async updateSubject(token: string, id: string, data: Partial<Subject>): Promise<Subject> {
+  async updateSubject(
+    token: string,
+    id: string,
+    data: Partial<Subject>,
+  ): Promise<Subject> {
     const response = await fetch(`${API_BASE}/subjects/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
     return handleResponse<Subject>(response);
@@ -93,10 +119,10 @@ export const api = {
 
   async deleteSubject(token: string, id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/subjects/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) throw new Error('No se pudo eliminar la materia');
+    if (!response.ok) throw new Error("No se pudo eliminar la materia");
   },
 
   async getAtRiskSubjects(token: string): Promise<Subject[]> {
@@ -107,7 +133,9 @@ export const api = {
   },
 
   async getTasks(token: string, subjectId?: string): Promise<Task[]> {
-    const url = subjectId ? `${API_BASE}/tasks?subject_id=${subjectId}` : `${API_BASE}/tasks`;
+    const url = subjectId
+      ? `${API_BASE}/tasks?subject_id=${subjectId}`
+      : `${API_BASE}/tasks`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -116,17 +144,27 @@ export const api = {
 
   async createTask(token: string, data: Partial<Task>): Promise<Task> {
     const response = await fetch(`${API_BASE}/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
     return handleResponse<Task>(response);
   },
 
-  async updateTask(token: string, id: string, data: Partial<Task>): Promise<Task> {
+  async updateTask(
+    token: string,
+    id: string,
+    data: Partial<Task>,
+  ): Promise<Task> {
     const response = await fetch(`${API_BASE}/tasks/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
     return handleResponse<Task>(response);
@@ -134,10 +172,10 @@ export const api = {
 
   async deleteTask(token: string, id: string): Promise<void> {
     const response = await fetch(`${API_BASE}/tasks/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) throw new Error('No se pudo eliminar la tarea');
+    if (!response.ok) throw new Error("No se pudo eliminar la tarea");
   },
 
   async getJournals(token: string): Promise<PracticeJournal[]> {
@@ -147,20 +185,41 @@ export const api = {
     return handleResponse<PracticeJournal[]>(response);
   },
 
-  async getJournalByDate(token: string, date: string): Promise<PracticeJournal | null> {
-    const response = await fetch(`${API_BASE}/practice-journals?date=${date}`, {
+  async getJournalByDate(
+    token: string,
+    date: string,
+  ): Promise<PracticeJournal | null> {
+    const response = await fetch(`${API_BASE}/practice-journals`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const journals = await handleResponse<PracticeJournal[]>(response);
-    return journals.length > 0 ? journals[0] : null;
+
+    // Filtrar en cliente hasta que el backend soporte ?date=
+    const target = date.split("T")[0]; // normalizar a YYYY-MM-DD
+    const found = journals.find((j) => {
+      const jDate =
+        j.date instanceof Date
+          ? j.date.toISOString().split("T")[0]
+          : String(j.date).split("T")[0];
+      return jDate === target;
+    });
+    return found ?? null;
   },
 
-  async upsertJournal(token: string, data: Partial<PracticeJournal>): Promise<PracticeJournal> {
-    const method = data.id ? 'PATCH' : 'POST';
-    const url = data.id ? `${API_BASE}/practice-journals/${data.id}` : `${API_BASE}/practice-journals`;
+  async upsertJournal(
+    token: string,
+    data: Partial<PracticeJournal>,
+  ): Promise<PracticeJournal> {
+    const method = data.id ? "PUT" : "POST";
+    const url = data.id
+      ? `${API_BASE}/practice-journals/${data.id}`
+      : `${API_BASE}/practice-journals`;
     const response = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
     return handleResponse<PracticeJournal>(response);
@@ -181,17 +240,51 @@ export const api = {
   },
 
   async getAbsences(token: string, subjectId: string): Promise<Absence[]> {
-    const response = await fetch(`${API_BASE}/absences?subject_id=${subjectId}`, {
+    const response = await fetch(
+      `${API_BASE}/absences?subject_id=${subjectId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return handleResponse<Absence[]>(response);
+  },
+
+  async createAbsence(token: string, data: Partial<Absence>): Promise<Absence> {
+    const response = await fetch(`${API_BASE}/absences`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Absence>(response);
+  },
+
+  async deleteAbsence(token: string, id: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/absences/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error("No se pudo eliminar la inasistencia");
+  },
+
+  async getAllAbsences(token: string): Promise<Absence[]> {
+    const response = await fetch(`${API_BASE}/absences`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return handleResponse<Absence[]>(response);
   },
 
-  async updateTaskStatus(token: string, taskId: string, status: Task['status']): Promise<Task> {
+  async updateTaskStatus(
+    token: string,
+    taskId: string,
+    status: Task["status"],
+  ): Promise<Task> {
     const response = await fetch(`${API_BASE}/tasks/${taskId}/status`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ status }),

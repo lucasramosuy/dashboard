@@ -1,11 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { AnalyticsDashboard } from '../components/AnalyticsDashboard';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { AnalyticsPage } from '../components/AnalyticsPage';
 ---
 
-<Base title="Analíticas">
-  <AppProviders client:only="react">
-    <AnalyticsDashboard />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.replace('/login');
+  })();
+</script>
+
+<DashboardLayout title="Analíticas">
+  <AnalyticsPage client:only="react" />
+</DashboardLayout>

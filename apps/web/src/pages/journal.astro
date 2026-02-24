@@ -1,11 +1,15 @@
 ---
-import Base from '../layouts/Base.astro';
-import { AppProviders } from '../components/AppProviders';
-import { JournalView } from '../components/JournalView';
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { JournalPage } from '../components/JournalPage';
 ---
 
-<Base title="Journal Diario">
-  <AppProviders client:only="react">
-    <JournalView />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.replace('/login');
+  })();
+</script>
+
+<DashboardLayout title="Journal de Práctica">
+  <JournalPage client:only="react" />
+</DashboardLayout>

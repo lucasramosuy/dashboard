@@ -9,7 +9,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
 **Objetivo:** Configurar el esqueleto del repositorio y las herramientas de desarrollo.
 
 1.  **Inicialización del Repo:**
-    - [x] Crear el repositorio en GitHub.
+    - [x] Crear el auth_token en GitHub.
     - [x] Configurar `.gitignore` para Bun y Node.
     - [x] Configurar `git init` hecho y `.gitignore` configurado con `node_modules/`, `dist/` y `.env*`.
 
@@ -46,7 +46,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Implementar `dbService` con métodos CRUD robustos.
 3.  **Configuración de imports de shared-types:**
     - **Estrategia Elegida:** Opción B (Alias de paquete `@dashboard/shared-types`).
-    - **Archivos Configurados:** 
+    - **Archivos Configurados:**
       - `packages/shared-types/package.json` (definición del paquete).
       - `apps/api/tsconfig.json` (mapping de `paths` e inclusión de rutas en `include` para evitar error TS6307).
     - **Ejemplo de Import:** `import { User } from "@dashboard/shared-types";`
@@ -92,12 +92,15 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] Migración exitosa de Oat UI (CSS/JS) de CDN externa a implementación local en `src/styles/theme.css`, eliminando errores de red y asegurando carga offline.
     - [x] Configurar `src/styles/theme.css` para personalización de variables.
     - [x] Alinear componentes principales (forms, badges, cards) al sistema de diseño de Oat mediante componentes reutilizables (`StatusBadge`, botones y tarjetas con clases `.oat-*`).
+    - [x] **Refactorización de Layouts:** Separación de `Base.astro` (HTML base) y `DashboardLayout.astro` (Shell del dashboard) para permitir vistas limpias (Login/404).
+    - [x] Limpieza de UI global: Header (Logo actualizado) y consistencia visual.
     - [x] Instalación de dependencias de UI críticas (`recharts`, `lucide-react`).
 3.  **Contextos y Estado:** [x]
     - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
     - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
     - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
     - [x] Sincronización completa de tipos Date y cliente de API con soporte para revival automático.
+    - [x] **Redirección y Seguridad:** Se actualizó `AuthContext.tsx` para obtener datos completos del usuario y realizar una redirección explícita a `/`. Se añadió blindaje con `window.location.replace` y estandarización de la clave `'auth_token'` para evitar bucles de navegación.
 4.  **Cliente API:** [x]
     - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
     - [x] Implementado revival de fechas automático para consistencia con `shared-types`.
@@ -106,6 +109,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] `/`: Dashboard con resumen (materias en riesgo, tareas próximas).
     - [x] `/subjects`: Lista de materias consumiendo la API.
     - [x] `/tasks`: Lista de tareas con capacidad de cambio de estado.
+    - [x] `404`: Página de error personalizada con estética Oat y protección de privacidad.
 6.  **Próximos pasos UI:** [ ]
     - **Vistas de Detalle Dinámicas:**
         - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.

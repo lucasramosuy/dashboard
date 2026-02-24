@@ -1,14 +1,18 @@
 ---
-import Base from '../../layouts/Base.astro';
-import { AppProviders } from '../../components/AppProviders';
-import { SubjectDetail } from '../../components/SubjectDetail';
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { SubjectDetailPage } from '../../components/SubjectDetailPage';
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/subjects');
 ---
 
-<Base title="Detalle de Materia">
-  <AppProviders client:only="react">
-    <SubjectDetail id={id} />
-  </AppProviders>
-</Base>
+<script is:inline>
+  (function() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) window.location.replace('/login');
+  })();
+</script>
+
+<DashboardLayout title="Detalle de Materia">
+  <SubjectDetailPage id={id} client:only="react" />
+</DashboardLayout>

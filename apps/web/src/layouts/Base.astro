@@ -2,62 +2,31 @@
 import '../styles/theme.css';
 
 interface Props {
-        title: string;
+  title: string;
 }
 
 const { title } = Astro.props;
 ---
 
-<!doctype html>
+<!Doctype html>
 <html lang="es">
-        <head>
-                <meta charset="UTF-8" />
-                <meta name="viewport" content="width=device-width" />
-                <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-                <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
-                <script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
+    <script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
 
-                <meta name="generator" content={Astro.generator} />
-                <title>{title} | Academic Planning</title>
-        </head>
-        <body data-theme="light">
-                <div class="oat-shell">
-                        <header class="oat-header">
-                                <div class="oat-logo">
-                                     <strong>Dashboard</strong>
-                                </div>
-                                <nav id="top-nav">
-                                     <div id="theme-toggle-root"></div>
-                                </nav>
-                        </header>
-                        <aside class="oat-sidebar">
-                                <nav>
-                                     <ul class="oat-nav-list" style="list-style: none; padding: 0;">
-                                     <li><a href="/" class="oat-nav-link">Dashboard</a></li>
-                                     <li><a href="/subjects" class="oat-nav-link">Materias</a></li>
-                                     <li><a href="/tasks" class="oat-nav-link">Tareas</a></li>
-                                     <li><a href="/analytics" class="oat-nav-link">Analíticas</a></li>
-                                     <li><a href="/journal" class="oat-nav-link">Journal</a></li>
-                                     </ul>
-                                </nav>
-                        </aside>
-                        <main class="oat-main">
-                                <slot />
-                        </main>
-                </div>
-        </body>
+    <!-- ✅ Anti-flash: aplicar tema ANTES del primer render -->
+    <script is:inline>
+      const saved = localStorage.getItem('dash_theme');
+      if (saved) document.documentElement.dataset.theme = saved;
+    </script>
+
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>  <!-- ✅ Sin data-theme hardcodeado, el script lo aplica antes -->
+    <slot />
+  </body>
 </html>
-
-<style>
-  .oat-nav-link {
-    text-decoration: none;
-    color: inherit;
-    padding: 0.75rem 0.5rem;
-    display: block;
-    border-radius: 4px;
-    transition: background 0.2s;
-  }
-  .oat-nav-link:hover {
-    background: rgba(0,0,0,0.05);
-  }
-</style>
