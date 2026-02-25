@@ -1,12 +1,11 @@
 ---
-import DashboardLayout from '../layouts/DashboardLayout.astro';
-import { DashboardPage } from '../components/DashboardPage';
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { DashboardPage } from "../components/DashboardPage";
 ---
 
 <script is:inline>
-  (function() {
-    const token = localStorage.getItem('auth_token');
-    if (!token) window.location.replace('/login');
+  (function () {
+    if (!localStorage.getItem("auth_token")) window.location.replace("/login");
   })();
 </script>
 

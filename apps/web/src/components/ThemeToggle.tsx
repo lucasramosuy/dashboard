@@ -1,18 +1,26 @@
-import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useStore } from "@nanostores/react";
+import { themeStore, toggleTheme, initTheme } from "../stores/theme";
+import { useEffect } from "react";
 
-export const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+export const ThemeToggle = ({ variant = "floating" }: { variant?: "sidebar" | "floating" }) => {
+  const theme = useStore(themeStore);
+
+  useEffect(() => {
+    initTheme();
+  }, []);
+
+  if (variant === "sidebar") {
+    return (
+      <button onClick={toggleTheme} aria-label="Toggle theme" className="theme-toggle-btn">
+        <span>{theme === "light" ? "🌙" : "☀️"}</span>
+        <span className="sidebar-label">{theme === "light" ? "Oscuro" : "Claro"}</span>
+      </button>
+    );
+  }
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="oat-btn oat-btn-outline"
-      style={{ padding: '0.5rem 0.75rem', fontSize: '1rem', lineHeight: 1 }}
-      aria-label="Cambiar tema"
-      title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
-    >
-      {theme === 'light' ? '🌙' : '☀️'}
+    <button onClick={toggleTheme} aria-label="Toggle theme" className="mobile-theme-btn">
+      <span>{theme === "light" ? "🌙" : "☀️"}</span>
     </button>
   );
 };

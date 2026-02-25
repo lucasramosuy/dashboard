@@ -16,7 +16,7 @@ export async function createToken(payload: AppJWTPayload): Promise<string> {
 
 export async function verifyToken(token: string): Promise<AppJWTPayload | null> {
   try {
-    return await verify(token, JWT_SECRET, "HS256") as AppJWTPayload;
+    return (await verify(token, JWT_SECRET, "HS256")) as AppJWTPayload;
   } catch {
     return null;
   }

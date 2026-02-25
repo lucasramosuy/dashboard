@@ -1,9 +1,11 @@
-import React from 'react';
-import { AuthProvider } from '../contexts/AuthContext';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import { SubjectDetail } from './SubjectDetail';
+import React from "react";
+import { AuthProvider } from "../contexts/AuthContext";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import { SubjectDetail } from "./SubjectDetail";
 
-interface Props { id: string; }
+interface Props {
+  id: string;
+}
 
 export const SubjectDetailPage: React.FC<Props> = ({ id }) => (
   <AuthProvider>

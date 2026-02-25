@@ -1,17 +1,25 @@
 ---
-import Base from '../layouts/Base.astro';
-import { LoginPage } from '../components/LoginPage';
+import Base from "../layouts/Base.astro";
+import { LoginPage } from "../components/LoginPage";
+import { ThemeToggle } from "../components/ThemeToggle";
 ---
 
 <Base title="Iniciar Sesión">
-  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; background-color: var(--oat-bg);">
-    <header style="margin-bottom: 2.5rem; text-align: center;">
-      <h1 class="oat-text-bold" style="font-size: 2.5rem; margin: 0;">Dashboard</h1>
-      <p class="oat-text-secondary">Bienvenido de nuevo.</p>
-    </header>
-
+  <div
+    style="
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    background-color: var(--oat-bg);
+  "
+  >
     <div style="width: 100%; max-width: 400px;">
-      <LoginPage client:only="react" />  <!-- ✅ Un solo punto de entrada React -->
+      <div style="position:fixed; top:1rem; right:1rem; z-index:100;">
+        <ThemeToggle client:only="react" variant="floating" />
+      </div>
+      <LoginPage client:only="react" />
     </div>
   </div>
 </Base>

@@ -11,14 +11,6 @@ interface Props {
 /**
  * Componente reutilizable para badges de estado alineado con el sistema de diseño de Oat UI.
  */
-export const StatusBadge: React.FC<Props> = ({
-  variant = "info",
-  children,
-  className = "",
-}) => {
-  return (
-    <span className={`oat-badge oat-badge--${variant} ${className}`}>
-      {children}
-    </span>
-  );
+export const StatusBadge: React.FC<Props> = ({ variant = "info", children, className = "" }) => {
+  return <span className={`oat-badge oat-badge--${variant} ${className}`}>{children}</span>;
 };

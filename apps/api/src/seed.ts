@@ -31,7 +31,7 @@ async function seed() {
 
   // 2. Materias
   const subjects = [
-    { id: randomUUID(), name: "Sistemas Operativos",      total_classes: 24, user_id: user.id },
+    { id: randomUUID(), name: "Sistemas Operativos", total_classes: 24, user_id: user.id },
     { id: randomUUID(), name: "Arquitectura de Software", total_classes: 32, user_id: user.id },
   ];
   for (const s of subjects) {
@@ -80,7 +80,7 @@ async function seed() {
   process.exit(0);
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error("❌ Error durante el seed:", err);
   process.exit(1);
 });

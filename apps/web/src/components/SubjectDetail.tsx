@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { StatusBadge } from "./StatusBadge";
+import { Toast } from "./Toast";
+import { useToast } from "../hooks/useToast";
 import type { Subject, Task, Absence } from "@dashboard/shared-types";
 
 interface Props {
@@ -15,34 +17,72 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [absenceValue, setAbsenceValue] = useState<number>(1);
+  const [absenceSubmitting, setAbsenceSubmitting] = useState(false);
+  const [showAbsenceForm, setShowAbsenceForm] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
-  useEffect(() => {
-    // Protección de acceso: si no hay sesión, redirigir a login.
-    if (!authLoading && !user) {
-      window.location.href = "/login";
-    }
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    if (token && id) {
-      setLoading(true);
-      Promise.all([
+  const fetchData = async () => {
+    if (!token || !id) return;
+    setLoading(true);
+    try {
+      const [s, t, a] = await Promise.all([
         api.getSubject(token, id),
         api.getTasks(token, id),
         api.getAbsences(token, id),
-      ])
-        .then(([s, t, a]) => {
-          setSubject(s);
-          setTasks(t);
-          setAbsences(a);
-        })
-        .catch((err) => {
-          console.error(err);
-          setError(err.message || "No se pudo cargar la materia.");
-        })
-        .finally(() => setLoading(false));
+      ]);
+      setSubject(s);
+      setTasks(t);
+      setAbsences(a);
+    } catch (err: any) {
+      setError(err.message || "No se pudo cargar la materia.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (!authLoading && !user) window.location.href = "/login";
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (token) fetchData();
   }, [token, id]);
+
+  const handleCreateAbsence = async () => {
+    if (!token) return;
+    setAbsenceSubmitting(true);
+    try {
+      const calculated_value = absenceValue === 0.5 ? 0.5 : 1.0;
+      await api.createAbsence(token, {
+        subject_id: id,
+        date: new Date(absenceDate),
+        type: calculated_value === 1.0 ? "standard" : "justified",
+        calculated_value,
+      });
+      setShowAbsenceForm(false);
+      setAbsenceDate(new Date().toISOString().split("T")[0]);
+      setAbsenceValue(1);
+      await fetchData();
+      showToast("Inasistencia registrada");
+    } catch (e: any) {
+      showToast(e.message, "error");
+    } finally {
+      setAbsenceSubmitting(false);
+    }
+  };
+
+  const handleDeleteAbsence = async (absenceId: string) => {
+    if (!token) return;
+    try {
+      await api.deleteAbsence(token, absenceId);
+      await fetchData();
+      showToast("Inasistencia eliminada");
+    } catch (e: any) {
+      showToast(e.message, "error");
+    }
+  };
 
   if (authLoading || loading) {
     return (
@@ -53,146 +93,214 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
     );
   }
 
-  if (error) return <div className="oat-text--danger">Error: {error}</div>;
-  if (!subject)
-    return <div className="oat-text--secondary">Materia no encontrada.</div>;
+  if (error) return <p style={{ color: "var(--oat-danger)" }}>Error: {error}</p>;
+  if (!subject) return <p className="oat-text-secondary">Materia no encontrada.</p>;
 
-  // Cálculo de métricas reales de asistencia
-  const totalAbsenceValue = absences.reduce(
-    (sum, a) => sum + a.calculated_value,
-    0,
-  );
+  const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
   const attendancePercentage =
     subject.total_classes > 0
       ? Math.max(
           0,
-          Math.round(
-            ((subject.total_classes - totalAbsenceValue) /
-              subject.total_classes) *
-              100,
-          ),
+          Math.round(((subject.total_classes - totalAbsenceValue) / subject.total_classes) * 100),
         )
       : 100;
-
-  // Lógica de semáforo basada en el porcentaje de asistencia (riesgo de libre)
-  // Límite usual 75-80% para aprobación
   const riskVariant =
-    attendancePercentage < 75
-      ? "danger"
-      : attendancePercentage < 85
-        ? "warning"
-        : "success";
+    attendancePercentage < 75 ? "danger" : attendancePercentage < 85 ? "warning" : "success";
 
   return (
-    <div className="oat-detail-container">
-      <header
-        className="oat-header"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-          borderBottom: "1px solid var(--oat-border)",
-          paddingBottom: "1rem",
-        }}
-      >
-        <h1 className="oat-title">{subject.name}</h1>
-        <StatusBadge variant={riskVariant}>
-          Riesgo:{" "}
-          {riskVariant === "success"
-            ? "Bajo"
-            : riskVariant === "warning"
-              ? "Medio"
-              : "Alto"}
-        </StatusBadge>
-      </header>
+    <>
+      <div className="subject-detail-container">
+        <header className="subject-detail-header">
+          <h1>{subject.name}</h1>
+          <StatusBadge variant={riskVariant}>
+            {riskVariant === "success"
+              ? "Bajo riesgo"
+              : riskVariant === "warning"
+                ? "Riesgo medio"
+                : "Alto riesgo"}
+          </StatusBadge>
+        </header>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "1.5rem",
-        }}
-      >
-        <section className="oat-card">
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-            Métricas de Asistencia
-          </h2>
-          <div style={{ textAlign: "center", padding: "1rem" }}>
-            <span
+        <div className="subject-detail-grid">
+          {/* Métricas */}
+          <section className="oat-card">
+            <div
               style={{
-                fontSize: "3rem",
-                fontWeight: "bold",
-                color: "var(--oat-primary)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1rem",
               }}
             >
-              {attendancePercentage}%
-            </span>
-            <p className="oat-text-secondary">Asistencia actual</p>
-          </div>
-          <div
-            style={{
-              marginTop: "1rem",
-              borderTop: "1px solid var(--oat-border)",
-              paddingTop: "1rem",
-            }}
-          >
-            <p style={{ margin: "0.5rem 0" }}>
-              Clases totales: <strong>{subject.total_classes}</strong>
-            </p>
-            <p style={{ margin: "0.5rem 0" }}>
-              Inasistencias totales:{" "}
-              <strong style={{ color: "var(--oat-danger)" }}>
-                {totalAbsenceValue}
-              </strong>
-            </p>
-          </div>
-        </section>
+              <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Asistencia</h2>
+              <button
+                onClick={() => setShowAbsenceForm(!showAbsenceForm)}
+                className="oat-btn oat-btn-outline"
+                style={{ fontSize: "0.8rem" }}
+              >
+                {showAbsenceForm ? "Cancelar" : "+ Registrar inasistencia"}
+              </button>
+            </div>
 
-        <section className="oat-card">
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-            Historial de Tareas
-          </h2>
-          {tasks.length === 0 ? (
-            <p className="oat-text-secondary">No hay tareas asociadas.</p>
-          ) : (
-            <ul className="oat-list" style={{ listStyle: "none", padding: 0 }}>
-              {tasks.map((t) => (
-                <li
-                  key={t.id}
+            {showAbsenceForm && (
+              <div className="absence-form">
+                <div
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    padding: "0.75rem 0",
-                    borderBottom: "1px solid var(--oat-border)",
+                    gap: "0.75rem",
+                    flexWrap: "wrap",
+                    alignItems: "flex-end",
                   }}
                 >
-                  <a
-                    href={`/tasks/${t.id}`}
-                    style={{ textDecoration: "none", color: "inherit" }}
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.8rem",
+                        marginBottom: "0.25rem",
+                        color: "var(--oat-text-muted)",
+                      }}
+                    >
+                      Fecha
+                    </label>
+                    <input
+                      type="date"
+                      className="oat-input"
+                      value={absenceDate}
+                      onChange={(e) => setAbsenceDate(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: "140px" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.8rem",
+                        marginBottom: "0.25rem",
+                        color: "var(--oat-text-muted)",
+                      }}
+                    >
+                      Tipo
+                    </label>
+                    <select
+                      className="oat-input"
+                      value={absenceValue}
+                      onChange={(e) => setAbsenceValue(Number(e.target.value))}
+                    >
+                      <option value={1}>Falta completa (1)</option>
+                      <option value={0.5}>Media falta (0.5)</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleCreateAbsence}
+                    className="oat-btn oat-btn-primary"
+                    disabled={absenceSubmitting}
+                    style={{ whiteSpace: "nowrap" }}
                   >
-                    {t.title}
-                  </a>
-                  <StatusBadge
-                    variant={t.status === "done" ? "success" : "warning"}
+                    {absenceSubmitting ? "Guardando..." : "Guardar"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ textAlign: "center", padding: "1rem 0" }}>
+              <span style={{ fontSize: "3rem", fontWeight: "bold", color: "var(--oat-primary)" }}>
+                {attendancePercentage}%
+              </span>
+              <p className="oat-text-secondary" style={{ margin: "0.25rem 0 0" }}>
+                Asistencia actual
+              </p>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--oat-border)", paddingTop: "1rem" }}>
+              <p style={{ margin: "0.5rem 0" }}>
+                Clases totales: <strong>{subject.total_classes}</strong>
+              </p>
+              <p style={{ margin: "0.5rem 0" }}>
+                Inasistencias:{" "}
+                <strong style={{ color: "var(--oat-danger)" }}>{totalAbsenceValue}</strong>
+              </p>
+            </div>
+
+            {absences.length > 0 && (
+              <div style={{ marginTop: "1rem" }}>
+                <p
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "var(--oat-text-muted)",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  Historial de inasistencias
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {absences.map((a) => (
+                    <li key={a.id} className="absence-item">
+                      <span style={{ fontSize: "0.875rem" }}>
+                        {new Date(a.date).toLocaleDateString("es-UY")} —{" "}
+                        <strong>
+                          {a.calculated_value === 0.5 ? "Media falta" : "Falta completa"}
+                        </strong>
+                      </span>
+                      <button
+                        onClick={() => handleDeleteAbsence(a.id)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "var(--oat-danger)",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          {/* Tareas */}
+          <section className="oat-card">
+            <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Historial de Tareas</h2>
+            {tasks.length === 0 ? (
+              <p className="oat-text-secondary">No hay tareas asociadas.</p>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0 }}>
+                {tasks.map((t) => (
+                  <li
+                    key={t.id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      padding: "0.75rem 0",
+                      borderBottom: "1px solid var(--oat-border)",
+                    }}
                   >
-                    {t.status === "done" ? "Ok" : "Pendiente"}
-                  </StatusBadge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                    <a href={`/tasks/${t.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      {t.title}
+                    </a>
+                    <StatusBadge variant={t.status === "done" ? "success" : "warning"}>
+                      {t.status === "done" ? "Ok" : "Pendiente"}
+                    </StatusBadge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <div style={{ marginTop: "2rem" }}>
+          <button
+            onClick={() => (window.location.href = "/subjects")}
+            className="oat-btn oat-btn-outline"
+          >
+            ← Volver a Materias
+          </button>
+        </div>
       </div>
 
-      <div style={{ marginTop: "2rem" }}>
-        <button
-          onClick={() => (window.location.href = "/subjects")}
-          className="oat-btn oat-btn-outline"
-        >
-          ← Volver a Materias
-        </button>
-      </div>
-    </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+    </>
   );
 };

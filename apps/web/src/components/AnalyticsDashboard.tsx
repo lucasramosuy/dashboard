@@ -80,18 +80,10 @@ export const AnalyticsDashboard: React.FC = () => {
   // Datos para Bar Chart (Asistencia por Materia - Porcentaje Real)
   const attendanceData = subjects.map((s) => {
     const subjectAbsences = absences.filter((a) => a.subject_id === s.id);
-    const totalAbsenceValue = subjectAbsences.reduce(
-      (sum, a) => sum + a.calculated_value,
-      0,
-    );
+    const totalAbsenceValue = subjectAbsences.reduce((sum, a) => sum + a.calculated_value, 0);
     const percentage =
       s.total_classes > 0
-        ? Math.max(
-            0,
-            Math.round(
-              ((s.total_classes - totalAbsenceValue) / s.total_classes) * 100,
-            ),
-          )
+        ? Math.max(0, Math.round(((s.total_classes - totalAbsenceValue) / s.total_classes) * 100))
         : 100;
 
     return {
@@ -101,12 +93,10 @@ export const AnalyticsDashboard: React.FC = () => {
   });
 
   return (
-    <div className="oat-analytics-view">
+    <div className="analytics-grid">
       <header style={{ marginBottom: "2.5rem" }}>
         <h1 style={{ margin: 0 }}>Analíticas Académicas</h1>
-        <p style={{ color: "#666" }}>
-          Resumen visual de tu progreso y asistencia.
-        </p>
+        <p className="oat-text-secondary">Resumen visual de tu progreso y asistencia.</p>
       </header>
 
       <div
@@ -167,11 +157,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <XAxis dataKey="name" />
                 <YAxis domain={[0, 100]} />
                 <Tooltip />
-                <Bar
-                  dataKey="asistencia"
-                  fill="#3b82f6"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="asistencia" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -189,10 +175,7 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       <div style={{ marginTop: "2.5rem", textAlign: "right" }}>
-        <button
-          onClick={() => (window.location.href = "/")}
-          className="oat-btn oat-btn-outline"
-        >
+        <button onClick={() => (window.location.href = "/")} className="oat-btn oat-btn-outline">
           Volver al Dashboard
         </button>
       </div>

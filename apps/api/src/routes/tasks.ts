@@ -5,8 +5,8 @@ import { JWT_SECRET } from "../lib/auth";
 import type { Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
-const VALID_STATUSES = ['todo', 'in-progress', 'done'] as const;
-type TaskStatus = typeof VALID_STATUSES[number];
+const VALID_STATUSES = ["todo", "in-progress", "done"] as const;
+type TaskStatus = (typeof VALID_STATUSES)[number];
 
 const tasksRouter = new Hono();
 
@@ -19,7 +19,7 @@ tasksRouter.get("/", async (c) => {
 
   if (subjectId) {
     // ✅ IDOR fix: verificar que el subject pertenece al usuario antes de filtrar
-    if (!await dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+    if (!(await dbService.ownership.subjectBelongsToUser(subjectId, payload.id))) {
       return c.json({ error: "Not found" }, 404);
     }
     return c.json(await dbService.tasks.getBySubject(subjectId));
@@ -34,7 +34,7 @@ tasksRouter.get("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -51,7 +51,7 @@ tasksRouter.post("/", async (c) => {
   }
 
   // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id))) {
     return c.json({ error: "Subject not found" }, 404);
   }
 
@@ -79,7 +79,7 @@ tasksRouter.patch("/:id/status", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -91,7 +91,7 @@ tasksRouter.patch("/:id/status", async (c) => {
   }
 
   await dbService.tasks.updateStatus(id, body.status);
-  return c.json({ ...await dbService.tasks.getById(id), status: body.status });
+  return c.json({ ...(await dbService.tasks.getById(id)), status: body.status });
 });
 
 // PATCH /:id — actualización genérica
@@ -100,7 +100,7 @@ tasksRouter.patch("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -123,7 +123,7 @@ tasksRouter.patch("/:id", async (c) => {
   }
 
   await dbService.tasks.update(id, updateData);
-  return c.json({ ...await dbService.tasks.getById(id), ...updateData });
+  return c.json({ ...(await dbService.tasks.getById(id)), ...updateData });
 });
 
 // DELETE task
@@ -132,7 +132,7 @@ tasksRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.taskBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 

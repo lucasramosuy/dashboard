@@ -1,5 +1,5 @@
 ---
-import '../styles/theme.css';
+import "../styles/theme.css";
 
 interface Props {
   title: string;
@@ -8,25 +8,27 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<!Doctype html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css" />
     <script src="https://unpkg.com/@knadh/oat/oat.min.js" defer></script>
 
-    <!-- ✅ Anti-flash: aplicar tema ANTES del primer render -->
     <script is:inline>
-      const saved = localStorage.getItem('dash_theme');
-      if (saved) document.documentElement.dataset.theme = saved;
+      const saved = localStorage.getItem("dash_theme");
+      const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      document.documentElement.dataset.theme = saved || preferred;
     </script>
 
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body>  <!-- ✅ Sin data-theme hardcodeado, el script lo aplica antes -->
+  <body>
     <slot />
   </body>
 </html>

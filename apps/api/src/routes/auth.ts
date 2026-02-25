@@ -1,18 +1,13 @@
 import { Hono } from "hono";
 import { jwt } from "hono/jwt";
 import { dbService } from "../lib/db";
-import {
-  createToken,
-  JWT_SECRET,
-  hashPassword,
-  verifyPassword,
-} from "../lib/auth";
+import { createToken, JWT_SECRET, hashPassword, verifyPassword } from "../lib/auth";
 import type { UserRecord } from "../types/internal";
 import { randomUUID } from "node:crypto";
 
 const authRouter = new Hono();
 
-const DEV_LOGIN_ENABLED = Bun.env.DEV_LOGIN_ENABLED === "true";
+const DEV_LOGIN_ENABLED = Bun.env.DEV_LOGIN_ENABLED === "true"; // Nunca activar en producción
 const DEMO_EMAIL = "demo@example.com";
 const DEMO_PASSWORD = "demo123";
 
@@ -70,7 +65,7 @@ authRouter.get("/me", jwt({ secret: JWT_SECRET, alg: "HS256" }), async (c) => {
     return c.json({ error: "User not found" }, 404);
   }
 
-  const { passwordHash, ...safeUser } = user;
+  const { passwordHash: _passwordHash, ...safeUser } = user;
   return c.json(safeUser);
 });
 

@@ -3,31 +3,29 @@ import { useAuth } from "../contexts/AuthContext";
 import { api } from "../lib/api";
 import { Modal } from "./Modal";
 import { SubjectForm } from "./SubjectForm";
-import type { Subject } from "@dashboard/shared-types";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
+import type { Subject } from "@dashboard/shared-types";
 
 export const SubjectList: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingSubject, setEditingSubject] = useState<Subject | undefined>(
-    undefined,
-  );
+  const [editingSubject, setEditingSubject] = useState<Subject | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
   const fetchSubjects = async () => {
-    if (token) {
-      try {
-        const data = await api.getSubjects(token);
-        setSubjects(data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+    if (!token) return;
+    try {
+      const data = await api.getSubjects(token);
+      setSubjects(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,7 +34,7 @@ export const SubjectList: React.FC = () => {
   }, [user, authLoading]);
 
   useEffect(() => {
-    fetchSubjects();
+    if (token) fetchSubjects();
   }, [token]);
 
   const handleSubmit = async (data: Partial<Subject>) => {
@@ -50,10 +48,8 @@ export const SubjectList: React.FC = () => {
       }
       setModalOpen(false);
       setEditingSubject(undefined);
-      fetchSubjects();
-      showToast(
-        `Materia ${editingSubject ? "actualizada" : "creada"} correctamente`,
-      );
+      await fetchSubjects();
+      showToast(`Materia ${editingSubject ? "actualizada" : "creada"} correctamente`);
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
@@ -62,10 +58,11 @@ export const SubjectList: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm("¿Estás seguro de eliminar esta materia?")) return;
+    if (!token) return;
     try {
       await api.deleteSubject(token, id);
-      fetchSubjects();
+      setDeletingId(null);
+      await fetchSubjects();
       showToast("Materia eliminada");
     } catch (e: any) {
       showToast(e.message, "error");
@@ -84,15 +81,8 @@ export const SubjectList: React.FC = () => {
   return (
     <>
       <div className="oat-card">
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <h1 style={{ margin: 0 }}>Mis Materias</h1>
+        <header className="subjects-header">
+          <h1 style={{ margin: 0 }}>Materias</h1>
           <button
             onClick={() => {
               setEditingSubject(undefined);
@@ -104,57 +94,76 @@ export const SubjectList: React.FC = () => {
           </button>
         </header>
 
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid #ccc" }}>
-              <th style={{ textAlign: "left", padding: "0.5rem" }}>Nombre</th>
-              <th style={{ textAlign: "left", padding: "0.5rem" }}>
-                Clases Totales
-              </th>
-              <th style={{ textAlign: "right", padding: "0.5rem" }}>
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {subjects.map((s) => (
-              <tr key={s.id} style={{ borderBottom: "1px solid #eee" }}>
-                <td style={{ padding: "0.5rem" }}>
-                  <a
-                    href={`/subjects/${s.id}`}
-                    style={{
-                      color: "var(--oat-primary)",
-                      fontWeight: "bold",
-                      textDecoration: "none",
-                    }}
-                  >
-                    {s.name}
-                  </a>
-                </td>
-                <td style={{ padding: "0.5rem" }}>{s.total_classes}</td>
-                <td style={{ padding: "0.5rem", textAlign: "right" }}>
-                  <button
-                    onClick={() => {
-                      setEditingSubject(s);
-                      setModalOpen(true);
-                    }}
-                    className="oat-btn oat-btn-outline"
-                    style={{ fontSize: "0.75rem", marginRight: "0.5rem" }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(s.id)}
-                    className="oat-btn oat-btn-outline"
-                    style={{ fontSize: "0.75rem", color: "red" }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {subjects.length === 0 ? (
+          <p className="oat-text-secondary">No hay materias registradas aún.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="subjects-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Clases Totales</th>
+                  <th style={{ textAlign: "right" }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subjects.map((s) => (
+                  <tr key={s.id} className="subjects-row">
+                    <td>
+                      <a href={`/subjects/${s.id}`} className="subjects-link">
+                        {s.name}
+                      </a>
+                    </td>
+                    <td>{s.total_classes}</td>
+                    <td>
+                      <div className="subjects-actions">
+                        <button
+                          onClick={() => {
+                            setEditingSubject(s);
+                            setModalOpen(true);
+                          }}
+                          className="oat-btn oat-btn-outline"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          Editar
+                        </button>
+                        {deletingId === s.id ? (
+                          <>
+                            <span style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}>
+                              ¿Confirmar?
+                            </span>
+                            <button
+                              onClick={() => handleDelete(s.id)}
+                              className="oat-btn oat-btn-outline"
+                              style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                            >
+                              Sí
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(null)}
+                              className="oat-btn oat-btn-outline"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              No
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setDeletingId(s.id)}
+                            className="oat-btn oat-btn-outline"
+                            style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <Modal
           isOpen={modalOpen}
@@ -170,9 +179,7 @@ export const SubjectList: React.FC = () => {
         </Modal>
       </div>
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
   );
 };

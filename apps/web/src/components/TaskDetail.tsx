@@ -26,12 +26,11 @@ const STATUS_LABELS: Record<Task["status"], string> = {
   done: "Completada",
 };
 
-const STATUS_VARIANTS: Record<Task["status"], "warning" | "info" | "success"> =
-  {
-    todo: "warning",
-    "in-progress": "info",
-    done: "success",
-  };
+const STATUS_VARIANTS: Record<Task["status"], "warning" | "info" | "success"> = {
+  todo: "warning",
+  "in-progress": "info",
+  done: "success",
+};
 
 const NEXT_STATUS: Record<Task["status"], Task["status"]> = {
   todo: "in-progress",
@@ -44,6 +43,7 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) window.location.href = "/login";
@@ -65,23 +65,18 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
 
   const advanceStatus = async () => {
     if (!token || !task) return;
+    setActionError(null);
     try {
-      const updated = await api.updateTaskStatus(
-        token,
-        task.id,
-        NEXT_STATUS[task.status],
-      );
+      const updated = await api.updateTaskStatus(token, task.id, NEXT_STATUS[task.status]);
       setTask(updated);
     } catch (err: any) {
-      alert(`Error al actualizar estado: ${err.message}`);
+      setActionError(err.message);
     }
   };
 
   if (authLoading || loading) {
     return (
-      <div
-        style={{ display: "flex", justifyContent: "center", padding: "4rem" }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
         <div className="oat-spinner" />
       </div>
     );
@@ -92,9 +87,7 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
   }
 
   if (!task) {
-    return (
-      <p style={{ color: "var(--oat-text-muted)" }}>Tarea no encontrada.</p>
-    );
+    return <p style={{ color: "var(--oat-text-muted)" }}>Tarea no encontrada.</p>;
   }
 
   return (
@@ -197,19 +190,27 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
         style={{
           display: "flex",
           gap: "1rem",
+          flexDirection: "column",
           borderTop: "1px solid var(--oat-border)",
           paddingTop: "2rem",
         }}
       >
-        <button onClick={advanceStatus} className="oat-btn oat-btn-primary">
-          Marcar como {STATUS_LABELS[NEXT_STATUS[task.status]]}
-        </button>
-        <button
-          onClick={() => (window.location.href = "/tasks")}
-          className="oat-btn oat-btn-outline"
-        >
-          Volver a Tareas
-        </button>
+        {actionError && (
+          <p style={{ color: "var(--oat-danger)", fontSize: "0.875rem", margin: 0 }}>
+            {actionError}
+          </p>
+        )}
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button onClick={advanceStatus} className="oat-btn oat-btn-primary">
+            Marcar como {STATUS_LABELS[NEXT_STATUS[task.status]]}
+          </button>
+          <button
+            onClick={() => (window.location.href = "/tasks")}
+            className="oat-btn oat-btn-outline"
+          >
+            Volver a Tareas
+          </button>
+        </div>
       </footer>
     </div>
   );

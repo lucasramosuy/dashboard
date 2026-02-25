@@ -17,7 +17,7 @@ export interface Absence {
   id: string;
   subject_id: string;
   date: Date;
-  type: 'standard' | 'justified';
+  type: "standard" | "justified";
   calculated_value: 1.0 | 0.5;
 }
 
@@ -27,7 +27,7 @@ export interface Task {
   title: string;
   description?: string;
   due_date: Date;
-  status: 'todo' | 'in-progress' | 'done';
+  status: "todo" | "in-progress" | "done";
 }
 
 export interface PracticeJournal {

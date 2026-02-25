@@ -13,9 +13,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserPublic | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("auth_token", newToken);
       const verifiedToken = localStorage.getItem("auth_token");
       if (verifiedToken !== newToken) {
-        throw new Error(
-          "Error crítico: El token no se pudo persistir en localStorage",
-        );
+        throw new Error("Error crítico: El token no se pudo persistir en localStorage");
       }
 
       // ✅ Usar user que ya viene en la respuesta del login, sin segunda llamada
@@ -81,9 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, token, loading, login, logout, refreshMe }}
-    >
+    <AuthContext.Provider value={{ user, token, loading, login, logout, refreshMe }}>
       {children}
     </AuthContext.Provider>
   );
@@ -92,9 +86,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Solo en cliente, nunca en SSR
-      console.warn('useAuth debe usarse dentro de <AuthProvider>');
+      console.warn("useAuth debe usarse dentro de <AuthProvider>");
     }
     return {
       user: null,

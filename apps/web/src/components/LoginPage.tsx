@@ -1,14 +1,9 @@
-import React from 'react';
-import { AuthProvider } from '../contexts/AuthContext';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import { LoginForm } from './LoginForm';
+import React from "react";
+import { AuthProvider } from "../contexts/AuthContext";
+import { LoginForm } from "./LoginForm";
 
-export const LoginPage: React.FC = () => {
-  return (
-    <AuthProvider>
-      <ThemeProvider>
-        <LoginForm />
-      </ThemeProvider>
-    </AuthProvider>
-  );
-};
+export const LoginPage: React.FC = () => (
+  <AuthProvider>
+    <LoginForm />
+  </AuthProvider>
+);

@@ -1,18 +1,15 @@
-import type {
-  UserPublic,
-  Subject,
-  Task,
-  Absence,
-  PracticeJournal,
-} from "@dashboard/shared-types";
+import type { UserPublic, Subject, Task, Absence, PracticeJournal } from "@dashboard/shared-types";
 
 /**
  * Cliente de API para el dashboard académico.
  *
- * En desarrollo, PUBLIC_API_BASE será http://localhost:8787/api
- * En producción, el valor será /api (relativo al dominio de despliegue).
+ * En desarrollo y producción usamos siempre rutas relativas
+ * y dejamos que Astro proxyee /api → backend.
  */
-const API_BASE = import.meta.env.PUBLIC_API_BASE || "http://localhost:8787/api";
+const API_BASE =
+  import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
+    ? import.meta.env.PUBLIC_API_BASE
+    : "/api";
 
 /**
  * Helper para convertir strings de fecha a objetos Date en respuestas JSON
@@ -58,10 +55,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ token: string; user: UserPublic }> {
+  async login(email: string, password: string): Promise<{ token: string; user: UserPublic }> {
     try {
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
@@ -101,11 +95,7 @@ export const api = {
     return handleResponse<Subject>(response);
   },
 
-  async updateSubject(
-    token: string,
-    id: string,
-    data: Partial<Subject>,
-  ): Promise<Subject> {
+  async updateSubject(token: string, id: string, data: Partial<Subject>): Promise<Subject> {
     const response = await fetch(`${API_BASE}/subjects/${id}`, {
       method: "PATCH",
       headers: {
@@ -133,9 +123,7 @@ export const api = {
   },
 
   async getTasks(token: string, subjectId?: string): Promise<Task[]> {
-    const url = subjectId
-      ? `${API_BASE}/tasks?subject_id=${subjectId}`
-      : `${API_BASE}/tasks`;
+    const url = subjectId ? `${API_BASE}/tasks?subject_id=${subjectId}` : `${API_BASE}/tasks`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -154,11 +142,7 @@ export const api = {
     return handleResponse<Task>(response);
   },
 
-  async updateTask(
-    token: string,
-    id: string,
-    data: Partial<Task>,
-  ): Promise<Task> {
+  async updateTask(token: string, id: string, data: Partial<Task>): Promise<Task> {
     const response = await fetch(`${API_BASE}/tasks/${id}`, {
       method: "PATCH",
       headers: {
@@ -185,10 +169,7 @@ export const api = {
     return handleResponse<PracticeJournal[]>(response);
   },
 
-  async getJournalByDate(
-    token: string,
-    date: string,
-  ): Promise<PracticeJournal | null> {
+  async getJournalByDate(token: string, date: string): Promise<PracticeJournal | null> {
     const response = await fetch(`${API_BASE}/practice-journals`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -198,18 +179,13 @@ export const api = {
     const target = date.split("T")[0]; // normalizar a YYYY-MM-DD
     const found = journals.find((j) => {
       const jDate =
-        j.date instanceof Date
-          ? j.date.toISOString().split("T")[0]
-          : String(j.date).split("T")[0];
+        j.date instanceof Date ? j.date.toISOString().split("T")[0] : String(j.date).split("T")[0];
       return jDate === target;
     });
     return found ?? null;
   },
 
-  async upsertJournal(
-    token: string,
-    data: Partial<PracticeJournal>,
-  ): Promise<PracticeJournal> {
+  async upsertJournal(token: string, data: Partial<PracticeJournal>): Promise<PracticeJournal> {
     const method = data.id ? "PUT" : "POST";
     const url = data.id
       ? `${API_BASE}/practice-journals/${data.id}`
@@ -240,12 +216,9 @@ export const api = {
   },
 
   async getAbsences(token: string, subjectId: string): Promise<Absence[]> {
-    const response = await fetch(
-      `${API_BASE}/absences?subject_id=${subjectId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    );
+    const response = await fetch(`${API_BASE}/absences?subject_id=${subjectId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return handleResponse<Absence[]>(response);
   },
 
@@ -276,11 +249,7 @@ export const api = {
     return handleResponse<Absence[]>(response);
   },
 
-  async updateTaskStatus(
-    token: string,
-    taskId: string,
-    status: Task["status"],
-  ): Promise<Task> {
+  async updateTaskStatus(token: string, taskId: string, status: Task["status"]): Promise<Task> {
     const response = await fetch(`${API_BASE}/tasks/${taskId}/status`, {
       method: "PATCH",
       headers: {

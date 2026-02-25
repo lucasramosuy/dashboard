@@ -20,21 +20,26 @@ subjectsRouter.get("/at-risk", async (c) => {
   const payload = c.get("jwtPayload");
   const subjects = await dbService.subjects.getAll(payload.id);
 
-  const atRisk = subjects.map(s => {
-    const absences = await dbService.absences.getBySubject(s.id);
-    const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
-    const percentage = s.total_classes > 0
-      ? (totalAbsenceValue / s.total_classes) * 100
-      : 0;
+  const results = await Promise.all(
+    subjects.map(async (s) => {
+      const absences = await dbService.absences.getBySubject(s.id);
+      const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
+      const percentage = s.total_classes > 0 ? (totalAbsenceValue / s.total_classes) * 100 : 0;
 
-    let status: 'normal' | 'warning' | 'danger' = 'normal';
-    if (percentage >= 20) status = 'danger';
-    else if (percentage >= 15) status = 'warning';
+      let status: "normal" | "warning" | "danger" = "normal";
+      if (percentage >= 20) status = "danger";
+      else if (percentage >= 15) status = "warning";
 
-    return { ...s, currentAbsences: totalAbsenceValue, absencePercentage: percentage, status };
-  }).filter(s => s.status !== 'normal');
+      return {
+        ...s,
+        currentAbsences: totalAbsenceValue,
+        absencePercentage: percentage,
+        status,
+      };
+    }),
+  );
 
-  return c.json(atRisk);
+  return c.json(results.filter((s) => s.status !== "normal"));
 });
 
 // GET subject by ID
@@ -43,7 +48,7 @@ subjectsRouter.get("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix: verificar ownership antes de devolver el recurso
-  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -59,7 +64,7 @@ subjectsRouter.post("/", async (c) => {
     return c.json({ error: "Missing required fields" }, 400);
   }
 
-  if (typeof body.total_classes !== 'number' || body.total_classes < 0) {
+  if (typeof body.total_classes !== "number" || body.total_classes < 0) {
     return c.json({ error: "total_classes must be a non-negative number" }, 400);
   }
 
@@ -80,7 +85,7 @@ subjectsRouter.patch("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -88,7 +93,7 @@ subjectsRouter.patch("/:id", async (c) => {
   const updateData: Partial<Subject> = {};
   if (body.name) updateData.name = String(body.name).trim();
   if (body.total_classes !== undefined) {
-    if (typeof body.total_classes !== 'number' || body.total_classes < 0) {
+    if (typeof body.total_classes !== "number" || body.total_classes < 0) {
       return c.json({ error: "total_classes must be a non-negative number" }, 400);
     }
     updateData.total_classes = body.total_classes;
@@ -99,7 +104,7 @@ subjectsRouter.patch("/:id", async (c) => {
   }
 
   await dbService.subjects.update(id, updateData);
-  return c.json({ ...await dbService.subjects.getById(id), ...updateData });
+  return c.json({ ...(await dbService.subjects.getById(id)), ...updateData });
 });
 
 // DELETE subject
@@ -108,7 +113,7 @@ subjectsRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix
-  if (!await dbService.ownership.subjectBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 

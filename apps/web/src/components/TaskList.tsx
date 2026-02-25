@@ -4,9 +4,26 @@ import { api } from "../lib/api";
 import { Modal } from "./Modal";
 import { TaskForm } from "./TaskForm";
 import { StatusBadge } from "./StatusBadge";
-import type { Task, Subject } from "@dashboard/shared-types";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
+import type { Task, Subject } from "@dashboard/shared-types";
+
+const STATUS_LABELS: Record<Task["status"], string> = {
+  todo: "Pendiente",
+  "in-progress": "En proceso",
+  done: "Completada",
+};
+const STATUS_VARIANTS: Record<Task["status"], "warning" | "info" | "success"> = {
+  todo: "warning",
+  "in-progress": "info",
+  done: "success",
+};
+
+function formatDate(date?: Date | string): string {
+  if (!date) return "—";
+  const d = date instanceof Date ? date : new Date(date);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es-UY");
+}
 
 export const TaskList: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
@@ -16,22 +33,26 @@ export const TaskList: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
   const fetchData = async () => {
-    if (token) {
-      try {
-        const [taskData, subjectData] = await Promise.all([
-          api.getTasks(token),
-          api.getSubjects(token),
-        ]);
-        setTasks(taskData);
-        setSubjects(subjectData);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+    if (!token) return;
+    try {
+      const [taskData, subjectData] = await Promise.all([
+        api.getTasks(token),
+        api.getSubjects(token),
+      ]);
+      // Ordenar por fecha de vencimiento ascendente
+      const sorted = [...taskData].sort(
+        (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+      );
+      setTasks(sorted);
+      setSubjects(subjectData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,7 +61,7 @@ export const TaskList: React.FC = () => {
   }, [user, authLoading]);
 
   useEffect(() => {
-    fetchData();
+    if (token) fetchData();
   }, [token]);
 
   const handleSubmit = async (data: Partial<Task>) => {
@@ -54,10 +75,8 @@ export const TaskList: React.FC = () => {
       }
       setModalOpen(false);
       setEditingTask(undefined);
-      fetchData();
-      showToast(
-        `Tarea ${editingTask ? "actualizada" : "creada"} correctamente`,
-      );
+      await fetchData();
+      showToast(`Tarea ${editingTask ? "actualizada" : "creada"} correctamente`);
     } catch (e: any) {
       showToast(e.message, "error");
     } finally {
@@ -66,10 +85,11 @@ export const TaskList: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm("¿Estás seguro de eliminar esta tarea?")) return;
+    if (!token) return;
     try {
       await api.deleteTask(token, id);
-      fetchData();
+      setDeletingId(null);
+      await fetchData();
       showToast("Tarea eliminada");
     } catch (e: any) {
       showToast(e.message, "error");
@@ -87,16 +107,9 @@ export const TaskList: React.FC = () => {
 
   return (
     <>
-      <div>
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "2rem",
-          }}
-        >
-          <h1 style={{ margin: 0 }}>Mis Tareas</h1>
+      <div className="oat-card">
+        <header className="subjects-header">
+          <h1 style={{ margin: 0 }}>Tareas</h1>
           <button
             onClick={() => {
               setEditingTask(undefined);
@@ -108,73 +121,84 @@ export const TaskList: React.FC = () => {
           </button>
         </header>
 
-        <div
-          style={{
-            display: "grid",
-            gap: "1rem",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          }}
-        >
-          {tasks.map((t) => (
-            <article key={t.id} className="oat-card">
-              <header
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "1rem",
-                }}
-              >
-                <a
-                  href={`/tasks/${t.id}`}
-                  style={{
-                    fontWeight: "bold",
-                    textDecoration: "none",
-                    color: "inherit",
-                  }}
-                >
-                  {t.title}
-                </a>
-                <StatusBadge
-                  variant={t.status === "done" ? "success" : "warning"}
-                >
-                  {t.status === "done" ? "Completada" : "Pendiente"}
-                </StatusBadge>
-              </header>
-              <p style={{ fontSize: "0.85rem", color: "#666" }}>
-                Vence:{" "}
-                {t.due_date instanceof Date
-                  ? t.due_date.toLocaleDateString()
-                  : String(t.due_date)}
-              </p>
-              <div
-                style={{
-                  marginTop: "1rem",
-                  display: "flex",
-                  gap: "0.5rem",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  onClick={() => {
-                    setEditingTask(t);
-                    setModalOpen(true);
-                  }}
-                  className="oat-btn oat-btn-outline"
-                  style={{ fontSize: "0.75rem" }}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(t.id)}
-                  className="oat-btn oat-btn-outline"
-                  style={{ fontSize: "0.75rem", color: "red" }}
-                >
-                  Borrar
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
+        {tasks.length === 0 ? (
+          <p className="oat-text-secondary">No hay tareas registradas aún.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="subjects-table">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Vencimiento</th>
+                  <th>Estado</th>
+                  <th style={{ textAlign: "right" }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map((t) => (
+                  <tr key={t.id} className="subjects-row">
+                    <td>
+                      <a href={`/tasks/${t.id}`} className="subjects-link">
+                        {t.title}
+                      </a>
+                    </td>
+                    <td style={{ fontSize: "0.875rem", color: "var(--oat-text-muted)" }}>
+                      {formatDate(t.due_date)}
+                    </td>
+                    <td>
+                      <StatusBadge variant={STATUS_VARIANTS[t.status]}>
+                        {STATUS_LABELS[t.status]}
+                      </StatusBadge>
+                    </td>
+                    <td>
+                      <div className="subjects-actions">
+                        <button
+                          onClick={() => {
+                            setEditingTask(t);
+                            setModalOpen(true);
+                          }}
+                          className="oat-btn oat-btn-outline"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          Editar
+                        </button>
+                        {deletingId === t.id ? (
+                          <>
+                            <span style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}>
+                              ¿Confirmar?
+                            </span>
+                            <button
+                              onClick={() => handleDelete(t.id)}
+                              className="oat-btn oat-btn-outline"
+                              style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                            >
+                              Sí
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(null)}
+                              className="oat-btn oat-btn-outline"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              No
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setDeletingId(t.id)}
+                            className="oat-btn oat-btn-outline"
+                            style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <Modal
           isOpen={modalOpen}
@@ -191,9 +215,7 @@ export const TaskList: React.FC = () => {
         </Modal>
       </div>
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={hideToast} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
   );
 };

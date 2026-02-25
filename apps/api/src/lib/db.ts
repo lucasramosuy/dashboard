@@ -1,12 +1,6 @@
 import { createClient } from "@libsql/client";
 import type { InValue } from "@libsql/client";
-import {
-  UserPublic,
-  Subject,
-  Task,
-  Absence,
-  PracticeJournal,
-} from "@dashboard/shared-types";
+import { UserPublic, Subject, Task, Absence, PracticeJournal } from "@dashboard/shared-types";
 
 // --- DB CONFIG ---
 const getDbConfig = () => {
@@ -165,12 +159,7 @@ export const dbService = {
     create: async (subject: Subject) => {
       return db.execute({
         sql: "INSERT INTO subjects (id, name, total_classes, user_id) VALUES (?, ?, ?, ?)",
-        args: sanitizeValues([
-          subject.id,
-          subject.name,
-          subject.total_classes,
-          subject.user_id,
-        ]),
+        args: sanitizeValues([subject.id, subject.name, subject.total_classes, subject.user_id]),
       });
     },
 
@@ -324,12 +313,7 @@ export const dbService = {
     create: async (journal: PracticeJournal) => {
       return db.execute({
         sql: "INSERT INTO practice_journals (id, subject_id, date, content) VALUES (?, ?, ?, ?)",
-        args: sanitizeValues([
-          journal.id,
-          journal.subject_id,
-          journal.date,
-          journal.content,
-        ]),
+        args: sanitizeValues([journal.id, journal.subject_id, journal.date, journal.content]),
       });
     },
 
@@ -350,10 +334,7 @@ export const dbService = {
 
   // --- OWNERSHIP ---
   ownership: {
-    subjectBelongsToUser: async (
-      subjectId: string,
-      userId: string,
-    ): Promise<boolean> => {
+    subjectBelongsToUser: async (subjectId: string, userId: string): Promise<boolean> => {
       const r = await db.execute({
         sql: "SELECT id FROM subjects WHERE id = ? AND user_id = ?",
         args: [subjectId, userId],
@@ -361,10 +342,7 @@ export const dbService = {
       return r.rows.length > 0;
     },
 
-    taskBelongsToUser: async (
-      taskId: string,
-      userId: string,
-    ): Promise<boolean> => {
+    taskBelongsToUser: async (taskId: string, userId: string): Promise<boolean> => {
       const r = await db.execute({
         sql: `SELECT t.id FROM tasks t JOIN subjects s ON t.subject_id = s.id WHERE t.id = ? AND s.user_id = ?`,
         args: [taskId, userId],
@@ -372,10 +350,7 @@ export const dbService = {
       return r.rows.length > 0;
     },
 
-    absenceBelongsToUser: async (
-      absenceId: string,
-      userId: string,
-    ): Promise<boolean> => {
+    absenceBelongsToUser: async (absenceId: string, userId: string): Promise<boolean> => {
       const r = await db.execute({
         sql: `SELECT a.id FROM absences a JOIN subjects s ON a.subject_id = s.id WHERE a.id = ? AND s.user_id = ?`,
         args: [absenceId, userId],
@@ -383,10 +358,7 @@ export const dbService = {
       return r.rows.length > 0;
     },
 
-    journalBelongsToUser: async (
-      journalId: string,
-      userId: string,
-    ): Promise<boolean> => {
+    journalBelongsToUser: async (journalId: string, userId: string): Promise<boolean> => {
       const r = await db.execute({
         sql: `SELECT j.id FROM practice_journals j JOIN subjects s ON j.subject_id = s.id WHERE j.id = ? AND s.user_id = ?`,
         args: [journalId, userId],

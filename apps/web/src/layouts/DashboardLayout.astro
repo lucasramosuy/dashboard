@@ -1,50 +1,306 @@
 ---
-import Base from './Base.astro';
+import Base from "./Base.astro";
+import { LogoutButton } from "../components/LogoutButton";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+const pathname = Astro.url.pathname;
+
+const navItems = [
+  { href: "/", icon: "🏠", label: "Dashboard" },
+  { href: "/subjects", icon: "📚", label: "Materias" },
+  { href: "/tasks", icon: "✅", label: "Tareas" },
+  { href: "/analytics", icon: "📊", label: "Analíticas" },
+  { href: "/journal", icon: "✍️", label: "Práctica" },
+];
 ---
 
 <Base title={title}>
-  <div class="oat-shell">
-    <header class="oat-header">
-      <div class="oat-logo">
-        <strong>Dashboard</strong>
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-icon-item">📚</span>
+        <span class="sidebar-label sidebar-brand-text">Mi Panel</span>
       </div>
-      <nav id="top-nav">
-        <div id="theme-toggle-root"></div>
+
+      <nav class="sidebar-nav">
+        {
+          navItems.map(({ href, icon, label }) => (
+            <a href={href} class={`app-nav-link${pathname === href ? " active" : ""}`}>
+              <span class="sidebar-icon-item">{icon}</span>
+              <span class="sidebar-label">{label}</span>
+            </a>
+          ))
+        }
       </nav>
-    </header>
-    <aside class="oat-sidebar">
-      <nav>
-        <ul class="oat-nav-list" style="list-style: none; padding: 0;">
-          <li><a href="/" class="oat-nav-link">Dashboard</a></li>
-          <li><a href="/subjects" class="oat-nav-link">Materias</a></li>
-          <li><a href="/tasks" class="oat-nav-link">Tareas</a></li>
-          <li><a href="/analytics" class="oat-nav-link">Analíticas</a></li>
-          <li><a href="/journal" class="oat-nav-link">Journal</a></li>
-        </ul>
-      </nav>
+
+      {/* Desktop Sidebar Bottom */}
+      <div class="sidebar-bottom">
+        <ThemeToggle client:only="react" variant="sidebar" />
+        <LogoutButton client:only="react" />
+      </div>
     </aside>
-    <main class="oat-main">
+
+    <main class="app-main">
       <slot />
     </main>
+
+    {/* Mobile Floating Actions */}
+    <div class="mobile-actions">
+      <ThemeToggle client:only="react" variant="floating" />
+      <LogoutButton client:only="react" />
+    </div>
   </div>
 </Base>
 
 <style is:global>
-  .oat-nav-link {
-    text-decoration: none;
-    color: inherit;
-    padding: 0.75rem 0.5rem;
-    display: block;
-    border-radius: 4px;
-    transition: background 0.2s;
+  /* ===== SHELL ===== */
+  .app-shell {
+    display: flex;
+    min-height: 100vh;
+    background: var(--oat-bg);
   }
-  .oat-nav-link:hover {
-    background: rgba(0,0,0,0.05);
+
+  /* ===== SIDEBAR BENTO ===== */
+  .app-sidebar {
+    flex-shrink: 0;
+    width: 72px;
+    margin: 1rem 0 1rem 1rem;
+    height: calc(100vh - 2rem);
+    background: var(--oat-card-bg);
+    border: 1px solid var(--oat-border);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: sticky;
+    top: 1rem;
+    z-index: 40;
+  }
+
+  .app-sidebar:hover {
+    width: 220px;
+  }
+
+  /* Brand */
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.375rem;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-brand-text {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--oat-text);
+    white-space: nowrap;
+  }
+
+  /* Nav */
+  .sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .app-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--oat-text-muted);
+    font-weight: 500;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+
+  .app-nav-link:hover,
+  .app-nav-link.active {
+    background: var(--oat-bg);
+    color: var(--oat-text);
+  }
+
+  .app-nav-link.active {
+    font-weight: 700;
+  }
+
+  /* Icon */
+  .sidebar-icon-item {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    width: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Labels */
+  .sidebar-label {
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    margin-left: 0;
+    transition:
+      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.15s ease,
+      margin-left 0.2s ease;
+  }
+
+  .app-sidebar:hover .sidebar-label {
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 0.75rem;
+  }
+
+  /* Bottom */
+  .sidebar-bottom {
+    padding-top: 1rem;
+    border-top: 1px solid var(--oat-border);
+    overflow: hidden;
+  }
+
+  /* ===== MAIN ===== */
+  .app-main {
+    flex: 1;
+    min-width: 0;
+    padding: 2.5rem;
+    background: var(--oat-bg);
+  }
+
+  /* ===== MOBILE ACTIONS (theme + logout) ===== */
+  .mobile-actions {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(64px + 1rem); /* Por encima del bottom nav */
+    display: none;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 60;
+  }
+
+  .mobile-theme-btn {
+    width: auto;
+    height: 36px;
+    padding: 0 0.875rem;
+    border-radius: 8px; /* pill rectangular */
+    margin: 0;
+    font-size: 0.8rem;
+    justify-content: center;
+    background: var(--oat-card-bg);
+    border: 1px solid var(--oat-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    display: flex;
+    align-items: center;
+
+    cursor: pointer;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .app-shell {
+      flex-direction: column;
+      padding-bottom: 72px;
+    }
+
+    .app-sidebar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      top: auto;
+      width: 100% !important;
+      height: 64px;
+      margin: 0;
+      border-radius: 0;
+      border-top: 1px solid var(--oat-border);
+      border-bottom: none;
+      border-left: none;
+      border-right: none;
+      flex-direction: row;
+      align-items: center;
+      padding: 0 1rem;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.07);
+    }
+
+    .sidebar-brand,
+    .sidebar-bottom {
+      display: none;
+    }
+
+    .sidebar-nav {
+      flex-direction: row;
+      justify-content: space-around;
+      width: 100%;
+      gap: 0;
+    }
+
+    .app-nav-link {
+      flex-direction: column;
+      gap: 0.2rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.65rem;
+    }
+
+    .sidebar-label {
+      max-width: 100px !important;
+      opacity: 1 !important;
+      margin-left: 0 !important;
+      font-size: 0.65rem;
+    }
+
+    .sidebar-icon-item {
+      font-size: 1.2rem;
+      width: auto;
+    }
+
+    .app-main {
+      padding: 1.5rem 1rem;
+    }
+
+    .mobile-actions {
+      display: flex;
+      /*flex-direction: row;       /* en fila, no columna
+      gap: 0.5rem;
+      bottom: calc(64px + 0.75rem);
+      right: 0.75rem;*/
+    }
+
+    /* El logout reutiliza la clase pero en mobile lo hacemos redondo */
+    .mobile-actions .logout-btn {
+      width: auto;
+      height: 36px;
+      padding: 0 0.875rem;
+      border-radius: 8px; /* pill rectangular */
+      margin: 0;
+      font-size: 0.8rem;
+      justify-content: center;
+      background: var(--oat-card-bg);
+      border: 1px solid var(--oat-danger);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobile-actions .logout-btn .sidebar-label {
+      max-width: unset;
+      opacity: 1;
+      margin-left: 0.4rem;
+    }
   }
 </style>

@@ -1,15 +1,15 @@
 ---
-import DashboardLayout from '../../layouts/DashboardLayout.astro';
-import { TaskDetailPage } from '../../components/TaskDetailPage';
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import { TaskDetailPage } from "../../components/TaskDetailPage";
 
 const { id } = Astro.params;
-if (!id) return Astro.redirect('/tasks');
+if (!id) return Astro.redirect("/tasks");
 ---
 
 <script is:inline>
-  (function() {
-    const token = localStorage.getItem('auth_token');
-    if (!token) window.location.replace('/login');
+  (function () {
+    const token = localStorage.getItem("auth_token");
+    if (!token) window.location.replace("/login");
   })();
 </script>
 

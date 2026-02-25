@@ -6,11 +6,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const Toast: React.FC<Props> = ({
-  message,
-  type = "success",
-  onClose,
-}) => {
+export const Toast: React.FC<Props> = ({ message, type = "success", onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
@@ -25,8 +21,7 @@ export const Toast: React.FC<Props> = ({
         zIndex: 9999,
         padding: "1rem 1.5rem",
         borderRadius: "12px",
-        backgroundColor:
-          type === "success" ? "var(--oat-success)" : "var(--oat-danger)",
+        backgroundColor: type === "success" ? "var(--oat-success)" : "var(--oat-danger)",
         color: "#fff",
         fontWeight: 600,
         fontSize: "0.875rem",

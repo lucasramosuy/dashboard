@@ -10,14 +10,8 @@ import { initDB } from "./lib/db";
 // --- CONFIGURATION GUARD ---
 const JWT_SECRET = Bun.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET === "dev-secret-change-me") {
-  console.warn(
-    "\n\x1b[33m%s\x1b[0m",
-    "⚠️  WARNING: Using default or missing JWT_SECRET.",
-  );
-  console.warn(
-    "\x1b[33m%s\x1b[0m",
-    "   Environment is insecure for production use.\n",
-  );
+  console.warn("\n\x1b[33m%s\x1b[0m", "⚠️  WARNING: Using default or missing JWT_SECRET.");
+  console.warn("\x1b[33m%s\x1b[0m", "   Environment is insecure for production use.\n");
 }
 
 // Initialize SQLite tables
@@ -26,15 +20,12 @@ await initDB();
 export const app = new Hono();
 
 // ✅ CORS dinámico — soporta múltiples orígenes desde variable de entorno
-const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(
-  ",",
-);
+const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(",");
 
 app.use(
   "/api/*",
   cors({
-    origin: (origin) =>
-      ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     exposeHeaders: ["Content-Length"],

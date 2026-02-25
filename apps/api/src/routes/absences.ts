@@ -5,8 +5,8 @@ import { JWT_SECRET } from "../lib/auth";
 import type { Absence } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
-const VALID_ABSENCE_TYPES = ['standard', 'justified'] as const;
-type AbsenceType = typeof VALID_ABSENCE_TYPES[number];
+const VALID_ABSENCE_TYPES = ["standard", "justified"] as const;
+type AbsenceType = (typeof VALID_ABSENCE_TYPES)[number];
 
 const absencesRouter = new Hono();
 
@@ -19,7 +19,7 @@ absencesRouter.get("/", async (c) => {
 
   if (subjectId) {
     // ✅ IDOR fix: verificar que el subject pertenece al usuario
-    if (!await dbService.ownership.subjectBelongsToUser(subjectId, payload.id)) {
+    if (!(await dbService.ownership.subjectBelongsToUser(subjectId, payload.id))) {
       return c.json({ error: "Not found" }, 404);
     }
     return c.json(await dbService.absences.getBySubject(subjectId));
@@ -43,7 +43,7 @@ absencesRouter.post("/", async (c) => {
   }
 
   // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id)) {
+  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id))) {
     return c.json({ error: "Subject not found" }, 404);
   }
 
@@ -58,7 +58,7 @@ absencesRouter.post("/", async (c) => {
     subject_id: body.subject_id,
     date: parsedDate,
     type: body.type as AbsenceType,
-    calculated_value: body.type === 'justified' ? 0.5 : 1.0,
+    calculated_value: body.type === "justified" ? 0.5 : 1.0,
   };
 
   await dbService.absences.create(newAbsence);
@@ -71,7 +71,7 @@ absencesRouter.delete("/:id", async (c) => {
   const payload = c.get("jwtPayload");
 
   // ✅ IDOR fix: verificar ownership antes de borrar
-  if (!await dbService.ownership.absenceBelongsToUser(id, payload.id)) {
+  if (!(await dbService.ownership.absenceBelongsToUser(id, payload.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 

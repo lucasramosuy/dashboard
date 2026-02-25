@@ -4,6 +4,22 @@ import { api } from "../lib/api";
 import { StatusBadge } from "./StatusBadge";
 import type { Subject, Task } from "@dashboard/shared-types";
 
+// Wrapper clickeable para tarjetas bento
+const BentoLink: React.FC<{
+  href: string;
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  dark?: boolean;
+}> = ({ href, children, style, dark }) => (
+  <a
+    href={href}
+    className={`oat-card bento-link${dark ? " bento-link--dark" : ""}`}
+    style={{ textDecoration: "none", color: "inherit", display: "block", ...style }}
+  >
+    {children}
+  </a>
+);
+
 export const DashboardSummary: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
   const [atRisk, setAtRisk] = useState<Subject[]>([]);
@@ -12,13 +28,14 @@ export const DashboardSummary: React.FC = () => {
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "done").length;
-  const progressPercent =
-    totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const upcomingTasks = [...tasks]
+    .filter((t) => t.status !== "done")
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+    .slice(0, 3);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      window.location.href = "/login";
-    }
+    if (!authLoading && !user) window.location.href = "/login";
   }, [user, authLoading]);
 
   useEffect(() => {
@@ -29,9 +46,15 @@ export const DashboardSummary: React.FC = () => {
           setAtRisk(riskData);
           setTasks(taskData);
         })
+        .catch(() => {
+          // API falló — no bloqueamos la UI
+        })
         .finally(() => setLoading(false));
+    } else if (!authLoading) {
+      // Auth terminó pero no hay token → redirigir
+      setLoading(false);
     }
-  }, [token]);
+  }, [token, authLoading]); // ← agregar authLoading a las deps
 
   if (authLoading || loading) {
     return (
@@ -45,199 +68,131 @@ export const DashboardSummary: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      {/* Header */}
-      <header style={{ marginBottom: "2.5rem" }}>
+    <div className="dashboard-wrapper">
+      <header className="dashboard-header">
         <h1 className="oat-text-bold" style={{ fontSize: "2.5rem", margin: 0 }}>
-          Hola, {user.name.split(" ")[0]}
+          Hola, {user.name.split(" ")[0]} 👋
         </h1>
-        <p className="oat-text-secondary">
-          Este es el estado de tu semestre académico.
-        </p>
+        <p className="oat-text-secondary">Este es el estado de tu semestre académico.</p>
       </header>
 
-      {/* Bento Grid Layout */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gridAutoRows: "minmax(160px, auto)",
-          gap: "1.5rem",
-        }}
-      >
-        {/* CARD 1: Materias en Riesgo (Ocupa 2 filas si hay datos) */}
-        <section
-          className="oat-card"
+      <div className="bento-grid">
+        {/* CARD 1: Alertas → /subjects */}
+        <BentoLink
+          href="/subjects"
           style={{
             gridRow: atRisk.length > 0 ? "span 2" : "span 1",
-            borderColor:
-              atRisk.length > 0 ? "var(--oat-danger)" : "var(--oat-border)",
-            backgroundColor:
-              atRisk.length > 0
-                ? "var(--oat-danger-light)"
-                : "var(--oat-card-bg)",
+            borderColor: atRisk.length > 0 ? "var(--oat-danger)" : "var(--oat-border)",
+            backgroundColor: atRisk.length > 0 ? "var(--oat-danger-light)" : "var(--oat-card-bg)",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <h2 style={{ fontSize: "1.25rem", margin: 0 }}>⚠️ Alertas</h2>
+          <div className="bento-card-header">
+            <h2 className="bento-card-title">⚠️ Alertas</h2>
             <StatusBadge variant={atRisk.length > 0 ? "danger" : "success"}>
               {atRisk.length} materias
             </StatusBadge>
           </div>
-
           {atRisk.length === 0 ? (
-            <p className="oat-text-secondary">
-              Todo bajo control. No hay riesgos detectados.
-            </p>
+            <p className="oat-text-secondary">Todo bajo control. No hay riesgos detectados.</p>
           ) : (
-            <ul className="oat-list" style={{ listStyle: "none", padding: 0 }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {atRisk.map((s) => (
-                <li
-                  key={s.id}
-                  style={{
-                    padding: "1rem",
-                    backgroundColor: "rgba(255, 255, 255, 0.5)",
-                    borderRadius: "12px",
-                    marginBottom: "0.75rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.25rem",
-                    border: "1px solid var(--oat-danger)",
-                  }}
-                >
-                  <span
-                    className="oat-text-bold"
-                    style={{ color: "var(--oat-danger)" }}
-                  >
+                <li key={s.id} className="at-risk-item">
+                  <span className="oat-text-bold" style={{ color: "var(--oat-danger)" }}>
                     {s.name}
                   </span>
-                  <small className="oat-text-secondary">
-                    Superó el límite de inasistencias
-                  </small>
+                  <small className="oat-text-secondary">Superó el límite de inasistencias</small>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+          <span className="bento-link-hint">Ver materias →</span>
+        </BentoLink>
 
-        {/* CARD 2: Próximas Tareas (Más ancha en desktop) */}
-        <section className="oat-card" style={{ gridColumn: "span 1" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem" }}>
-            📅 Próximas Tareas
-          </h2>
-          {tasks.length === 0 ? (
-            <p className="oat-text-secondary">
-              Sin tareas pendientes para hoy.
-            </p>
+        {/* CARD 2: Próximas Tareas → /tasks */}
+        <BentoLink href="/tasks">
+          <div className="bento-card-header">
+            <h2 className="bento-card-title">📅 Próximas Tareas</h2>
+          </div>
+          {upcomingTasks.length === 0 ? (
+            <p className="oat-text-secondary">Sin tareas pendientes.</p>
           ) : (
-            <ul className="oat-list" style={{ listStyle: "none", padding: 0 }}>
-              {tasks.slice(0, 3).map((t) => (
-                <li
-                  key={t.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.75rem 0",
-                    borderBottom: "1px solid var(--oat-border)",
-                  }}
-                >
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {upcomingTasks.map((t) => (
+                <li key={t.id} className="task-preview-item">
                   <div>
                     <div
                       className="oat-text-primary"
-                      style={{ fontWeight: 600 }}
+                      style={{ fontWeight: 600, fontSize: "0.875rem" }}
                     >
                       {t.title}
                     </div>
                     <small className="oat-text-secondary">
+                      Vence:{" "}
                       {t.due_date instanceof Date
-                        ? t.due_date.toLocaleDateString()
-                        : new Date(t.due_date).toLocaleDateString()}
+                        ? t.due_date.toLocaleDateString("es-UY")
+                        : new Date(t.due_date).toLocaleDateString("es-UY")}
                     </small>
                   </div>
-                  <StatusBadge
-                    variant={t.status === "done" ? "success" : "warning"}
-                  >
-                    {t.status === "done" ? "Ok" : "Pendiente"}
-                  </StatusBadge>
+                  <StatusBadge variant="warning">Pendiente</StatusBadge>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+          <span className="bento-link-hint">Ver tareas →</span>
+        </BentoLink>
 
-        {/* CARD 3: Acceso Rápido Diario (Estética Bento pequeña) */}
-        <section
-          className="oat-card"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            cursor: "pointer",
-            backgroundColor: "var(--oat-primary)",
-            color: "var(--oat-bg)",
-            border: "none",
-          }}
-          onClick={() => (window.location.href = "/journal")}
-        >
-          <span style={{ fontSize: "2rem" }}>✍️</span>
-          <span className="oat-text-bold" style={{ marginTop: "0.5rem" }}>
-            Nuevo Diario
-          </span>
-        </section>
-
-        {/* CARD 4: Resumen de Progreso (Ancha) */}
-        <section className="oat-card" style={{ gridColumn: "span 1" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>
-            Progreso General
-          </h2>
+        {/* CARD 3: Acceso Rápido Práctica → /journal */}
+        <BentoLink href="/journal" dark>
           <div
             style={{
-              height: "8px",
-              backgroundColor: "var(--oat-border)",
-              borderRadius: "4px",
-              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+              minHeight: "120px",
+              gap: "0.5rem",
             }}
           >
+            <span style={{ fontSize: "2.5rem" }}>✍️</span>
+            <span className="oat-text-bold" style={{ fontSize: "1.1rem" }}>
+              Nueva Práctica
+            </span>
+          </div>
+        </BentoLink>
+
+        {/* CARD 4: Progreso General → /analytics */}
+        <BentoLink href="/analytics">
+          <div className="bento-card-header">
+            <h2 className="bento-card-title">Progreso General</h2>
+          </div>
+          <div className="progress-bar-track">
             <div
+              className="progress-bar-fill"
               style={{
                 width: `${progressPercent}%`,
-                height: "100%",
                 backgroundColor:
                   progressPercent === 100
                     ? "var(--oat-success)"
                     : progressPercent >= 50
                       ? "var(--oat-primary)"
                       : "var(--oat-warning)",
-                transition: "width 0.4s ease",
               }}
             />
           </div>
-          <p
-            className="oat-text-secondary"
-            style={{ marginTop: "0.75rem", fontSize: "0.875rem" }}
-          >
+          <p className="oat-text-secondary" style={{ marginTop: "0.75rem", fontSize: "0.875rem" }}>
             {totalTasks === 0 ? (
               "No hay tareas registradas aún."
             ) : (
               <>
-                Has completado{" "}
-                <strong>
-                  {doneTasks} de {totalTasks}
-                </strong>{" "}
-                tareas ({progressPercent}%)
+                <strong>{doneTasks}</strong> de <strong>{totalTasks}</strong> tareas completadas (
+                {progressPercent}%)
               </>
             )}
           </p>
-        </section>
+          <span className="bento-link-hint">Ver analíticas →</span>
+        </BentoLink>
       </div>
     </div>
   );

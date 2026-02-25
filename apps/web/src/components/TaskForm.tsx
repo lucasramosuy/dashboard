@@ -24,18 +24,10 @@ export const TaskForm: React.FC<Props> = ({
   loading,
 }) => {
   const [title, setTitle] = useState(initialData?.title || "");
-  const [subjectId, setSubjectId] = useState(
-    initialData?.subject_id || subjects[0]?.id || "",
-  );
-  const [dueDate, setDueDate] = useState(
-    toDateInputValue(initialData?.due_date),
-  ); // ✅ siempre string
-  const [description, setDescription] = useState(
-    initialData?.description || "",
-  );
-  const [status, setStatus] = useState<Task["status"]>(
-    initialData?.status || "todo",
-  ); // ✅ 'todo' no 'pending'
+  const [subjectId, setSubjectId] = useState(initialData?.subject_id || "");
+  const [dueDate, setDueDate] = useState(toDateInputValue(initialData?.due_date)); // ✅ siempre string
+  const [description, setDescription] = useState(initialData?.description || "");
+  const [status, setStatus] = useState<Task["status"]>(initialData?.status || "todo"); // ✅ 'todo' no 'pending'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +62,9 @@ export const TaskForm: React.FC<Props> = ({
           onChange={(e) => setSubjectId(e.target.value)}
           required
         >
+          <option value="" disabled>
+            Seleccioná una materia
+          </option>
           {subjects.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -127,11 +122,7 @@ export const TaskForm: React.FC<Props> = ({
         >
           Cancelar
         </button>
-        <button
-          type="submit"
-          className="oat-btn oat-btn-primary"
-          disabled={loading}
-        >
+        <button type="submit" className="oat-btn oat-btn-primary" disabled={loading}>
           {loading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
         </button>
       </div>

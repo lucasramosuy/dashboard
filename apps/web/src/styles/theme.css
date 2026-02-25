@@ -689,3 +689,130 @@ input:-webkit-autofill:active {
   background: var(--oat-bg);
   color: var(--oat-text);
 }
+
+/* ================================
+   TABLES — responsive
+   ================================ */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.subjects-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 400px;
+}
+
+.subjects-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--oat-border);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--oat-text-muted);
+}
+
+.subjects-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--oat-border);
+}
+
+.subjects-row:hover td {
+  background: var(--oat-bg);
+}
+
+.subjects-link {
+  color: var(--oat-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.subjects-link:hover {
+  text-decoration: underline;
+}
+
+.subjects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.subjects-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ================================
+   SUBJECT DETAIL
+   ================================ */
+.subject-detail-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.subject-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--oat-border);
+  padding-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.subject-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.absence-form {
+  background: var(--oat-bg);
+  border: 1px solid var(--oat-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.absence-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--oat-border);
+}
+
+.absence-item:last-child {
+  border-bottom: none;
+}
+
+/* ================================
+   ANALYTICS — responsive grid
+   ================================ */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+@media (max-width: 640px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================
+   JOURNAL HISTORY
+   ================================ */
+.journal-history-item {
+  padding: 1rem 1.25rem;
+}
