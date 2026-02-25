@@ -622,7 +622,7 @@ input:-webkit-autofill:active {
 .mobile-theme-btn {
   width: 44px;
   height: 44px;
-  border-radius: 999px;
+  border-radius: 10px;
   background: var(--oat-card-bg);
   border: 1px solid var(--oat-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -638,7 +638,7 @@ input:-webkit-autofill:active {
   .mobile-actions .logout-btn {
     width: 44px;
     height: 44px;
-    border-radius: 999px;
+    border-radius: 10px;
     padding: 0;
     justify-content: center;
     background: var(--oat-card-bg);
