@@ -8,25 +8,47 @@ async function seed() {
   console.log("🌱 Iniciando seed técnico de la base de datos...");
   initDB();
 
+  // Datos demo
   const DEMO_USER_ID = "2d2f9c04-414e-4ae4-b084-8da7b9bd8a76";
   const demoEmail = "demo@example.com";
   const demoPassword = "demo123";
 
+  const JOSE_USER_ID = "06130585-9acb-4467-bf46-85ca922cc10f";
+  const joseEmail = "jose@example.com";
+  const josePassword = "jose123";
+
   // 1. Usuario demo
-  let user = await dbService.users.getById(DEMO_USER_ID);
+  let user = await dbService.users.getByEmail(demoEmail); // ← getByEmail, no getById
   if (!user) {
     const demoUser: UserRecord = {
       id: DEMO_USER_ID,
       name: "Claudio Demo",
       email: demoEmail,
-      passwordHash: await hashPassword(demoPassword), // ✅ hasheado
+      passwordHash: await hashPassword(demoPassword),
       role: "admin",
     };
     await dbService.users.create(demoUser);
-    user = await dbService.users.getById(DEMO_USER_ID)!;
+    user = await dbService.users.getByEmail(demoEmail);
+    if (!user) throw new Error("No se pudo crear el usuario demo");
     console.log("✅ Usuario demo creado.");
   } else {
     console.log("ℹ️ El usuario demo ya existe.");
+  }
+
+  // Usuario dev — José
+  let joseUser = await dbService.users.getByEmail(joseEmail);
+  if (!joseUser) {
+    const newJoseUser: UserRecord = {
+      id: JOSE_USER_ID,
+      name: "José",
+      email: joseEmail,
+      passwordHash: await hashPassword(josePassword),
+      role: "admin",
+    };
+    await dbService.users.create(newJoseUser);
+    console.log(`✅ Usuario dev creado: ${joseEmail} / ${josePassword}`);
+  } else {
+    console.log("ℹ️ El usuario José ya existe.");
   }
 
   // 2. Materias
