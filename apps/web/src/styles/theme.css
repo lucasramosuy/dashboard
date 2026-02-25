@@ -1,3 +1,5 @@
+@import "@fontsource-variable/inter";
+
 :root {
   /* Sober Neutral Palette - Light Mode */
   --oat-bg: #f8fafc;
@@ -22,7 +24,7 @@
   --oat-header-bg: #ffffff;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --oat-bg: #020617;
   --oat-card-bg: #0f172a;
   --oat-text: #f8fafc;
@@ -42,7 +44,11 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter Variable",
+    system-ui,
+    -apple-system,
+    sans-serif;
   background-color: var(--oat-bg);
   color: var(--oat-text);
   line-height: 1.5;
@@ -55,11 +61,15 @@ body {
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .oat-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .oat-shell {
@@ -111,7 +121,8 @@ body {
   transition: all 0.2s;
 }
 
-.oat-nav-link:hover, .oat-nav-link.active {
+.oat-nav-link:hover,
+.oat-nav-link.active {
   background: var(--oat-bg);
   color: var(--oat-primary);
 }
@@ -155,9 +166,15 @@ body {
   opacity: 0.9;
 }
 
-.oat-text-primary { color: var(--oat-text); }
-.oat-text-secondary { color: var(--oat-text-muted); }
-.oat-text-bold { font-weight: 700; }
+.oat-text-primary {
+  color: var(--oat-text);
+}
+.oat-text-secondary {
+  color: var(--oat-text-muted);
+}
+.oat-text-bold {
+  font-weight: 700;
+}
 
 .oat-spinner {
   border: 3px solid var(--oat-border);
@@ -169,8 +186,12 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ================================
@@ -226,7 +247,7 @@ body {
   color: #2563eb;
 }
 
-[data-theme='dark'] .oat-badge--info {
+[data-theme="dark"] .oat-badge--info {
   background: #1e3a5f;
   color: #60a5fa;
 }
@@ -270,29 +291,401 @@ table {
   border-collapse: collapse;
 }
 
-th, td {
+th,
+td {
   color: var(--oat-text);
 }
 
 /* ================================
    TEMA OSCURO — oat-badge info
    ================================ */
-[data-theme='dark'] .oat-badge--success {
+[data-theme="dark"] .oat-badge--success {
   background: var(--oat-success-light);
   color: #34d399;
 }
 
-[data-theme='dark'] .oat-badge--warning {
+[data-theme="dark"] .oat-badge--warning {
   background: var(--oat-warning-light);
   color: #fbbf24;
 }
 
-[data-theme='dark'] .oat-badge--danger {
+[data-theme="dark"] .oat-badge--danger {
   background: var(--oat-danger-light);
   color: #f87171;
 }
 
 @keyframes slideUp {
-  from { transform: translateY(1rem); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ================================
+   LOGIN PAGE
+   ================================ */
+.login-card {
+  padding: 2.5rem 2rem;
+}
+
+.login-logo {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 2rem 0;
+  color: var(--oat-text);
+}
+
+.login-field {
+  margin-bottom: 1.25rem;
+}
+
+.login-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--oat-text-muted);
+  font-weight: 500;
+}
+
+.login-error {
+  padding: 0.75rem 1rem;
+  background-color: var(--oat-danger-light);
+  color: var(--oat-danger);
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--oat-danger);
+}
+
+.login-submit {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+/* ================================
+   AUTOFILL — fix hover feo del browser
+   ================================ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px var(--oat-card-bg) inset !important;
+  -webkit-text-fill-color: var(--oat-text) !important;
+  caret-color: var(--oat-text);
+  border-color: var(--oat-border) !important;
+  transition: background-color 99999s ease-in-out 0s;
+}
+
+/* Input hover sutil */
+.oat-input:hover:not(:focus):not(:disabled) {
+  border-color: var(--oat-accent);
+}
+
+/* Input disabled */
+.oat-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================================
+   BOTÓN — hover limpio
+   ================================ */
+.oat-btn-primary:hover:not(:disabled) {
+  opacity: 1;
+  background: var(--oat-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.oat-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Spinner pequeño para botones */
+.oat-spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+/* ================================
+   RESPONSIVE — Login
+   ================================ */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem 1.25rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* ================================
+   DASHBOARD BENTO GRID
+   ================================ */
+.dashboard-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 2.5rem;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(160px, auto);
+  gap: 1.25rem;
+}
+
+/* Tarjeta bento clickeable */
+.bento-link {
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.bento-link:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Variante oscura */
+.bento-link--dark {
+  background-color: var(--oat-primary) !important;
+  border-color: transparent !important;
+  color: var(--oat-bg) !important;
+}
+
+.bento-link--dark * {
+  color: var(--oat-bg) !important;
+}
+
+/* Header interno de cada card */
+.bento-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.bento-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--oat-text);
+}
+
+/* Hint de navegación */
+.bento-link-hint {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--oat-text-muted);
+  text-align: right;
+}
+
+/* Items de tareas en preview */
+.task-preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--oat-border);
+}
+
+.task-preview-item:last-child {
+  border-bottom: none;
+}
+
+/* Items at-risk */
+.at-risk-item {
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid var(--oat-danger);
+}
+
+/* Progress bar */
+.progress-bar-track {
+  height: 8px;
+  background: var(--oat-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ================================
+   DASHBOARD RESPONSIVE
+   ================================ */
+@media (max-width: 900px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+
+  .bento-grid [style*="span 2"],
+  .bento-grid [style*="span 1"] {
+    grid-row: auto !important;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.75rem !important;
+  }
+}
+
+/* LOGOUT BUTTON */
+.logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--oat-danger);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  gap: 0;
+}
+
+/* Reusa animación de labels del sidebar */
+.logout-btn .sidebar-label {
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  transition:
+    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease,
+    margin-left 0.2s ease;
+}
+
+.app-sidebar:hover .logout-btn .sidebar-label {
+  max-width: 200px;
+  opacity: 1;
+  margin-left: 0.75rem;
+}
+
+.logout-btn:hover {
+  background: var(--oat-danger-light);
+  color: var(--oat-danger);
+}
+
+/* MOBILE: bottom nav */
+@media (max-width: 768px) {
+  .sidebar-bottom {
+    display: none; /* ocultamos el bloque inferior entero en mobile */
+  }
+}
+
+.mobile-theme-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--oat-card-bg);
+  border: 1px solid var(--oat-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+
+/* Logout flotante en mobile: solo icono */
+@media (max-width: 768px) {
+  .mobile-actions .logout-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    padding: 0;
+    justify-content: center;
+    background: var(--oat-card-bg);
+    border: 1px solid var(--oat-danger);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin: 0;
+  }
+
+  .mobile-actions .logout-btn .sidebar-label {
+    display: none;
+  }
+}
+
+/* THEME TOGGLE BUTTON — sidebar */
+.theme-toggle-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.6rem 0.5rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--oat-text-muted);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  gap: 0;
+}
+
+.theme-toggle-btn .sidebar-label {
+  max-width: 0;
+  opacity: 0;
+  margin-left: 0;
+  transition:
+    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.15s ease,
+    margin-left 0.2s ease;
+}
+
+.app-sidebar:hover .theme-toggle-btn .sidebar-label {
+  max-width: 200px;
+  opacity: 1;
+  margin-left: 0.75rem;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--oat-bg);
+  color: var(--oat-text);
 }
