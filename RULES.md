@@ -27,7 +27,7 @@ Este archivo define las restricciones técnicas y de estilo para el **Dashboard*
   - Todo componente React en Astro debe llevar la directiva `client:load` o `client:visible` según corresponda para asegurar la interactividad.
 
 - **Theming:**
-  - No usar bibliotecas de *Dark Mode*. El tema se controla vía `document.body.dataset.theme`.
+  - No usar bibliotecas de _Dark Mode_. El tema se controla vía `document.body.dataset.theme`.
   - Las variaciones de color se hacen mediante variables CSS en `src/styles/theme.css`.
 
 ---

@@ -20,7 +20,7 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     ```
 3.  **Configuración de Bun (Raíz):**
     - [x] Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
-    - [x] *Tarea:* Crear un `README.md` con las instrucciones básicas.
+    - [x] _Tarea:_ Crear un `README.md` con las instrucciones básicas.
 
 4.  **Shared Types:** [x]
     - [x] Definir las interfaces base (Subject, Task, Absence, PracticeJournal, User).
@@ -112,22 +112,22 @@ Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.spa
     - [x] `404`: Página de error personalizada con estética Oat y protección de privacidad.
 6.  **Próximos pasos UI:** [ ]
     - **Vistas de Detalle Dinámicas:**
-        - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.
-        - [x] Componente de visualización de métricas de asistencia (%).
-        - [x] Historial de tareas y notas por materia.
+      - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.
+      - [x] Componente de visualización de métricas de asistencia (%).
+      - [x] Historial de tareas y notas por materia.
     - **Formularios CRUD Completos:**
-        - [x] Modales de creación para Subjects y Tasks.
-        - [x] Flujo de edición y borrado con confirmación.
-        - [x] Integración de notificaciones (Toasts) de éxito/error.
+      - [x] Modales de creación para Subjects y Tasks.
+      - [x] Flujo de edición y borrado con confirmación.
+      - [x] Integración de notificaciones (Toasts) de éxito/error.
     - **Dashboard de Analíticas:**
-        - [x] Integración de `Recharts` en el proyecto.
-        - [x] Gráfico de "Semáforo de Asistencia" (riesgo de libre).
-        - [x] Gráfico de cumplimiento de tareas (Burndown simple).
-        - [x] Ruta dedicada `/analytics`.
+      - [x] Integración de `Recharts` en el proyecto.
+      - [x] Gráfico de "Semáforo de Asistencia" (riesgo de libre).
+      - [x] Gráfico de cumplimiento de tareas (Burndown simple).
+      - [x] Ruta dedicada `/analytics`.
     - **Registro de Journal Diario:**
-        - [x] Editor Markdown minimalista para `PracticeJournal`.
-        - [x] Selector de fecha y navegación por historial de reflexiones.
-        - [x] Corregido error crítico de manejo de fechas (`Date` vs `Error`) que impedía la carga inicial del componente.
+      - [x] Editor Markdown minimalista para `PracticeJournal`.
+      - [x] Selector de fecha y navegación por historial de reflexiones.
+      - [x] Corregido error crítico de manejo de fechas (`Date` vs `Error`) que impedía la carga inicial del componente.
 
 ---
 

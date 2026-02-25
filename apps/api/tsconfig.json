@@ -18,9 +18,5 @@
       "@dashboard/shared-types": ["../../packages/shared-types/src/index.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*",
-    "../../packages/shared-types/**/*"
-  ]
+  "include": ["src/**/*", "tests/**/*", "../../packages/shared-types/**/*"]
 }

@@ -7,7 +7,7 @@ Este documento sirve como referencia técnica para que **Gemini** genere interfa
 ## 1. Principio Fundamental
 
 Oat estiliza elementos HTML nativos mediante selectores globales.
-**No se deben añadir clases** a menos que sea estrictamente necesario para *layout* o estados específicos.
+**No se deben añadir clases** a menos que sea estrictamente necesario para _layout_ o estados específicos.
 
 ---
 
@@ -56,11 +56,8 @@ Oat usa <article> para representar contenedores con sombra y padding.
 </article>
 ```
 
-```html
-Formularios
-No usar clases en inputs. Oat los captura por su tipo.
-
-```html
+````html
+Formularios No usar clases en inputs. Oat los captura por su tipo. ```html
 <form>
   <label for="name">Nombre</label>
   <input type="text" id="name" name="name" placeholder="Ej: Matemática" required />
@@ -73,7 +70,7 @@ No usar clases en inputs. Oat los captura por su tipo.
 
   <button type="submit">Guardar</button>
 </form>
-```
+````
 
 Badges y Estados (Custom)
 
@@ -90,11 +87,8 @@ Como Oat es limitado en badges, usamos clases propias definidas en theme.css:
 Para ajustes finos en componentes React, usar estas variables:
 
 ```html
-css
---oat-color-bg: Fondo principal;
---oat-color-fg: Color de texto;
---oat-color-accent: Color de marca / botones principales;
---oat-border-radius: Generalmente 4px o 8px;
+css --oat-color-bg: Fondo principal; --oat-color-fg: Color de texto; --oat-color-accent: Color de
+marca / botones principales; --oat-border-radius: Generalmente 4px o 8px;
 ```
 
 ## 5. Interactividad (Oat JS)
@@ -102,8 +96,6 @@ css
 Oat maneja diálogos nativos. Para abrir un modal:
 
 ```html
-javascript
-// En React o JS nativo
-const dialog = document.querySelector('dialog');
+javascript // En React o JS nativo const dialog = document.querySelector('dialog');
 dialog.showModal();
 ```

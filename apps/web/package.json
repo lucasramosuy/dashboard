@@ -2,16 +2,19 @@
   "name": "web",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --host 0.0.0.0 --port 4321",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/node": "^9.5.4",
+    "@astrojs/node": "8.2.1",
     "@astrojs/react": "3.6.2",
     "@dashboard/shared-types": "workspace:*",
+    "@nanostores/react": "^1.0.0",
     "astro": "4.16.1",
     "lucide-react": "0.427.0",
+    "nanostores": "^1.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "2.12.7"

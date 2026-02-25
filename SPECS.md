@@ -22,14 +22,14 @@ Estructura propuesta (monorepo):
 
 /
 ├─ apps/
-│  ├─ web/           # Astro + React + Oat (frontend)
-│  └─ api/           # Bun + Hono (backend)
+│ ├─ web/ # Astro + React + Oat (frontend)
+│ └─ api/ # Bun + Hono (backend)
 ├─ packages/
-│  └─ shared-types/  # Tipos TypeScript compartidos (Subject, Task, Practice, etc.)
-├─ infra/            # Configs de deploy (render.yaml, dockerfiles opcionales)
+│ └─ shared-types/ # Tipos TypeScript compartidos (Subject, Task, Practice, etc.)
+├─ infra/ # Configs de deploy (render.yaml, dockerfiles opcionales)
 ├─ .editorconfig
 ├─ .gitignore
-├─ package.json      # Scripts de orquestación (opcional, puede ser solo Bun)
+├─ package.json # Scripts de orquestación (opcional, puede ser solo Bun)
 └─ README.md
 
 ---
@@ -54,10 +54,12 @@ Inclusión en layout raíz de Astro (`src/layouts/Base.astro` o equivalente):
 (Opcional: copiar esos assets al proyecto y servirlos localmente en producción).
 
 Estilos
+
 - Usar mayormente elementos HTML nativos (<button>, <input>, <nav>, <section>, <dialog>, etc.), ya que Oat los estiliza automáticamente sin clases adicionales.
 - Para ajustes finos, sobrescribir variables CSS de Oat en un archivo global (`src/styles/theme.css`) cargado después del CSS de Oat.
 
 Componentes dinámicos
+
 - Utilizar los Web Components y JS mínimo que ofrece Oat para elementos como diálogos, menús, etc.
 - Mantener React solo donde se necesite estado complejo: tablas con filtros, vistas Kanban, formularios modales, etc.
 
@@ -82,6 +84,7 @@ Rutas principales (según la app actual):
 - /practice – Diario de prácticas.
 
 Layout
+
 - Layout raíz con sidebar colapsable:
   - Navegación: Dashboard, Materias, Tareas, Prácticas.
   - Estado de colapso manejado con React (contexto o useState en un componente envolvente).
@@ -90,11 +93,13 @@ Layout
 ### Estados
 
 AuthContext
+
 - Estado: user, isLoading.
 - Acciones: login(credentials), logout().
 - Usa fetch contra /api/auth/login, /api/auth/logout, /api/auth/me.
 
 ThemeContext
+
 - Estado: theme: 'light' | 'dark'.
 - Acción: toggleTheme().
 - Persiste en localStorage y sincroniza data-theme en <body>.
@@ -106,9 +111,9 @@ Cliente HTTP en `apps/web/src/lib/api.ts`.
 Definir API_BASE:
 
 const API_BASE =
-  import.meta.env.PROD
-    ? '/api'
-    : 'http://localhost:8787/api';
+import.meta.env.PROD
+? '/api'
+: 'http://localhost:8787/api';
 
 Exponer métodos tipados:
 
@@ -133,22 +138,26 @@ Tipos importados desde packages/shared-types.
 Portar la lógica de Zo a las siguientes rutas (prefijo /api):
 
 Auth
+
 - POST /api/auth/login
 - POST /api/auth/logout
 - GET /api/auth/me
 - POST /api/auth/register (opcional, se puede mantener solo para desarrollo).
 
 Subjects
+
 - GET /api/subjects
 - GET /api/subjects/:id
 - GET /api/subjects/at-risk
 
 Absences
+
 - GET /api/absences?subject_id=...
 - POST /api/absences
 - DELETE /api/absences/:id
 
 Tasks
+
 - GET /api/tasks
 - GET /api/tasks/today
 - GET /api/tasks/week
@@ -157,12 +166,14 @@ Tasks
 - DELETE /api/tasks/:id
 
 Practice
+
 - GET /api/practice
 - POST /api/practice
 - PUT /api/practice/:id
 - DELETE /api/practice/:id
 
 Utilidades
+
 - GET /api/db – Health check / debug.
 
 ### Persistencia
@@ -170,17 +181,19 @@ Utilidades
 Almacenamiento: **SQLite** gestionado a través de `bun:sqlite`.
 
 Módulo `lib/db.ts` en `apps/api`:
+
 - Singleton de `Database` que detecta el entorno (`:memory:` para tests, `database.sqlite` para dev/prod).
 - `initDB()`: Inicializa tablas con integridad referencial (`ON DELETE CASCADE`) y claves foráneas activas.
 - `dbService`: Capa de abstracción CRUD con conversión automática de tipos (ej. strings ISO de SQLite a objetos `Date` de JS).
 
 Esquema de Tablas:
+
 - `users`: id, name, email, passwordHash, role.
 - `subjects`: id, name, total_classes, user_id (FK).
 - `absences`: id, subject_id (FK), date, type, calculated_value.
 - `tasks`: id, subject_id (FK), title, description, status, due_date.
 - `practice_journals`: id, subject_id (FK), date, content.
-Config vía env:
+  Config vía env:
 
 - DATA_DIR con default ./data.
 
@@ -211,13 +224,13 @@ Inasistencias
 
 Porcentaje de inasistencias de una materia:
 
-porcentaje = sum(calculated_value) / total_classes * 100
+porcentaje = sum(calculated_value) / total_classes \* 100
 
 Estados:
 
 - < 15% → Normal.
-- >= 15% y < 20% → En alerta.
-- >= 20% → En peligro.
+- > = 15% y < 20% → En alerta.
+- > = 20% → En peligro.
 
 - /api/subjects/at-risk calcula y devuelve solo materias en alerta o peligro.
 - /api/tasks/today y /api/tasks/week filtran por fechas (hoy, semana actual) según due_date.
@@ -269,7 +282,7 @@ Frontend – apps/web
 
 Ruteo /api
 
-- Configurar en Render que /api/* se enrute al Web Service apps/api (mismo dominio o subdominio, según setup).
+- Configurar en Render que /api/\* se enrute al Web Service apps/api (mismo dominio o subdominio, según setup).
 
 ### 3.2. Opción alternativa: Cloudflare Pages + otro backend
 
@@ -283,7 +296,7 @@ Backend
 
 Configuración
 
-- Rutas de Pages que apunten /api/* a Workers o al backend correspondiente.
+- Rutas de Pages que apunten /api/\* a Workers o al backend correspondiente.
 
 ---
 
@@ -299,11 +312,11 @@ Requisitos:
 Scripts recomendados (en package.json raíz):
 
 {
-  "scripts": {
-    "dev:web": "cd apps/web && bun run dev",
-    "dev:api": "cd apps/api && bun run dev",
-    "dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
-  }
+"scripts": {
+"dev:web": "cd apps/web && bun run dev",
+"dev:api": "cd apps/api && bun run dev",
+"dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
+}
 }
 
 apps/web
@@ -371,7 +384,7 @@ Backend Bun + Hono
 
 - Scaffold server Hono con Bun.
 - Implementar lib/db.ts con lectura/escritura JSON.
-- Portar endpoints /api/* desde Zo.
+- Portar endpoints /api/\* desde Zo.
 - Implementar auth + usuario demo.
 
 Frontend Astro + React + Oat
