@@ -1,188 +1,351 @@
-# Roadmap de Implementación – Dashboard
+## ✅ Fase 1 — Backend & DB básica
 
-Este documento detalla el plan paso a paso para migrar el dashboard desde Zo.space hacia una arquitectura moderna basada en Bun, Hono, Astro y React.
+- Monorepo con `apps/api`, `apps/web`, `packages/shared-types`.
+- API Hono + Bun + Turso (o SQLite local en dev).
+- Tablas: `users`, `subjects`, `tasks`, `absences`, `practice_journals`.
+- JWT propio (`auth.ts`): `createToken`, `verifyToken`, `hashPassword`, `verifyPassword`.
+- `dbService` con servicios para users/subjects/tasks/absences/journals.
+- Tests de API para auth, subjects, tasks, practice_journals.
+- `seed.ts` para usuario demo + datos de ejemplo.
+- Dockerfiles para API y Web, CORS dinámico, `render.yaml`.
 
----
+## ✅ Fase 2 — Frontend base
 
-## 1. Fase: Preparación (Estructura Monorepo) [x]
+- Astro + React + Oat UI.
+- `AuthContext` con `user`, `token`, `loading`, login/logout.
+- Theme con nanostores + script inline para evitar flash.
+- Páginas Astro: `/`, `/login`, `/subjects`, `/tasks`, `/analytics`, `/journal`, `404`.
+- Páginas React: `DashboardPage`, `SubjectsPage`, `TasksPage`, `AnalyticsPage`, `JournalPage`, `LoginPage`.
+- Layouts: `Base.astro`, `DashboardLayout.astro`.
+- Cliente API: `API_BASE = "/api"` (sin host hardcodeado).
 
-**Objetivo:** Configurar el esqueleto del repositorio y las herramientas de desarrollo.
+## ✅ Fase 3 — UI por pantalla
 
-1.  **Inicialización del Repo:**
-    - [x] Crear el auth_token en GitHub.
-    - [x] Configurar `.gitignore` para Bun y Node.
-    - [x] Configurar `git init` hecho y `.gitignore` configurado con `node_modules/`, `dist/` y `.env*`.
+- `/subjects`: lista, form, detalle, inasistencias, métricas.
+- `/tasks`: lista, form, detalle, estados, orden por fecha.
+- `/journal`: selección de fecha, materia, guardado, historial.
+- `/analytics`: pie chart de tareas, barras de asistencia.
+- Toasts en operaciones CRUD y errores.
+- Spinners consistentes.
 
-2.  **Estructura de Carpetas:**
-    - [x] Crear los directorios definidos en `SPECS.md`.
-    ```bash
-    mkdir -p apps/web apps/api packages/shared-types infra
-    ```
-3.  **Configuración de Bun (Raíz):**
-    - [x] Inicializar el workspace (si se usa `package.json` raíz) o simplemente preparar los scripts de orquestación.
-    - [x] _Tarea:_ Crear un `README.md` con las instrucciones básicas.
+## ✅ Fase 4 — UX y theme
 
-4.  **Shared Types:** [x]
-    - [x] Definir las interfaces base (Subject, Task, Absence, PracticeJournal, User).
-    - [x] Reestructuración a `packages/shared-types/src/index.ts` para resolución robusta en el monorepo.
-    - [x] Sincronización de dependencias de workspace en `apps/api` y `apps/web`.
-
----
-
-## 2. Fase: Backend (Bun + Hono)
-
-**Objetivo:** Construir una API funcional con persistencia en JSON.
-
-1.  **Scaffold del Servidor:**
-    - [x] Configurar Hono en `apps/api`.
-    ```bash
-    cd apps/api
-    bun init -y
-    bun add hono
-    ```
-2.  **Capa de Persistencia (SQLite DB):**
-    - [x] Implementar `lib/db.ts` usando `bun:sqlite`.
-    - [x] Configurar persistencia en disco (`database.sqlite`) y en memoria para tests.
-    - [x] Implementar `dbService` con métodos CRUD robustos.
-3.  **Configuración de imports de shared-types:**
-    - **Estrategia Elegida:** Opción B (Alias de paquete `@dashboard/shared-types`).
-    - **Archivos Configurados:**
-      - `packages/shared-types/package.json` (definición del paquete).
-      - `apps/api/tsconfig.json` (mapping de `paths` e inclusión de rutas en `include` para evitar error TS6307).
-    - **Ejemplo de Import:** `import { User } from "@dashboard/shared-types";`
-    - [x] Configuración completada.
-4.  **Endpoints de Auth:**
-    - [x] Implementar `/api/auth/login` con persistencia en SQLite.
-    - [x] Implementar `/api/auth/me` y `/api/auth/logout`.
-    - [x] Corregir error de JWT: especificar explícitamente el algoritmo `HS256` en middleware y funciones `sign`/`verify` de `lib/auth.ts`.
-    - [x] Configurar y documentar `DEV_LOGIN_ENABLED` para login demo (`demo@example.com` / `demo123`) en desarrollo.
-    - ⚠️ **ADVERTENCIA:** En producción, `DEV_LOGIN_ENABLED` DEBE ser `false`.
-5.  **Endpoints de Negocio:**
-    - [x] Implementar CRUD para Subjects, Tasks y Practice consumiendo `dbService`.
-    - [x] Implementar lógica de inasistencias (cálculo de % y estados de alerta/peligro) mediante consultas SQL.
-    - [x] Endpoint especial: `/api/subjects/at-risk`.
-6.  **Validación y Testing:**
-    - [x] Migrar infraestructura de testing a **Bun Test** (eliminando Vitest).
-    - [x] Configurar `apps/api/tests/setup.ts` para usar SQLite en memoria (`:memory:`).
-    - [x] Refactorizar todos los tests (`auth`, `subjects`, `tasks`, `journals`) para soportar JWT e integridad referencial.
-    - **Testing backend:**
-      - Correr tests: `cd apps/api && bun test`.
-      - Correr tests en modo watch: `cd apps/api && bun test --watch`.
-      - Cobertura: Completa para el core de la API.
-
-7.  **Continuous Integration (CI):**
-    - [x] Configurar workflow de GitHub Actions (`.github/workflows/ci.yml`).
-    - [x] Ejecutar automáticamente los tests de `apps/api` en cada Push o PR hacia `main`.
-    - **Estado del CI:** Los resultados se pueden ver en la pestaña **Actions** del repositorio en GitHub.
+- `ThemeToggle` en sidebar, mobile y `/login`.
+- `LogoutButton` funcional (limpia token + redirige).
+- Inter auto-hosteada y aplicada.
+- `robots.txt` (Disallow: /).
+- `<meta name="description">` y `<link rel="canonical">` en `Base.astro`.
 
 ---
 
-## 3. Fase: Frontend (Astro + React + Oat UI)
+## 🟡 Fase 5 — Sistema de invites (registro controlado, PRIORIDAD 1)
 
-**Objetivo:** Crear una interfaz ultra-liviana y reactiva.
+**Objetivo:** solo personas con un invite code de un solo uso pueden registrarse, con un máximo de 10 invites activos.
 
-1.  **Scaffold de Astro:** [x]
-    - [x] Crear el proyecto en `apps/web`.
-    ```bash
-    cd apps/web
-    bun create astro@latest . -- --template minimal
-    bun add @astrojs/react react react-dom
-    ```
-2.  **Integración de Oat UI:** [x]
-    - [x] Migración exitosa de Oat UI (CSS/JS) de CDN externa a implementación local en `src/styles/theme.css`, eliminando errores de red y asegurando carga offline.
-    - [x] Configurar `src/styles/theme.css` para personalización de variables.
-    - [x] Alinear componentes principales (forms, badges, cards) al sistema de diseño de Oat mediante componentes reutilizables (`StatusBadge`, botones y tarjetas con clases `.oat-*`).
-    - [x] **Refactorización de Layouts:** Separación de `Base.astro` (HTML base) y `DashboardLayout.astro` (Shell del dashboard) para permitir vistas limpias (Login/404).
-    - [x] Limpieza de UI global: Header (Logo actualizado) y consistencia visual.
-    - [x] Instalación de dependencias de UI críticas (`recharts`, `lucide-react`).
-3.  **Contextos y Estado:** [x]
-    - [x] Implementar `AuthContext.tsx` (React) para manejar la sesión.
-    - [x] Implementar `ThemeContext.tsx` (React) para el modo oscuro (`data-theme`).
-    - [x] Creación de `AppProviders.tsx` para envolver la jerarquía de React.
-    - [x] Sincronización completa de tipos Date y cliente de API con soporte para revival automático.
-    - [x] **Redirección y Seguridad:** Se actualizó `AuthContext.tsx` para obtener datos completos del usuario y realizar una redirección explícita a `/`. Se añadió blindaje con `window.location.replace` y estandarización de la clave `'auth_token'` para evitar bucles de navegación.
-4.  **Cliente API:** [x]
-    - [x] Crear `src/lib/api.ts` con fetch tipado apuntando a `API_BASE`.
-    - [x] Implementado revival de fechas automático para consistencia con `shared-types`.
-5.  **Páginas Principales:** [x]
-    - [x] `/login`: Formulario de acceso con `AuthContext`.
-    - [x] `/`: Dashboard con resumen (materias en riesgo, tareas próximas).
-    - [x] `/subjects`: Lista de materias consumiendo la API.
-    - [x] `/tasks`: Lista de tareas con capacidad de cambio de estado.
-    - [x] `404`: Página de error personalizada con estética Oat y protección de privacidad.
-6.  **Próximos pasos UI:** [ ]
-    - **Vistas de Detalle Dinámicas:**
-      - [x] Configurar rutas dinámicas `/subjects/[id]` y `/tasks/[id]`.
-      - [x] Componente de visualización de métricas de asistencia (%).
-      - [x] Historial de tareas y notas por materia.
-    - **Formularios CRUD Completos:**
-      - [x] Modales de creación para Subjects y Tasks.
-      - [x] Flujo de edición y borrado con confirmación.
-      - [x] Integración de notificaciones (Toasts) de éxito/error.
-    - **Dashboard de Analíticas:**
-      - [x] Integración de `Recharts` en el proyecto.
-      - [x] Gráfico de "Semáforo de Asistencia" (riesgo de libre).
-      - [x] Gráfico de cumplimiento de tareas (Burndown simple).
-      - [x] Ruta dedicada `/analytics`.
-    - **Registro de Journal Diario:**
-      - [x] Editor Markdown minimalista para `PracticeJournal`.
-      - [x] Selector de fecha y navegación por historial de reflexiones.
-      - [x] Corregido error crítico de manejo de fechas (`Date` vs `Error`) que impedía la carga inicial del componente.
+### 5.1. Modelo y DB
 
----
+- [ ] Agregar tabla `invites` en `initDB()`:
+  - Campos: `id`, `code` (UNIQUE), `used` (boolean), `created_at`.
+- [ ] Extender `dbService` con:
+  - `invites.create(code)`.
+  - `invites.getByCode(code)`.
+  - `invites.markUsed(id)`.
+  - `invites.countActive()`.
 
-## 4. Fase: Integración y E2E Local
+### 5.2. Script CLI para crear invites
 
-**Objetivo:** Asegurar que el flujo completo funciona en desarrollo.
+- [ ] Crear `apps/api/src/invites.ts`:
+  - Inicializa DB.
+  - Lee cuántos invites activos hay (`used = 0`).
+  - Si ya hay 10, no crea más.
+  - Genera N códigos (ej. 3) con `randomUUID()` (o formato corto).
+  - Inserta con `dbService.invites.create(code)`.
+  - Imprime los códigos en consola.
+- [ ] Añadir script en `apps/api/package.json`:
+  - `"invites": "bun src/invites.ts"`.
 
-1.  **Orquestación Local:** [x]
-    - [x] Los scripts `dev:web`, `dev:api` y `dev` están configurados correctamente en la raíz para evitar recursión.
-    - [x] El comando estándar para desarrollo local es:
-      - `bun install` (una vez para instalar dependencias en todos los paquetes).
-      - `bun run dev` (desde la raíz para levantar API + Web en paralelo usando `concurrently`).
-    ```json
-    "dev:web": "cd apps/web && bun run dev",
-    "dev:api": "cd apps/api && bun run dev",
-    "dev": "bunx concurrently \"bun run dev:web\" \"bun run dev:api\""
-    ```
-2.  **Pruebas de Flujo:**
-    - [x] **Login con usuario demo:** Verificado el flujo completo desde `/login` hasta el dashboard (`/`) tras autenticación exitosa con redirección automática.
-    - [x] **Guardia de Redirección:** Verificado que usuarios ya logueados son expulsados de `/login` hacia `/`.
-    - [ ] Crear una tarea -> Ver actualización.
-3.  **Shared Types Sync:**
-    - Verificar que los cambios en tipos se reflejan en ambos lados sin errores de TS.
+### 5.3. Endpoint de registro con invite
+
+- [ ] Agregar `POST /api/auth/register` en `auth.ts`:
+  - Body: `name`, `email`, `password`, `inviteCode`.
+  - Buscar invite por código:
+    - Si no existe o `used = 1` → 403.
+  - (Opcional) Comprobar límite global de usuarios.
+  - Verificar que el email no exista.
+  - Crear usuario con `hashPassword`.
+  - Marcar invite `used = 1`.
+  - Devolver `token` + `user` (login automático).
+
+### 5.4. Frontend para registro
+
+- [ ] Añadir método `register` en `apps/web/src/lib/api.ts`:
+  - `POST /api/auth/register` con `{ name, email, password, inviteCode }`.
+- [ ] Crear UI mínima:
+  - Pestaña o modal “Crear cuenta” en `LoginPage`.
+  - Campos: Nombre, Email, Password, Invite code.
+  - Manejo de errores de la API (`error` en JSON).
+- [ ] Flujo:
+  - Si el registro es OK, guardar `token` en `AuthContext` y redirigir al dashboard.
+
+### 5.5. Política de demo + prod
+
+- [ ] Mantener usuario(s) demo actuales:
+  - `DEV_LOGIN_ENABLED=true` solo en dev.
+  - En prod, `DEV_LOGIN_ENABLED=false` (nadie entra como demo desde afuera).
+- [ ] Definir:
+  - Cuántos usuarios reales máximos permitís (además de demo).
+  - Cuántos invites querés tener activos a la vez (máx. 10 ya está decidido).
+
+### 5.6. Tests para invites y registro
+
+- [ ] Tests de invites en API (`apps/api/tests/invites.test.ts`):
+  - Crear invites vía `dbService.invites.create`.
+  - Probar que `countActive` respeta el límite.
+  - Probar que `POST /api/auth/register`:
+    - Falla sin invite o con invite usado.
+    - Crea usuario, marca invite como usado y devuelve token.
+- [ ] Tests de registro en frontend (opcional, mínimo):
+  - Verificar que el formulario llama a `api.register` con los campos correctos.
+  - Manejo de errores (`error` de la API) en UI.
 
 ---
 
-## 5. Fase: Hosting & Deploy
+## 🟡 Fase 6 — Integración iCal por usuario (Schoology)
 
-**Objetivo:** Publicar la aplicación en un entorno de producción (Render).
+**Objetivo:** cada usuario puede vincular su feed iCal/webcal de Schoology y sincronizar eventos hacia el dashboard.
 
-1.  **Backend (Render Web Service):**
-    - Crear `apps/api/Dockerfile` (basado en `oven/bun`).
-    - Configurar el servicio en Render apuntando a la subcarpeta `apps/api`.
-    - Definir variables de entorno (PORT, DATA_DIR, etc.).
-2.  **Frontend (Render Static Site):**
-    - Configurar el build command: `cd apps/web && bun install && bun run build`.
-    - Configurar el directorio público: `apps/web/dist`.
-3.  **Ruteo de API:**
-    - Configurar el "Rewrite" o "Redirect" en Render para que `/api/*` apunte al servicio de backend.
-4.  **Smoke Test:**
-    - Acceder a la URL de producción y validar el login.
+### 6.1. Modelo y DB
+
+- [ ] Extender tabla `users`:
+  - Agregar campo `ical_url TEXT` y  `last_ical_sync TEXT`.
+- [ ] Actualizar `dbService.users`:
+  - Permitir leer y actualizar `ical_url` y `last_ical_sync`.
+
+### 6.2. Endpoints de configuración y sync
+
+- [ ] Endpoint para configurar iCal:
+  - `PATCH /api/auth/me/ical`:
+    - Requiere auth JWT.
+    - Body: `{ ical_url: string }`.
+    - Valida formato básico de URL.
+    - Normaliza `webcal://` a `https://`.
+    - Guarda en `users.ical_url` del usuario actual.
+- [ ] Servicio de sincronización:
+  - Elegir librería iCal compatible con Bun para parsear `.ics`.
+  - Endpoint `POST /api/ical/sync`:
+    - Requiere auth.
+    - Lee `user.ical_url`.
+    - Hace fetch del `.ics`.
+    - Parsea eventos y:
+      - O crea/actualiza `tasks` a partir de ellos.
+      - O los guarda en una tabla nueva `external_events` si querés separarlos.
+
+### 6.3. UI
+
+- [ ] En el dashboard, sección “Integraciones” o “Calendario”:
+  - Campo para pegar la URL Schoology (webcal/https).
+  - Botón “Guardar” (llama a `PATCH /api/auth/me/ical`).
+  - Botón “Sincronizar ahora” (llama a `POST /api/ical/sync`).
+- [ ] Opcional:
+  - Mostrar eventos Schoology mezclados con tareas o en un bloque separado.
+
+### 6.4. Tests para iCal
+
+- [ ] Tests de servicio iCal en API:
+  - Normalización `webcal://` → `https://`.
+  - Mock de fetch de `.ics` + parser iCal.
+  - Conversión de eventos de iCal a `Task` o `external_events`.
+- [ ] Tests de endpoints:
+  - `PATCH /api/auth/me/ical`:
+    - Rechaza URLs inválidas.
+    - Guarda/actualiza `ical_url` del usuario autenticado.
+  - `POST /api/ical/sync`:
+    - Sin `ical_url` → error claro.
+    - Con `ical_url` válido → crea/actualiza registros esperados.
 
 ---
 
-## 6. Fase: Limpieza & Docs
+## 🟡 Fase 7 — UX Mobile: nuevo panel flotante (menú `☰`)
 
-1.  **README Final:** Instrucciones claras para nuevos desarrolladores.
-2.  **Scripts de Mantenimiento:** Scripts para backup de los archivos JSON de `data/`.
-3.  **Finalización de SPECS:** Asegurar que `SPECS.md` refleja el estado final de la implementación.
+**Objetivo:** reemplazar el bottom navbar actual en mobile por un botón flotante tipo menú que despliega un panel grande con las opciones de navegación y acciones.
+
+### 7.1. Diseño del nuevo menú mobile
+
+- [ ] Eliminar/ocultar el bottom‑nav actual en mobile (`DashboardLayout.astro`).
+- [ ] Añadir un botón flotante icono `☰` en la esquina inferior derecha:
+  - Visible solo en pantallas `< 768px`.
+  - Con `aria-label="Abrir menú"` y estado abierto/cerrado manejado desde UI.
+- [ ] Crear un panel flotante:
+  - Ocupa ancho casi completo con bordes redondeados (similar al screenshot).
+  - Fondo oscuro/claro según tema.
+  - Animación de aparición (slide/fade).
+  - Cierra al tocar fuera o al pulsar “X”.
+
+### 7.2. Contenido del panel
+
+- [ ] Incluir enlaces a:
+  - Dashboard
+  - Materias / UC
+  - Tareas
+  - Analíticas
+  - Práctica
+- [ ] Incluir acciones:
+  - `ThemeToggle` (modo claro/oscuro).
+  - `LogoutButton`.
+- [ ] Asegurar accesibilidad:
+  - Focus atrapado dentro del panel cuando esté abierto.
+  - `aria-modal="true"` y `role="dialog"`.
+
+### 7.3. Implementación técnica
+
+- [ ] Ajustar `DashboardLayout.astro`:
+  - Quitar lógica de bottom‑nav en mobile.
+  - Mantener sidebar completa en desktop.
+  - Agregar contenedor para botón flotante y panel.
+- [ ] Crear un pequeño estado de UI para controlar `isMenuOpen` en mobile.
+- [ ] Reusar componentes existentes:
+  - `ThemeToggle` y `LogoutButton` dentro del panel.
+  - Links con misma estructura/estilos que el sidebar.
 
 ---
 
-## Ideas futuras (Mejoras fuera del MVP)
+## 🟡 Fase 8 — Enriquecimiento académico y Tasks avanzadas
 
-- **Base de Datos Real:** Migrar de JSON a SQLite (usando `bun:sqlite`) o una DB externa (PostgreSQL en Render/Supabase) cuando la escala lo requiera.
-- **Auth Robusta:** Implementar Lucia Auth o Clerk para manejo de sesiones más seguro.
-- **Notificaciones:** Integración con Telegram/Email para alertas de "Materia en Peligro".
-- **PWA:** Configurar Astro para que el dashboard funcione offline.
+### 8.1. Renombrar “Materias” → “UC (Unidad Curricular)”
+
+- [ ] En `/subjects` y textos de UI:
+  - Cambiar labels y títulos a “Unidades Curriculares (UC)”.
+- [ ] Mantener el modelo `Subject` en código, aclarando en UI que es UC.
+
+### 8.2. Trayecto y Duración en `/subjects`
+
+- [ ] Extender tabla `subjects` y tipo `Subject`:
+  - `trayecto TEXT` (ej.: `TFEE`, `TFLDPP`, `TFE`, etc.).
+  - `duracion TEXT` (ej.: `Primer semestre`, `Segundo semestre`, `Anual`).
+- [ ] Actualizar `SubjectForm`:
+  - Añadir selects para Trayecto y Duración (listas cerradas).
+- [ ] Mostrar columnas “Trayecto” y “Duración” en la tabla de `/subjects`.
+
+### 8.3. Reglas de clases totales por duración (reglamento CFE)
+
+- [ ] Basarse en el Reglamento CFE (Plan 2023), Art. 28:
+  - Las UC semestrales se desarrollan en **15 semanas**.
+  - Las UC anuales se desarrollan en **30 semanas**.
+- [ ] Definir reglas de sugerencia de `total_classes` usando esas semanas como base (1 clase por semana):
+  - Duración = **Anual** → sugerir `total_classes = 30`.
+  - Duración = **Semestral** → sugerir `total_classes = 15`.
+- [ ] Implementar en `SubjectForm`:
+  - Al seleccionar la Duración, si `total_classes` está vacío, autocompletar con el valor sugerido (permitiendo que el usuario lo modifique si tiene más/menos encuentros semanales).
+- [ ] Documentar en el código y en el ROADMAP:
+  - Que estos valores provienen del Art. 28 del Reglamento CFE (Plan 2023) y representan semanas de curso, no horas exactas.
+
+### 8.4. Nuevos campos en `/tasks` (por UC)
+
+- [ ] Extender tabla `tasks` y tipo `Task`:
+  - `type` (individual / grupal).
+  - `grade` (1–12, opcional).
+  - `file_url` (string, enlace al archivo).
+  - `comments` (texto).
+- [ ] Ajustar estados de tarea:
+  - Estados: `no-iniciado`, `bloqueado`, `en-curso`, `completado`.
+  - Mapear a labels en español.
+- [ ] Actualizar `TaskForm`:
+  - Campos:
+    - Tarea (`title`).
+    - Tipo (select: Individual / Grupal).
+    - Fecha de entrega (`due_date`).
+    - Estado (nuevos valores).
+    - Calificación (input numérico 1–12).
+    - Archivo (input texto para URL).
+    - Comentarios (textarea).
+- [ ] Actualizar vista `/tasks`:
+  - Columnas:
+    - Tarea
+    - Tipo
+    - Fecha de entrega
+    - Estado
+    - Calificación
+    - Archivo (renderizado como link si existe)
+    - Comentarios (truncado si es largo).
+
+### 8.5. Promedio de calificación por UC
+
+- [ ] En `SubjectDetail` (o en la tabla `/subjects`):
+  - Calcular promedio de `grade` de todas las tareas de esa UC (solo las que tengan nota).
+  - Mostrar “Promedio de calificación: X / 12”.
+- [ ] Opcional:
+  - Mostrar número de tareas calificadas vs. totales.
+
+### 8.6. Integración iCal con `/tasks`
+
+- [ ] Definir mapping iCal → Task:
+  - Título de evento → `title`.
+  - Fecha de evento → `due_date`.
+  - Descripción → `description` o `comments`.
+- [ ] UX para asignar UC:
+  - Al importar desde iCal, permitir elegir UC manualmente en un paso intermedio, o intentar mapear por nombre.
+- [ ] En `/tasks`:
+  - Añadir filtro o indicador que distinga:
+    - Tareas creadas a mano.
+    - Tareas importadas desde iCal.
+
+---
+
+## 🟡 Fase 9 — Planner semanal tipo WeekToDo
+
+**Objetivo:** tener una vista semanal estilo WeekToDo que complemente `/tasks`.
+
+### 9.1. Nueva ruta y layout
+
+- [ ] Crear nueva página `/planner` (o `/week`):
+  - Layout con 7 columnas (Lunes–Domingo).
+  - Cada columna muestra tareas de ese día (según `due_date`).
+- [ ] Fuente de datos:
+  - Reutilizar `tasks` existentes, filtradas por la semana actual (lunes–domingo).
+
+### 9.2. Funcionalidad inicial
+
+- [ ] V1:
+  - Solo visualización semanal (sin drag & drop).
+  - Filtros por UC y por estado (opcional).
+- [ ] V2 (futuro):
+  - Drag & drop entre columnas:
+    - Al mover una tarea a otro día, actualizar `due_date`.
+  - Indicadores visuales para tareas importadas desde iCal.
+
+### 9.3. Integración con resto del sistema
+
+- [ ] Desde `/tasks`, botón “Ver semana” que lleva a `/planner`.
+- [ ] Desde `/planner`, click en una tarjeta abre el `TaskDetail`.
+- [ ] Asegurar que cambios de fecha en el planner se reflejen en `/tasks`, `/analytics` e iCal (si corresponde).
+
+---
+
+## 🟡 Fase 10 — Higiene, tests, calidad y deploy
+
+- [ ] Ejecutar y dejar en verde:
+  - `bun run format`.
+  - `bun run lint`.
+  - `bun run check`.
+  - `cd apps/api && bun test`.
+  - `cd apps/web && bun run build`.
+- [ ] Corregir tipos/imports según herramientas.
+- [ ] Verificar que todos los métodos usados en frontend existen en `api.ts`.
+- [ ] Revisar que todos los endpoints filtran por `user_id` y respetan ownership.
+
+- [ ] Dominios prod:
+  - Web: `https://dashboard.lucasramos.uy`.
+  - API: `https://api.lucasramos.uy`.
+- [ ] CORS y env vars correctos en prod.
+- [ ] Crear (con `seed.ts` o invites) solo:
+  - Usuario demo interno (si lo querés conservar).
+  - Usuarios reales que invites tú.
+- [ ] Smoke test:
+  - Registro con invite.
+  - Login y uso normal del dashboard.
+  - Integración iCal, planner semanal y menú mobile.
+- [ ] Lighthouse básico (login y dashboard) y pequeños ajustes de accesibilidad/performance.
+
+## Post deploy
+
+- [ ] Migrar a Lucia Auth.

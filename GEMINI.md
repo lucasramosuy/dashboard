@@ -21,7 +21,7 @@
 
 ## Reglas de trabajo
 
-- Siempre leer SPECS.md,RULES.md, OAT_DOCS.md, ROADMAP.md y CURRENT_STATUS.md antes de proponer cambios estructurales.
+- Siempre leer SPECS.md,RULES.md, OAT_DOCS.md, ROADMAP.md antes de proponer cambios estructurales.
 - Si una tarea afecta el roadmap:
   - Proponer cómo actualizar ROADMAP.md (sección y checklist).
   - No borrar información existente sin aclararlo.
