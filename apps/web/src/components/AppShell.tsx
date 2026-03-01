@@ -5,9 +5,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        {children}
-      </AuthProvider>
+      <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
   );
 };

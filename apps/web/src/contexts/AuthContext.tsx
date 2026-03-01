@@ -7,6 +7,12 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    inviteCode: string;
+  }) => Promise<void>;
   logout: () => void;
   refreshMe: () => Promise<void>;
 }
@@ -62,6 +68,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const register = async (data: {
+    name: string;
+    email: string;
+    password: string;
+    inviteCode: string;
+  }) => {
+    try {
+      const response = await api.register(data);
+      const newToken = response.token;
+
+      localStorage.setItem("auth_token", newToken);
+      setToken(newToken);
+      setUser(response.user);
+    } catch (error) {
+      console.error("[Auth Error] Error al registrar:", error);
+      localStorage.removeItem("auth_token");
+      throw error;
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -77,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, refreshMe }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshMe }}>
       {children}
     </AuthContext.Provider>
   );
@@ -95,6 +121,7 @@ export const useAuth = () => {
       token: null,
       loading: true,
       login: async () => {},
+      register: async () => {},
       logout: () => {},
       refreshMe: async () => {},
     };

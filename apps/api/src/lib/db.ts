@@ -1,6 +1,13 @@
 import { createClient } from "@libsql/client";
 import type { InValue } from "@libsql/client";
-import { UserPublic, Subject, Task, Absence, PracticeJournal } from "@dashboard/shared-types";
+import {
+  UserPublic,
+  Subject,
+  Task,
+  Absence,
+  PracticeJournal,
+  Invite,
+} from "@dashboard/shared-types";
 
 // --- DB CONFIG ---
 const getDbConfig = () => {
@@ -63,11 +70,20 @@ export async function initDB() {
       content TEXT NOT NULL,
       FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
     )`,
+      `CREATE TABLE IF NOT EXISTS invites (
+      id TEXT PRIMARY KEY,
+      code TEXT UNIQUE NOT NULL,
+      used INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    )`,
     ],
     "write",
   );
 
-  const location = Bun.env.TURSO_DATABASE_URL ?? "local file";
+  const config = getDbConfig();
+  const location = config.url.startsWith("file::memory:")
+    ? "in-memory (test)"
+    : (Bun.env.TURSO_DATABASE_URL ?? "local file");
   console.log(`[DB] Database initialized: ${location}`);
 }
 
@@ -364,6 +380,45 @@ export const dbService = {
         args: [journalId, userId],
       });
       return r.rows.length > 0;
+    },
+  },
+
+  // --- INVITES ---
+  invites: {
+    create: async (invite: Invite) => {
+      return db.execute({
+        sql: "INSERT INTO invites (id, code, used, created_at) VALUES (?, ?, ?, ?)",
+        args: sanitizeValues([invite.id, invite.code, invite.used ? 1 : 0, invite.created_at]),
+      });
+    },
+
+    getByCode: async (code: string): Promise<Invite | null> => {
+      const r = await db.execute({
+        sql: "SELECT * FROM invites WHERE code = ?",
+        args: [code],
+      });
+      if (!r.rows[0]) return null;
+      const res = toObj<any>(r.rows[0]);
+      return {
+        ...res,
+        used: res.used === 1,
+        created_at: new Date(res.created_at),
+      };
+    },
+
+    markUsed: async (id: string) => {
+      return db.execute({
+        sql: "UPDATE invites SET used = 1 WHERE id = ?",
+        args: [id],
+      });
+    },
+
+    countActive: async (): Promise<number> => {
+      const r = await db.execute({
+        sql: "SELECT COUNT(*) as count FROM invites WHERE used = 0",
+        args: [],
+      });
+      return Number(r.rows[0].count);
     },
   },
 };

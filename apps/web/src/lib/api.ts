@@ -45,8 +45,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
     try {
       const errorData = await response.json();
       errorMessage = errorData.error || errorData.message || errorMessage;
-    } catch (e) {
-      // No JSON body
+    } catch {
+      // elimine el (e) del catch para que no saltara error de variable no definida, y deje el mensaje original.
+      // Si no se puede parsear el JSON de error, mantener el mensaje original
     }
     throw new Error(errorMessage);
   }
@@ -65,6 +66,25 @@ export const api = {
       return handleResponse<{ token: string; user: UserPublic }>(response);
     } catch (err) {
       console.error("ERROR DE RED O CORS EN API.login:", err);
+      throw err;
+    }
+  },
+
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+    inviteCode: string;
+  }): Promise<{ token: string; user: UserPublic }> {
+    try {
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return handleResponse<{ token: string; user: UserPublic }>(response);
+    } catch (err) {
+      console.error("ERROR DE RED O CORS EN API.register:", err);
       throw err;
     }
   },

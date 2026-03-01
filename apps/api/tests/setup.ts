@@ -6,19 +6,23 @@ Bun.env.NODE_ENV = "test";
 Bun.env.JWT_SECRET = "test-secret";
 Bun.env.DEV_LOGIN_ENABLED = "true";
 
-beforeAll(() => {
+beforeAll(async () => {
   // Initial table creation
-  initDB();
+  await initDB();
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   // Clean up all tables before each test to ensure isolation
-  db.transaction(() => {
-    // Note: order matters for foreign key constraints
-    db.run("DELETE FROM absences");
-    db.run("DELETE FROM tasks");
-    db.run("DELETE FROM practice_journals");
-    db.run("DELETE FROM subjects");
-    db.run("DELETE FROM users");
-  })();
+  // Note: order matters for foreign key constraints
+  await db.batch(
+    [
+      "DELETE FROM absences",
+      "DELETE FROM tasks",
+      "DELETE FROM practice_journals",
+      "DELETE FROM subjects",
+      "DELETE FROM invites",
+      "DELETE FROM users",
+    ],
+    "write",
+  );
 });

@@ -10,6 +10,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "seed": "bun src/seed.ts",
+    "invites": "bun src/invites.ts",
     "check": "tsc -p tsconfig.json"
   },
   "devDependencies": {

@@ -48,7 +48,13 @@ export default [
     plugins: {
       "@typescript-eslint": ts,
     },
-    rules: {},
+    rules: {
+      "no-unused-vars": "off", // base rule
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { args: "after-used" /* y cualquier otra opción que quieras */ },
+      ],
+    },
   },
 
   // Astro

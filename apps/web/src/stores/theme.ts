@@ -28,4 +28,3 @@ export function toggleTheme() {
   localStorage.setItem("dash_theme", next);
   document.documentElement.dataset.theme = next;
 }
-

@@ -1,6 +1,6 @@
 import { initDB, dbService } from "./lib/db";
 import { hashPassword } from "./lib/auth";
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "crypto";
 import type { UserRecord } from "./types/internal";
 import type { Absence, Task } from "@dashboard/shared-types";
 

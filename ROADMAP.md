@@ -38,15 +38,17 @@
 
 ---
 
-## 🟡 Fase 5 — Sistema de invites (registro controlado, PRIORIDAD 1)
+## SEGUIMOS DESDE ACÁ
+
+## ✅ Fase 5 — Sistema de invites (registro controlado, PRIORIDAD 1)
 
 **Objetivo:** solo personas con un invite code de un solo uso pueden registrarse, con un máximo de 10 invites activos.
 
 ### 5.1. Modelo y DB
 
-- [ ] Agregar tabla `invites` en `initDB()`:
+- [x] Agregar tabla `invites` en `initDB()`:
   - Campos: `id`, `code` (UNIQUE), `used` (boolean), `created_at`.
-- [ ] Extender `dbService` con:
+- [x] Extender `dbService` con:
   - `invites.create(code)`.
   - `invites.getByCode(code)`.
   - `invites.markUsed(id)`.
@@ -54,23 +56,23 @@
 
 ### 5.2. Script CLI para crear invites
 
-- [ ] Crear `apps/api/src/invites.ts`:
+- [x] Crear `apps/api/src/invites.ts`:
   - Inicializa DB.
   - Lee cuántos invites activos hay (`used = 0`).
   - Si ya hay 10, no crea más.
   - Genera N códigos (ej. 3) con `randomUUID()` (o formato corto).
   - Inserta con `dbService.invites.create(code)`.
   - Imprime los códigos en consola.
-- [ ] Añadir script en `apps/api/package.json`:
+- [x] Añadir script en `apps/api/package.json`:
   - `"invites": "bun src/invites.ts"`.
 
 ### 5.3. Endpoint de registro con invite
 
-- [ ] Agregar `POST /api/auth/register` en `auth.ts`:
+- [x] Agregar `POST /api/auth/register` en `auth.ts`:
   - Body: `name`, `email`, `password`, `inviteCode`.
   - Buscar invite por código:
     - Si no existe o `used = 1` → 403.
-  - (Opcional) Comprobar límite global de usuarios.
+  - Comprobar límite global de usuarios.
   - Verificar que el email no exista.
   - Crear usuario con `hashPassword`.
   - Marcar invite `used = 1`.
@@ -78,35 +80,130 @@
 
 ### 5.4. Frontend para registro
 
-- [ ] Añadir método `register` en `apps/web/src/lib/api.ts`:
+- [x] Añadir método `register` en `apps/web/src/lib/api.ts`:
   - `POST /api/auth/register` con `{ name, email, password, inviteCode }`.
-- [ ] Crear UI mínima:
+- [x] Crear UI mínima:
   - Pestaña o modal “Crear cuenta” en `LoginPage`.
   - Campos: Nombre, Email, Password, Invite code.
   - Manejo de errores de la API (`error` en JSON).
-- [ ] Flujo:
+- [x] Flujo:
   - Si el registro es OK, guardar `token` en `AuthContext` y redirigir al dashboard.
 
 ### 5.5. Política de demo + prod
 
-- [ ] Mantener usuario(s) demo actuales:
+- [x] Mantener usuario(s) demo actuales:
   - `DEV_LOGIN_ENABLED=true` solo en dev.
   - En prod, `DEV_LOGIN_ENABLED=false` (nadie entra como demo desde afuera).
-- [ ] Definir:
+- [x] Definir:
   - Cuántos usuarios reales máximos permitís (además de demo).
   - Cuántos invites querés tener activos a la vez (máx. 10 ya está decidido).
 
 ### 5.6. Tests para invites y registro
 
-- [ ] Tests de invites en API (`apps/api/tests/invites.test.ts`):
+- [x] Tests de invites en API (`apps/api/tests/invites.test.ts`):
   - Crear invites vía `dbService.invites.create`.
   - Probar que `countActive` respeta el límite.
   - Probar que `POST /api/auth/register`:
     - Falla sin invite o con invite usado.
     - Crea usuario, marca invite como usado y devuelve token.
-- [ ] Tests de registro en frontend (opcional, mínimo):
+- [x] Tests de registro en frontend (opcional, mínimo):
   - Verificar que el formulario llama a `api.register` con los campos correctos.
   - Manejo de errores (`error` de la API) en UI.
+
+---
+# 🔁 Fase 5.7 — Push a GitHub + Setup de entorno Windows
+
+**Objetivo:** dejar el código en un estado limpio y versionado en GitHub, y verificar que el entorno de desarrollo funciona correctamente en Windows antes de continuar con las fases siguientes.
+
+---
+
+## Por qué insertar esta fase aquí
+
+La Fase 5 cierra el ciclo de funcionalidad core (auth + invites), lo que significa que el proyecto ya tiene una base estable, testeada y sin deuda técnica urgente. Es el mejor punto de corte antes de arrancar con integraciones externas (iCal, Schoology) que van a requerir más iteración y posiblemente más herramientas. Migrar el entorno *durante* una fase de integración compleja es un riesgo innecesario.
+
+Factores técnicos concretos considerados:
+
+- **Bun en Windows:** tiene soporte nativo desde v1.0, pero hay edge cases con rutas, symlinks y scripts de shell que hay que verificar antes de seguir.
+- **Turso/SQLite local:** el archivo `.db` y los paths relativos pueden comportarse distinto entre Linux y Windows si no se usan paths absolutos o variables de entorno correctamente.
+- **Variables de entorno:** los `.env` con comillas o saltos de línea a veces se parsean diferente en Windows según el shell (CMD vs PowerShell vs Git Bash).
+- **Docker:** si se usa Docker Desktop en Windows, hay que confirmar que los Dockerfiles del monorepo funcionan igual.
+- **Git line endings:** el `CRLF` vs `LF` puede romper scripts bash o archivos de config si no está configurado `.gitattributes`.
+
+---
+
+## 5.7.1. Limpieza y preparación del repo
+
+- [ ] Verificar que `.gitignore` excluye correctamente:
+  - `node_modules/`, `.turbo/`, `dist/`, `*.db`, `*.db-shm`, `*.db-wal`
+  - Archivos `.env` y `.env.local` (nunca deben subir)
+- [ ] Agregar `.gitattributes` en la raíz para normalizar line endings:
+  ```
+  * text=auto eol=lf
+  *.bat text eol=crlf
+  ```
+- [ ] Verificar que no hay secrets hardcodeados en el código (JWT secret, URLs de DB, etc.).
+- [ ] Asegurarse de que el `README.md` tiene instrucciones mínimas de setup (`bun install`, `bun run dev`).
+
+---
+
+## 5.7.2. Push a GitHub
+
+- [ ] Crear el repositorio en GitHub (privado).
+- [ ] Hacer el push inicial desde el VPS:
+  ```bash
+  git init
+  git add .
+  git commit -m "chore: initial commit — phases 1–5 complete"
+  git remote add origin git@github.com:<usuario>/<repo>.git
+  git push -u origin main
+  ```
+- [ ] Verificar en GitHub que la estructura del monorepo se ve correcta (`apps/`, `packages/`).
+
+---
+
+## 5.7.3. Setup del entorno en Windows
+
+- [ ] Instalar herramientas base:
+  - **Git for Windows** (incluye Git Bash)
+  - **Bun** (`powershell -c "irm bun.sh/install.ps1 | iex"`)
+  - **Node.js LTS** (solo como fallback si alguna tool lo requiere)
+  - **VS Code** con extensiones: Astro, ESLint, Prettier, Tailwind CSS IntelliSense
+- [ ] Clonar el repo desde GitHub en Windows:
+  ```bash
+  git clone git@github.com:<usuario>/<repo>.git
+  cd <repo>
+  bun install
+  ```
+- [ ] Copiar los `.env` manualmente desde el VPS (nunca via git):
+  - `apps/api/.env`
+  - `apps/web/.env` (si existe)
+- [ ] Verificar que el entorno de desarrollo levanta correctamente:
+  ```bash
+  bun run dev
+  ```
+  - API responde en `localhost:3000`
+  - Web responde en `localhost:4321`
+- [ ] Correr los tests desde Windows para confirmar que pasan:
+  ```bash
+  cd apps/api && bun test
+  ```
+- [ ] Si se usa Docker: verificar que `docker compose up` levanta correctamente con Docker Desktop.
+
+---
+
+## 5.7.4. Configurar flujo de trabajo Git
+
+- [ ] Definir rama principal: `main`.
+- [ ] Opcional pero recomendado: usar ramas por feature (`feat/ical-integration`, `feat/mobile-menu`) para las fases siguientes y mergear via PR — da historial limpio aunque se trabaje solo.
+- [ ] Verificar que se puede hacer push desde Windows sin problemas de SSH keys (agregar la clave pública de Windows a GitHub si es diferente a la del VPS).
+
+---
+
+## 5.7.5. Smoke test final
+
+- [ ] Desde Windows, hacer un cambio menor (ej.: un comentario en `README.md`), comitearlo y pushearlo.
+- [ ] Confirmar que el VPS puede hacer `git pull` y recibir ese cambio.
+- [ ] A partir de este punto: **el VPS pasa a ser solo entorno de deploy/producción**; el desarrollo cotidiano se hace desde Windows.
 
 ---
 
@@ -117,7 +214,7 @@
 ### 6.1. Modelo y DB
 
 - [ ] Extender tabla `users`:
-  - Agregar campo `ical_url TEXT` y  `last_ical_sync TEXT`.
+  - Agregar campo `ical_url TEXT` y `last_ical_sync TEXT`.
 - [ ] Actualizar `dbService.users`:
   - Permitir leer y actualizar `ical_url` y `last_ical_sync`.
 
@@ -161,7 +258,7 @@
     - Guarda/actualiza `ical_url` del usuario autenticado.
   - `POST /api/ical/sync`:
     - Sin `ical_url` → error claro.
-    - Con `ical_url` válido → crea/actualiza registros esperados.
+    - En `ical_url` válido → crea/actualiza registros esperados.
 
 ---
 
@@ -323,6 +420,8 @@
 
 ## 🟡 Fase 10 — Higiene, tests, calidad y deploy
 
+- [ ] Verificar que los items de la DB estan linkeados por usuario.
+- [ ] Verificar si los requerimentos para la migración a Lucia Auth post deploy esta dada.
 - [ ] Ejecutar y dejar en verde:
   - `bun run format`.
   - `bun run lint`.
@@ -345,7 +444,3 @@
   - Login y uso normal del dashboard.
   - Integración iCal, planner semanal y menú mobile.
 - [ ] Lighthouse básico (login y dashboard) y pequeños ajustes de accesibilidad/performance.
-
-## Post deploy
-
-- [ ] Migrar a Lucia Auth.

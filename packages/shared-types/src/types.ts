@@ -36,3 +36,10 @@ export interface PracticeJournal {
   date: Date;
   content: string;
 }
+
+export interface Invite {
+  id: string;
+  code: string;
+  used: boolean;
+  created_at: Date;
+}
