@@ -133,37 +133,37 @@ Factores técnicos concretos considerados:
 
 ## 5.7.1. Limpieza y preparación del repo
 
-- [ ] Verificar que `.gitignore` excluye correctamente:
+- [x] Verificar que `.gitignore` excluye correctamente:
   - `node_modules/`, `.turbo/`, `dist/`, `*.db`, `*.db-shm`, `*.db-wal`
   - Archivos `.env` y `.env.local` (nunca deben subir)
-- [ ] Agregar `.gitattributes` en la raíz para normalizar line endings:
+- [x] Agregar `.gitattributes` en la raíz para normalizar line endings:
   ```
   * text=auto eol=lf
   *.bat text eol=crlf
   ```
-- [ ] Verificar que no hay secrets hardcodeados en el código (JWT secret, URLs de DB, etc.).
-- [ ] Asegurarse de que el `README.md` tiene instrucciones mínimas de setup (`bun install`, `bun run dev`).
+- [x] Verificar que no hay secrets hardcodeados en el código (JWT secret, URLs de DB, etc.).
+- [x] Asegurarse de que el `README.md` tiene instrucciones mínimas de setup (`bun install`, `bun run dev`).
 
 ---
 
 ## 5.7.2. Push a GitHub
 
-- [ ] Crear el repositorio en GitHub (privado).
-- [ ] Hacer el push inicial desde el VPS:
+- [x] Crear el repositorio en GitHub (privado).
+- [x] Hacer el push inicial desde el VPS:
   ```bash
   git init
   git add .
   git commit -m "chore: initial commit — phases 1–5 complete"
-  git remote add origin git@github.com:<usuario>/<repo>.git
+  git remote add origin git@github.com:lucasramosuy/dashboard.git
   git push -u origin main
   ```
-- [ ] Verificar en GitHub que la estructura del monorepo se ve correcta (`apps/`, `packages/`).
+- [x] Verificar en GitHub que la estructura del monorepo se ve correcta (`apps/`, `packages/`).
 
 ---
 
 ## 5.7.3. Setup del entorno en Windows
 
-- [ ] Instalar herramientas base:
+- [x] Instalar herramientas base:
   - **Git for Windows** (incluye Git Bash)
   - **Bun** (`powershell -c "irm bun.sh/install.ps1 | iex"`)
   - **Node.js LTS** (solo como fallback si alguna tool lo requiere)

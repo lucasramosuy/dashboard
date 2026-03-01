@@ -34,6 +34,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Turbo
+.turbo/
 
 # VSCode
 .vscode
