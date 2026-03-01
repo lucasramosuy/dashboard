@@ -168,57 +168,95 @@ Factores técnicos concretos considerados:
   - **Bun** (`powershell -c "irm bun.sh/install.ps1 | iex"`)
   - **Node.js LTS** (solo como fallback si alguna tool lo requiere)
   - **VS Code** con extensiones: Astro, ESLint, Prettier, Tailwind CSS IntelliSense
-- [ ] Clonar el repo desde GitHub en Windows:
+- [x] Clonar el repo desde GitHub en Windows:
   ```bash
-  git clone git@github.com:<usuario>/<repo>.git
-  cd <repo>
+  git clone git@github.com:lucasramosuy/dashboard.git
+  cd <./dashboard>
   bun install
   ```
-- [ ] Copiar los `.env` manualmente desde el VPS (nunca via git):
+- [x] Copiar los `.env` manualmente desde el VPS (nunca via git):
   - `apps/api/.env`
-  - `apps/web/.env` (si existe)
-- [ ] Verificar que el entorno de desarrollo levanta correctamente:
+- [x] Verificar que el entorno de desarrollo levanta correctamente:
   ```bash
   bun run dev
   ```
-  - API responde en `localhost:3000`
+  - API responde en `localhost:8787`
   - Web responde en `localhost:4321`
-- [ ] Correr los tests desde Windows para confirmar que pasan:
+- [x] Correr los tests desde Windows para confirmar que pasan:
   ```bash
   cd apps/api && bun test
   ```
-- [ ] Si se usa Docker: verificar que `docker compose up` levanta correctamente con Docker Desktop.
 
 ---
 
 ## 5.7.4. Configurar flujo de trabajo Git
 
-- [ ] Definir rama principal: `main`.
-- [ ] Opcional pero recomendado: usar ramas por feature (`feat/ical-integration`, `feat/mobile-menu`) para las fases siguientes y mergear via PR — da historial limpio aunque se trabaje solo.
-- [ ] Verificar que se puede hacer push desde Windows sin problemas de SSH keys (agregar la clave pública de Windows a GitHub si es diferente a la del VPS).
+- [x] Definir rama principal: `dev`.
+- [x] Verificar que se puede hacer push desde Windows sin problemas de SSH keys (agregar la clave pública de Windows a GitHub si es diferente a la del VPS).
 
 ---
 
 ## 5.7.5. Smoke test final
 
-- [ ] Desde Windows, hacer un cambio menor (ej.: un comentario en `README.md`), comitearlo y pushearlo.
-- [ ] Confirmar que el VPS puede hacer `git pull` y recibir ese cambio.
-- [ ] A partir de este punto: **el VPS pasa a ser solo entorno de deploy/producción**; el desarrollo cotidiano se hace desde Windows.
+- [x] Desde Windows, hacer un cambio menor (ej.: un comentario en `README.md`), comitearlo y pushearlo.
+- [x] Confirmar que el VPS puede hacer `git pull` y recibir ese cambio.
+- [x] A partir de este punto: **el VPS pasa a ser solo entorno de deploy/producción**; el desarrollo cotidiano se hace desde Windows.
 
 ---
 
-## 🟡 Fase 6 — Integración iCal por usuario (Schoology)
+## 🟡 Fase 6 — Migración a Better Auth
+
+**Objetivo:** reemplazar el sistema de autenticación custom (JWT propio) por **Better Auth**, aprovechando que provee gestión de sesiones, manejo automático de cookies y un cliente frontend out-of-the-box para Astro/React.
+
+### 6.1. Ajuste de Base de Datos y Tipos
+
+- [ ] Instalar dependencias `@better-auth/cli`, `better-auth`.
+- [ ] Ejecutar `npx @better-auth/cli generate` o ajustar el esquema manualente para agregar las tablas que requiere Better Auth (`session`, `account`, `verification`).
+- [ ] Modificar la tabla principal de `users` (y el tipo en `packages/shared-types`) para adaptarla a la estructura que requiere Better Auth (id, name, email, emailVerified, image, createdAt, updatedAt).
+- [ ] Migrar el usuario demo (o resetear la DB local si es dev) para que cumpla con el nuevo esquema.
+
+### 6.2. Configuración en apps/api (Backend)
+
+- [ ] Crear el archivo de configuración `auth.ts` (o `lib/auth.better.ts`) usando el adaptador de base de datos adecuado (seguramente SQLite, o compatibilidad con Turso/Drizzle/Kysely o SQL plano si aplica).
+- [ ] Mapear los endpoints en Hono: acoplar el handler de Better Auth (e.g. `auth.handler`) a un wildcard router tipo `app.all("/api/auth/*", ...)` para que maneje login, registro, logout y sesiones.
+- [ ] Eliminar la lógica vieja de JWT y hashing (`lib/auth.ts`, `routes/auth.ts` antiguo).
+- [ ] Refactorizar el middleware de permisos/sesión en Hono (ej. reemplazar `jwt(...)` por extraer el token de la sesión con Better Auth y validar que el usuario existe).
+
+### 6.3. Configuración en apps/web (Frontend)
+
+- [ ] Crear el cliente de Better Auth (ej. `lib/auth-client.ts`) usando `createAuthClient`.
+- [ ] Actualizar el AuthContext para que deje de guardar el JWT en memoria/localStorage y empiece a consumir la sesión de estado de Better Auth (la cual funciona primordialmente con HTTP-only cookies gestionadas por el cliente).
+- [ ] Refactorizar llamadas de `login` y `register` en `apps/web/src/lib/api.ts` para que utilicen los métodos del nuevo `authClient.signIn.email` y `authClient.signUp.email`.
+- [ ] Refactorizar el proceso de Logout usando `authClient.signOut`.
+
+### 6.4. Adaptación de Invites (Plugins o Lógica extendida)
+
+- [ ] Dado que tenemos el requerimiento estricto *"solo personas con un invite code"*:
+  - Opcion A: Evaluar si se puede interceptar el registro usando `plugins` de Better Auth o callbacks (ej. `databaseHooks.user.create`).
+  - Opcion B: Mantener un endpoint proxy en Hono `/api/custom-register` que primero valide en DB el inviteCode y luego llame internamente a Better Auth para la creación real de credenciales.
+- [ ] Ajustar tests relacionados al registro con código de invitación.
+
+### 6.5. Verificación (Smoke Test)
+
+- [ ] Confirmar login con usuario dev exitoso.
+- [ ] Confirmar registro con invite code descartándolo (used = 1) tras finalizar.
+- [ ] Borrado de credenciales/tokens viejos en LocalStorage.
+- [ ] Verificar persistencia de sesión cerrando y abriendo pestanas.
+
+---
+
+## 🟡 Fase 7 — Integración iCal por usuario (Schoology)
 
 **Objetivo:** cada usuario puede vincular su feed iCal/webcal de Schoology y sincronizar eventos hacia el dashboard.
 
-### 6.1. Modelo y DB
+### 7.1. Modelo y DB
 
 - [ ] Extender tabla `users`:
   - Agregar campo `ical_url TEXT` y `last_ical_sync TEXT`.
 - [ ] Actualizar `dbService.users`:
   - Permitir leer y actualizar `ical_url` y `last_ical_sync`.
 
-### 6.2. Endpoints de configuración y sync
+### 7.2. Endpoints de configuración y sync
 
 - [ ] Endpoint para configurar iCal:
   - `PATCH /api/auth/me/ical`:
@@ -237,7 +275,7 @@ Factores técnicos concretos considerados:
       - O crea/actualiza `tasks` a partir de ellos.
       - O los guarda en una tabla nueva `external_events` si querés separarlos.
 
-### 6.3. UI
+### 7.3. UI
 
 - [ ] En el dashboard, sección “Integraciones” o “Calendario”:
   - Campo para pegar la URL Schoology (webcal/https).
@@ -246,7 +284,7 @@ Factores técnicos concretos considerados:
 - [ ] Opcional:
   - Mostrar eventos Schoology mezclados con tareas o en un bloque separado.
 
-### 6.4. Tests para iCal
+### 7.4. Tests para iCal
 
 - [ ] Tests de servicio iCal en API:
   - Normalización `webcal://` → `https://`.
@@ -262,11 +300,11 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 7 — UX Mobile: nuevo panel flotante (menú `☰`)
+## 🟡 Fase 8 — UX Mobile: nuevo panel flotante (menú `☰`)
 
 **Objetivo:** reemplazar el bottom navbar actual en mobile por un botón flotante tipo menú que despliega un panel grande con las opciones de navegación y acciones.
 
-### 7.1. Diseño del nuevo menú mobile
+### 8.1. Diseño del nuevo menú mobile
 
 - [ ] Eliminar/ocultar el bottom‑nav actual en mobile (`DashboardLayout.astro`).
 - [ ] Añadir un botón flotante icono `☰` en la esquina inferior derecha:
@@ -278,7 +316,7 @@ Factores técnicos concretos considerados:
   - Animación de aparición (slide/fade).
   - Cierra al tocar fuera o al pulsar “X”.
 
-### 7.2. Contenido del panel
+### 8.2. Contenido del panel
 
 - [ ] Incluir enlaces a:
   - Dashboard
@@ -293,7 +331,7 @@ Factores técnicos concretos considerados:
   - Focus atrapado dentro del panel cuando esté abierto.
   - `aria-modal="true"` y `role="dialog"`.
 
-### 7.3. Implementación técnica
+### 8.3. Implementación técnica
 
 - [ ] Ajustar `DashboardLayout.astro`:
   - Quitar lógica de bottom‑nav en mobile.
@@ -306,15 +344,15 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 8 — Enriquecimiento académico y Tasks avanzadas
+## 🟡 Fase 9 — Enriquecimiento académico y Tasks avanzadas
 
-### 8.1. Renombrar “Materias” → “UC (Unidad Curricular)”
+### 9.1. Renombrar “Materias” → “UC (Unidad Curricular)”
 
 - [ ] En `/subjects` y textos de UI:
   - Cambiar labels y títulos a “Unidades Curriculares (UC)”.
 - [ ] Mantener el modelo `Subject` en código, aclarando en UI que es UC.
 
-### 8.2. Trayecto y Duración en `/subjects`
+### 9.2. Trayecto y Duración en `/subjects`
 
 - [ ] Extender tabla `subjects` y tipo `Subject`:
   - `trayecto TEXT` (ej.: `TFEE`, `TFLDPP`, `TFE`, etc.).
@@ -323,7 +361,7 @@ Factores técnicos concretos considerados:
   - Añadir selects para Trayecto y Duración (listas cerradas).
 - [ ] Mostrar columnas “Trayecto” y “Duración” en la tabla de `/subjects`.
 
-### 8.3. Reglas de clases totales por duración (reglamento CFE)
+### 9.3. Reglas de clases totales por duración (reglamento CFE)
 
 - [ ] Basarse en el Reglamento CFE (Plan 2023), Art. 28:
   - Las UC semestrales se desarrollan en **15 semanas**.
@@ -336,7 +374,7 @@ Factores técnicos concretos considerados:
 - [ ] Documentar en el código y en el ROADMAP:
   - Que estos valores provienen del Art. 28 del Reglamento CFE (Plan 2023) y representan semanas de curso, no horas exactas.
 
-### 8.4. Nuevos campos en `/tasks` (por UC)
+### 9.4. Nuevos campos en `/tasks` (por UC)
 
 - [ ] Extender tabla `tasks` y tipo `Task`:
   - `type` (individual / grupal).
@@ -365,7 +403,7 @@ Factores técnicos concretos considerados:
     - Archivo (renderizado como link si existe)
     - Comentarios (truncado si es largo).
 
-### 8.5. Promedio de calificación por UC
+### 9.5. Promedio de calificación por UC
 
 - [ ] En `SubjectDetail` (o en la tabla `/subjects`):
   - Calcular promedio de `grade` de todas las tareas de esa UC (solo las que tengan nota).
@@ -373,7 +411,7 @@ Factores técnicos concretos considerados:
 - [ ] Opcional:
   - Mostrar número de tareas calificadas vs. totales.
 
-### 8.6. Integración iCal con `/tasks`
+### 9.6. Integración iCal con `/tasks`
 
 - [ ] Definir mapping iCal → Task:
   - Título de evento → `title`.
@@ -388,11 +426,11 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 9 — Planner semanal tipo WeekToDo
+## 🟡 Fase 10 — Planner semanal tipo WeekToDo
 
 **Objetivo:** tener una vista semanal estilo WeekToDo que complemente `/tasks`.
 
-### 9.1. Nueva ruta y layout
+### 10.1. Nueva ruta y layout
 
 - [ ] Crear nueva página `/planner` (o `/week`):
   - Layout con 7 columnas (Lunes–Domingo).
@@ -400,7 +438,7 @@ Factores técnicos concretos considerados:
 - [ ] Fuente de datos:
   - Reutilizar `tasks` existentes, filtradas por la semana actual (lunes–domingo).
 
-### 9.2. Funcionalidad inicial
+### 10.2. Funcionalidad inicial
 
 - [ ] V1:
   - Solo visualización semanal (sin drag & drop).
@@ -410,7 +448,7 @@ Factores técnicos concretos considerados:
     - Al mover una tarea a otro día, actualizar `due_date`.
   - Indicadores visuales para tareas importadas desde iCal.
 
-### 9.3. Integración con resto del sistema
+### 10.3. Integración con resto del sistema
 
 - [ ] Desde `/tasks`, botón “Ver semana” que lleva a `/planner`.
 - [ ] Desde `/planner`, click en una tarjeta abre el `TaskDetail`.
@@ -418,7 +456,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 10 — Higiene, tests, calidad y deploy
+## 🟡 Fase 11 — Higiene, tests, calidad y deploy
 
 - [ ] Verificar que los items de la DB estan linkeados por usuario.
 - [ ] Verificar si los requerimentos para la migración a Lucia Auth post deploy esta dada.
