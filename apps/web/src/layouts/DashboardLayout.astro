@@ -1,7 +1,6 @@
 ---
 import Base from "./Base.astro";
-import { LogoutButton } from "../components/LogoutButton";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { SidebarActions } from "../components/SidebarActions";
 
 interface Props {
   title: string;
@@ -12,7 +11,7 @@ const pathname = Astro.url.pathname;
 
 const navItems = [
   { href: "/", icon: "🏠", label: "Dashboard" },
-  { href: "/subjects", icon: "📚", label: "Materias" },
+  { href: "/subjects", icon: "📚", label: "UC" },
   { href: "/tasks", icon: "✅", label: "Tareas" },
   { href: "/analytics", icon: "📊", label: "Analíticas" },
   { href: "/journal", icon: "✍️", label: "Práctica" },
@@ -40,8 +39,7 @@ const navItems = [
 
       {/* Desktop Sidebar Bottom */}
       <div class="sidebar-bottom">
-        <ThemeToggle client:only="react" variant="sidebar" />
-        <LogoutButton client:only="react" />
+        <SidebarActions client:only="react" variant="sidebar" />
       </div>
     </aside>
 
@@ -51,8 +49,7 @@ const navItems = [
 
     {/* Mobile Floating Actions */}
     <div class="mobile-actions">
-      <ThemeToggle client:only="react" variant="floating" />
-      <LogoutButton client:only="react" />
+      <SidebarActions client:only="react" variant="floating" />
     </div>
   </div>
 </Base>

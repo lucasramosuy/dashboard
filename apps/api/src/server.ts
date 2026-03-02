@@ -6,18 +6,25 @@ import { tasksRouter } from "./routes/tasks";
 import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
 import { initDB } from "./lib/db";
-
-// --- CONFIGURATION GUARD ---
-const JWT_SECRET = Bun.env.JWT_SECRET;
-if (!JWT_SECRET || JWT_SECRET === "dev-secret-change-me") {
-  console.warn("\n\x1b[33m%s\x1b[0m", "⚠️  WARNING: Using default or missing JWT_SECRET.");
-  console.warn("\x1b[33m%s\x1b[0m", "   Environment is insecure for production use.\n");
-}
+import { z } from "zod/v4";
 
 // Initialize SQLite tables
 await initDB();
 
 export const app = new Hono();
+
+// ✅ Error handler centralizado — respuestas JSON consistentes
+app.onError((err, c) => {
+  if (err instanceof z.ZodError) {
+    console.error("[Zod Error]", err.issues);
+    return c.json({ error: "Validation error", details: err.format() }, 400);
+  }
+  console.error("[API Error]", err.stack || err);
+  return c.json({ error: err.message || "Internal server error" }, 500);
+});
+
+// ✅ 404 handler — JSON en vez de HTML
+app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 // ✅ CORS dinámico — soporta múltiples orígenes desde variable de entorno
 const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(",");
@@ -34,7 +41,13 @@ app.use(
   }),
 );
 
+import { auth } from "./lib/auth.better";
+
 app.route("/api/auth", authRouter);
+app.on(["GET", "POST"], "/api/auth/*", async (c) => {
+  return auth.handler(c.req.raw);
+});
+
 app.route("/api/subjects", subjectsRouter);
 app.route("/api/tasks", tasksRouter);
 app.route("/api/practice-journals", practiceJournalsRouter);
@@ -42,9 +55,21 @@ app.route("/api/absences", absencesRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-console.log("\x1b[32m%s\x1b[0m", "🚀 API Server running on port 8787");
+const port = process.env.PORT || 8787;
 
-export default {
-  port: 8787,
+const server = Bun.serve({
+  port,
   fetch: app.fetch,
+});
+
+console.log("\x1b[32m%s\x1b[0m", `🚀 API Server running on port ${server.port}`);
+
+// ✅ Graceful shutdown para evitar puertos ocupados (EADDRINUSE) en Windows
+const shutdown = (signal: string) => {
+  console.log(`\n[${signal}] Cerrando servidor Bun y liberando el puerto ${server.port}...`);
+  server.stop(true); // Detiene conexiones activas y libera el puerto
+  process.exit(0);
 };
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

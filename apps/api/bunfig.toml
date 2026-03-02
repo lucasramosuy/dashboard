@@ -1,2 +1,7 @@
 [test]
 preload = ["./tests/setup.ts"]
+
+[test.env]
+NODE_ENV = "test"
+TURSO_DATABASE_URL = ""
+TURSO_AUTH_TOKEN = ""

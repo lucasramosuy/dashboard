@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { StatusBadge } from "./StatusBadge";
 import type { Task } from "@dashboard/shared-types";
+import { useTask, useUpdateTaskStatus } from "../hooks/useDashboardQueries";
 
 interface Props {
   id: string;
@@ -39,51 +39,45 @@ const NEXT_STATUS: Record<Task["status"], Task["status"]> = {
 };
 
 export const TaskDetail: React.FC<Props> = ({ id }) => {
-  const { user, token, loading: authLoading } = useAuth();
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+
+  // React Query Hooks
+  const { data: task, isLoading, error } = useTask(id);
+  const updateTaskStatus = useUpdateTaskStatus();
+
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token && id) {
-      setLoading(true);
-      api
-        .getTask(token, id)
-        .then(setTask)
-        .catch((err) => {
-          console.error(err);
-          setError(err.message || "No se pudo cargar la tarea.");
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [token, id]);
-
-  const advanceStatus = async () => {
-    if (!token || !task) return;
+  const advanceStatus = () => {
+    if (!task) return;
     setActionError(null);
-    try {
-      const updated = await api.updateTaskStatus(token, task.id, NEXT_STATUS[task.status]);
-      setTask(updated);
-    } catch (err: any) {
-      setActionError(err.message);
-    }
+    updateTaskStatus.mutate(
+      { id: task.id, status: NEXT_STATUS[task.status] },
+      {
+        onError: (e: any) => setActionError(e.message),
+      },
+    );
   };
 
-  if (authLoading || loading) {
+  if (authLoading || isLoading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
+      <div
+        style={{ display: "flex", justifyContent: "center", padding: "4rem" }}
+        aria-busy="true"
+        aria-label="Cargando tarea"
+      >
         <div className="oat-spinner" />
       </div>
     );
   }
 
   if (error) {
-    return <p style={{ color: "var(--oat-danger)" }}>Error: {error}</p>;
+    return <p style={{ color: "var(--oat-danger)" }}>Error al cargar la tarea</p>;
   }
 
   if (!task) {
@@ -145,14 +139,15 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
                 color: "var(--oat-text-muted)",
               }}
             >
-              Materia
+              UC
             </h4>
             <p style={{ fontSize: "1.125rem", fontWeight: "bold", margin: 0 }}>
               <a
                 href={`/subjects/${task.subject_id}`}
                 style={{ color: "var(--oat-primary)", textDecoration: "none" }}
+                aria-label="Ir a los detalles de la UC cursada"
               >
-                Ver materia
+                Ver UC
               </a>
             </p>
           </div>
@@ -201,12 +196,20 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
           </p>
         )}
         <div style={{ display: "flex", gap: "1rem" }}>
-          <button onClick={advanceStatus} className="oat-btn oat-btn-primary">
-            Marcar como {STATUS_LABELS[NEXT_STATUS[task.status]]}
+          <button
+            onClick={advanceStatus}
+            className="oat-btn oat-btn-primary"
+            disabled={updateTaskStatus.isPending}
+            aria-label={`Avanzar tarea al estado: ${STATUS_LABELS[NEXT_STATUS[task.status]]}`}
+          >
+            {updateTaskStatus.isPending
+              ? "Actualizando..."
+              : `Marcar como ${STATUS_LABELS[NEXT_STATUS[task.status]]}`}
           </button>
           <button
             onClick={() => (window.location.href = "/tasks")}
             className="oat-btn oat-btn-outline"
+            aria-label="Volver a lista de tareas"
           >
             Volver a Tareas
           </button>

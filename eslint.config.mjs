@@ -4,6 +4,9 @@ import tsParser from "@typescript-eslint/parser";
 import astro from "eslint-plugin-astro";
 
 export default [
+  {
+    ignores: ["**/dist/**", "**/.astro/**", "**/node_modules/**", "**/*.d.ts"],
+  },
   // Base JS + globals compartidos
   {
     ...js.configs.recommended,

@@ -1,102 +1,85 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { StatusBadge } from "./StatusBadge";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
-import type { Subject, Task, Absence } from "@dashboard/shared-types";
+import {
+  useSubject,
+  useTasks,
+  useAbsencesBySubject,
+  useCreateAbsence,
+  useDeleteAbsence,
+} from "../hooks/useDashboardQueries";
 
 interface Props {
   id: string;
 }
 
 export const SubjectDetail: React.FC<Props> = ({ id }) => {
-  const { user, token, loading: authLoading } = useAuth();
-  const [subject, setSubject] = useState<Subject | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [absences, setAbsences] = useState<Absence[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
+
+  // React Query Hooks
+  const { data: subject, isLoading: loadingSubject, error: subjectError } = useSubject(id);
+  const { data: tasks = [], isLoading: loadingTasks } = useTasks(id);
+  const { data: absences = [], isLoading: loadingAbsences } = useAbsencesBySubject(id);
+  const createAbsence = useCreateAbsence();
+  const deleteAbsence = useDeleteAbsence();
+
   const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split("T")[0]);
   const [absenceValue, setAbsenceValue] = useState<number>(1);
-  const [absenceSubmitting, setAbsenceSubmitting] = useState(false);
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
-  const fetchData = async () => {
-    if (!token || !id) return;
-    setLoading(true);
-    try {
-      const [s, t, a] = await Promise.all([
-        api.getSubject(token, id),
-        api.getTasks(token, id),
-        api.getAbsences(token, id),
-      ]);
-      setSubject(s);
-      setTasks(t);
-      setAbsences(a);
-    } catch (err: any) {
-      setError(err.message || "No se pudo cargar la materia.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingSubject || loadingTasks || loadingAbsences;
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token, id]);
-
-  const handleCreateAbsence = async () => {
-    if (!token) return;
-    setAbsenceSubmitting(true);
-    try {
-      const calculated_value = absenceValue === 0.5 ? 0.5 : 1.0;
-      await api.createAbsence(token, {
+  const handleCreateAbsence = () => {
+    const calculated_value = absenceValue === 0.5 ? 0.5 : 1.0;
+    createAbsence.mutate(
+      {
         subject_id: id,
         date: new Date(absenceDate),
         type: calculated_value === 1.0 ? "standard" : "justified",
         calculated_value,
-      });
-      setShowAbsenceForm(false);
-      setAbsenceDate(new Date().toISOString().split("T")[0]);
-      setAbsenceValue(1);
-      await fetchData();
-      showToast("Inasistencia registrada");
-    } catch (e: any) {
-      showToast(e.message, "error");
-    } finally {
-      setAbsenceSubmitting(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setShowAbsenceForm(false);
+          setAbsenceDate(new Date().toISOString().split("T")[0]);
+          setAbsenceValue(1);
+          showToast("Inasistencia registrada");
+        },
+        onError: (e: any) => showToast(e.message, "error"),
+      },
+    );
   };
 
-  const handleDeleteAbsence = async (absenceId: string) => {
-    if (!token) return;
-    try {
-      await api.deleteAbsence(token, absenceId);
-      await fetchData();
-      showToast("Inasistencia eliminada");
-    } catch (e: any) {
-      showToast(e.message, "error");
-    }
+  const handleDeleteAbsence = (absenceId: string) => {
+    deleteAbsence.mutate(absenceId, {
+      onSuccess: () => showToast("Inasistencia eliminada"),
+      onError: (e: any) => showToast(e.message, "error"),
+    });
   };
 
   if (authLoading || loading) {
     return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
+      <div
+        className="oat-spinner-wrapper"
+        aria-busy="true"
+        aria-label="Cargando detalles de UC"
+      ></div>
     );
   }
 
-  if (error) return <p style={{ color: "var(--oat-danger)" }}>Error: {error}</p>;
-  if (!subject) return <p className="oat-text-secondary">Materia no encontrada.</p>;
+  if (subjectError) return <p style={{ color: "var(--oat-danger)" }}>Error al cargar la UC</p>;
+  if (!subject) return <p className="oat-text-secondary">UC no encontrada.</p>;
 
-  const totalAbsenceValue = absences.reduce((sum, a) => sum + a.calculated_value, 0);
+  const totalAbsenceValue = absences.reduce((sum, a) => sum + (a.calculated_value || 0), 0);
   const attendancePercentage =
     subject.total_classes > 0
       ? Math.max(
@@ -137,13 +120,15 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                 onClick={() => setShowAbsenceForm(!showAbsenceForm)}
                 className="oat-btn oat-btn-outline"
                 style={{ fontSize: "0.8rem" }}
+                aria-expanded={showAbsenceForm}
+                aria-controls="absence-form"
               >
                 {showAbsenceForm ? "Cancelar" : "+ Registrar inasistencia"}
               </button>
             </div>
 
             {showAbsenceForm && (
-              <div className="absence-form">
+              <div id="absence-form" className="absence-form">
                 <div
                   style={{
                     display: "flex",
@@ -154,6 +139,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                 >
                   <div style={{ flex: 1, minWidth: "140px" }}>
                     <label
+                      htmlFor="absenceDate"
                       style={{
                         display: "block",
                         fontSize: "0.8rem",
@@ -164,6 +150,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       Fecha
                     </label>
                     <input
+                      id="absenceDate"
                       type="date"
                       className="oat-input"
                       value={absenceDate}
@@ -172,6 +159,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                   </div>
                   <div style={{ flex: 1, minWidth: "140px" }}>
                     <label
+                      htmlFor="absenceType"
                       style={{
                         display: "block",
                         fontSize: "0.8rem",
@@ -182,6 +170,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       Tipo
                     </label>
                     <select
+                      id="absenceType"
                       className="oat-input"
                       value={absenceValue}
                       onChange={(e) => setAbsenceValue(Number(e.target.value))}
@@ -193,17 +182,21 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                   <button
                     onClick={handleCreateAbsence}
                     className="oat-btn oat-btn-primary"
-                    disabled={absenceSubmitting}
+                    disabled={createAbsence.isPending}
                     style={{ whiteSpace: "nowrap" }}
+                    aria-label="Guardar inasistencia"
                   >
-                    {absenceSubmitting ? "Guardando..." : "Guardar"}
+                    {createAbsence.isPending ? "Guardando..." : "Guardar"}
                   </button>
                 </div>
               </div>
             )}
 
             <div style={{ textAlign: "center", padding: "1rem 0" }}>
-              <span style={{ fontSize: "3rem", fontWeight: "bold", color: "var(--oat-primary)" }}>
+              <span
+                style={{ fontSize: "3rem", fontWeight: "bold", color: "var(--oat-primary)" }}
+                aria-label={`Porcentaje de asistencia: ${attendancePercentage}%`}
+              >
                 {attendancePercentage}%
               </span>
               <p className="oat-text-secondary" style={{ margin: "0.25rem 0 0" }}>
@@ -232,7 +225,10 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                 >
                   Historial de inasistencias
                 </p>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                <ul
+                  style={{ listStyle: "none", padding: 0, margin: 0 }}
+                  aria-label="Historial de inasistencias"
+                >
                   {absences.map((a) => (
                     <li key={a.id} className="absence-item">
                       <span style={{ fontSize: "0.875rem" }}>
@@ -250,6 +246,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                           color: "var(--oat-danger)",
                           fontSize: "0.75rem",
                         }}
+                        aria-label={`Eliminar inasistencia del ${new Date(a.date).toLocaleDateString("es-UY")}`}
                       >
                         ✕
                       </button>
@@ -266,7 +263,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
             {tasks.length === 0 ? (
               <p className="oat-text-secondary">No hay tareas asociadas.</p>
             ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
+              <ul style={{ listStyle: "none", padding: 0 }} aria-label="Historial de Tareas">
                 {tasks.map((t) => (
                   <li
                     key={t.id}
@@ -294,8 +291,9 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
           <button
             onClick={() => (window.location.href = "/subjects")}
             className="oat-btn oat-btn-outline"
+            aria-label="Volver a lista de UC"
           >
-            ← Volver a Materias
+            ← Volver a UC
           </button>
         </div>
       </div>

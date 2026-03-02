@@ -2,22 +2,13 @@
 import Base from "../layouts/Base.astro";
 ---
 
-<script is:inline>
-  (function () {
-    const token = localStorage.getItem("auth_token");
-    if (!token) {
-      window.location.replace("/login");
-    }
-  })();
-</script>
-
 <Base title="404 - Página no encontrada">
   <div
     style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; background-color: var(--oat-bg);"
   >
     <header style="margin-bottom: 2.5rem; text-align: center;">
       <h1 class="oat-text-bold" style="font-size: 2.5rem; margin: 0;">Error 404</h1>
-      <p class="oat-text-secondary">Parece que te has perdido en el campus.</p>
+      <p class="oat-text-secondary">Parece que te has perdido.</p>
     </header>
 
     <div
@@ -27,7 +18,7 @@ import Base from "../layouts/Base.astro";
       <span style="font-size: 4rem; display: block; margin-bottom: 1rem;">🧭</span>
       <h2 class="oat-h2" style="margin-bottom: 1rem;">Página no encontrada</h2>
       <p style="margin-bottom: 2rem; color: var(--oat-text-muted);">
-        La página que buscas no existe o ha sido movida a otro departamento.
+        La página que buscas no existe o ha sido movida.
       </p>
       <a href="/" class="oat-btn oat-btn-primary" style="width: 100%;">Volver al Dashboard</a>
     </div>

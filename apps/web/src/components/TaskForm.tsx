@@ -54,7 +54,7 @@ export const TaskForm: React.FC<Props> = ({
         />
       </div>
       <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="subject">Materia</label>
+        <label htmlFor="subject">UC</label>
         <select
           id="subject"
           className="oat-input"
@@ -63,7 +63,7 @@ export const TaskForm: React.FC<Props> = ({
           required
         >
           <option value="" disabled>
-            Seleccioná una materia
+            Seleccioná una UC
           </option>
           {subjects.map((s) => (
             <option key={s.id} value={s.id}>

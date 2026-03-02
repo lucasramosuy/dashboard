@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
-import type { PracticeJournal } from "@dashboard/shared-types";
+import { useJournalByDate, useJournals, useUpsertJournal } from "../hooks/useDashboardQueries";
 
 const PRACTICE_SUBJECTS = ["Derecho", "Sociología"];
 
@@ -15,77 +14,65 @@ function formatDateDisplay(date: Date | string): string {
 }
 
 export const JournalView: React.FC = () => {
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
-  const [journal, setJournal] = useState<Partial<PracticeJournal>>({ content: "", subject_id: "" });
-  const [history, setHistory] = useState<PracticeJournal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [draftContent, setDraftContent] = useState("");
+  const [draftSubjectId, setDraftSubjectId] = useState("");
+
+  const { data: journalOnDate, isLoading: loadingJournal } = useJournalByDate(currentDate);
+  const { data: unSortedHistory = [], isLoading: loadingHistory } = useJournals();
+  const upsertJournal = useUpsertJournal();
+
   const { toast, showToast, hideToast } = useToast();
 
-  const fetchData = async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const [journalData, historyData] = await Promise.all([
-        api.getJournalByDate(token, currentDate),
-        api.getJournals(token),
-      ]);
-      if (journalData) {
-        setJournal(journalData);
-      } else {
-        setJournal({ content: "", subject_id: "", date: new Date(currentDate) });
-      }
-      setHistory(historyData ?? []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const loading = loadingJournal || loadingHistory;
+
+  // Sincronizar estado local con datos del Backend cuando se carga
+  useEffect(() => {
+    if (journalOnDate) {
+      setDraftContent(journalOnDate.content);
+      setDraftSubjectId(journalOnDate.subject_id);
+    } else {
+      setDraftContent("");
+      setDraftSubjectId("");
     }
-  };
+  }, [journalOnDate, currentDate]);
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token, currentDate]);
-
-  const handleSave = async () => {
-    if (!token) return;
-    if (!journal.subject_id) {
-      showToast("Seleccioná una materia", "error");
+  const handleSave = () => {
+    if (!draftSubjectId) {
+      showToast("Seleccioná una UC", "error");
       return;
     }
-    setSaving(true);
-    try {
-      const saved = await api.upsertJournal(token, {
-        ...journal,
+    upsertJournal.mutate(
+      {
+        id: journalOnDate?.id, // Se envia ID para hacer PUT si ya existe, sin ID para POST
+        subject_id: draftSubjectId,
+        content: draftContent,
         date: new Date(currentDate),
-      });
-      setJournal({ content: "", subject_id: "", date: new Date(currentDate) });
-      // Refrescar historial
-      const historyData = await api.getJournals(token);
-      setHistory(historyData ?? []);
-      showToast("Práctica guardada correctamente");
-    } catch (e: any) {
-      showToast(e.message, "error");
-    } finally {
-      setSaving(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          showToast("Práctica guardada correctamente");
+        },
+        onError: (e: any) => showToast(e.message, "error"),
+      },
+    );
   };
 
   if (authLoading || loading) {
     return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
+      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando prácticas"></div>
     );
   }
 
-  const sortedHistory = [...history].sort(
+  const sortedHistory = [...unSortedHistory].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 
@@ -109,6 +96,7 @@ export const JournalView: React.FC = () => {
             onChange={(e) => setCurrentDate(e.target.value)}
             className="oat-input"
             style={{ width: "auto" }}
+            aria-label="Seleccionar fecha para la práctica"
           />
         </header>
 
@@ -123,17 +111,17 @@ export const JournalView: React.FC = () => {
                 color: "var(--oat-text-muted)",
               }}
             >
-              Materia Asociada
+              UC Asociada
             </label>
             <select
               id="subject"
               className="oat-input"
-              value={journal.subject_id}
-              onChange={(e) => setJournal({ ...journal, subject_id: e.target.value })}
+              value={draftSubjectId}
+              onChange={(e) => setDraftSubjectId(e.target.value)}
               required
             >
               <option value="" disabled>
-                Seleccioná una materia
+                Seleccioná una UC
               </option>
               {PRACTICE_SUBJECTS.map((s) => (
                 <option key={s} value={s}>
@@ -158,16 +146,21 @@ export const JournalView: React.FC = () => {
             <textarea
               id="content"
               className="oat-input"
-              value={journal.content}
-              onChange={(e) => setJournal({ ...journal, content: e.target.value })}
+              value={draftContent}
+              onChange={(e) => setDraftContent(e.target.value)}
               style={{ minHeight: "260px", fontFamily: "inherit", lineHeight: "1.6" }}
               placeholder="Hoy en la práctica aprendí que..."
             />
           </div>
 
           <footer style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button onClick={handleSave} className="oat-btn oat-btn-primary" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar Reflexión"}
+            <button
+              onClick={handleSave}
+              className="oat-btn oat-btn-primary"
+              disabled={upsertJournal.isPending}
+              aria-label="Guardar reflexión"
+            >
+              {upsertJournal.isPending ? "Guardando..." : "Guardar Reflexión"}
             </button>
           </footer>
         </section>
@@ -180,7 +173,10 @@ export const JournalView: React.FC = () => {
             >
               Historial de prácticas
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+              aria-label="Historial de prácticas pasadas"
+            >
               {sortedHistory.map((entry) => (
                 <div key={entry.id} className="oat-card journal-history-item">
                   <div

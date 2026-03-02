@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { StatusBadge } from "./StatusBadge";
-import type { Subject, Task } from "@dashboard/shared-types";
+import { useTasks, useAtRiskSubjects } from "../hooks/useDashboardQueries";
 
 // Wrapper clickeable para tarjetas bento
 const BentoLink: React.FC<{
@@ -22,9 +21,12 @@ const BentoLink: React.FC<{
 
 export const DashboardSummary: React.FC = () => {
   const { user, token, loading: authLoading } = useAuth();
-  const [atRisk, setAtRisk] = useState<Subject[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // React Query Hooks (Data Fetching Sólido)
+  const { data: atRisk = [], isLoading: loadingAtRisk } = useAtRiskSubjects();
+  const { data: tasks = [], isLoading: loadingTasks } = useTasks();
+
+  const loading = loadingAtRisk || loadingTasks;
 
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "done").length;
@@ -35,33 +37,19 @@ export const DashboardSummary: React.FC = () => {
     .slice(0, 3);
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token) {
-      setLoading(true);
-      Promise.all([api.getAtRiskSubjects(token), api.getTasks(token)])
-        .then(([riskData, taskData]) => {
-          setAtRisk(riskData);
-          setTasks(taskData);
-        })
-        .catch(() => {
-          // API falló — no bloqueamos la UI
-        })
-        .finally(() => setLoading(false));
-    } else if (!authLoading) {
-      // Auth terminó pero no hay token → redirigir
-      setLoading(false);
-    }
-  }, [token, authLoading]); // ← agregar authLoading a las deps
-
-  if (authLoading || loading) {
+  // Si auth está cargando, o las queries iniciales, mostramos spinner
+  if (authLoading || (loading && token)) {
     return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
+      <div
+        className="oat-spinner-wrapper"
+        aria-busy="true"
+        aria-label="Cargando resumen del dashboard"
+      ></div>
     );
   }
 
@@ -89,7 +77,7 @@ export const DashboardSummary: React.FC = () => {
           <div className="bento-card-header">
             <h2 className="bento-card-title">⚠️ Alertas</h2>
             <StatusBadge variant={atRisk.length > 0 ? "danger" : "success"}>
-              {atRisk.length} materias
+              {atRisk.length} UC
             </StatusBadge>
           </div>
           {atRisk.length === 0 ? (
@@ -106,7 +94,9 @@ export const DashboardSummary: React.FC = () => {
               ))}
             </ul>
           )}
-          <span className="bento-link-hint">Ver materias →</span>
+          <span className="bento-link-hint" aria-hidden="true">
+            Ver UC →
+          </span>
         </BentoLink>
 
         {/* CARD 2: Próximas Tareas → /tasks */}
@@ -139,7 +129,9 @@ export const DashboardSummary: React.FC = () => {
               ))}
             </ul>
           )}
-          <span className="bento-link-hint">Ver tareas →</span>
+          <span className="bento-link-hint" aria-hidden="true">
+            Ver tareas →
+          </span>
         </BentoLink>
 
         {/* CARD 3: Acceso Rápido Práctica → /journal */}
@@ -155,7 +147,9 @@ export const DashboardSummary: React.FC = () => {
               gap: "0.5rem",
             }}
           >
-            <span style={{ fontSize: "2.5rem" }}>✍️</span>
+            <span style={{ fontSize: "2.5rem" }} aria-hidden="true">
+              ✍️
+            </span>
             <span className="oat-text-bold" style={{ fontSize: "1.1rem" }}>
               Nueva Práctica
             </span>
@@ -167,7 +161,7 @@ export const DashboardSummary: React.FC = () => {
           <div className="bento-card-header">
             <h2 className="bento-card-title">Progreso General</h2>
           </div>
-          <div className="progress-bar-track">
+          <div className="progress-bar-track" aria-hidden="true">
             <div
               className="progress-bar-fill"
               style={{
@@ -191,7 +185,9 @@ export const DashboardSummary: React.FC = () => {
               </>
             )}
           </p>
-          <span className="bento-link-hint">Ver analíticas →</span>
+          <span className="bento-link-hint" aria-hidden="true">
+            Ver analíticas →
+          </span>
         </BentoLink>
       </div>
     </div>

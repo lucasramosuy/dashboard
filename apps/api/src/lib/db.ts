@@ -1,5 +1,6 @@
 import { createClient } from "@libsql/client";
 import type { InValue } from "@libsql/client";
+import { mkdirSync } from "fs";
 import {
   UserPublic,
   Subject,
@@ -12,7 +13,7 @@ import {
 // --- DB CONFIG ---
 const getDbConfig = () => {
   if (Bun.env.NODE_ENV === "test") {
-    return { url: "file::memory:" };
+    return { url: "file:./data/test.sqlite" };
   }
   if (Bun.env.TURSO_DATABASE_URL) {
     return {
@@ -25,6 +26,8 @@ const getDbConfig = () => {
   return { url: `file:${dbPath}` };
 };
 
+// Ensure data directory exists before creating client
+mkdirSync("./data", { recursive: true });
 export const db = createClient(getDbConfig());
 
 // --- INIT ---
@@ -32,19 +35,58 @@ export async function initDB() {
   await db.batch(
     [
       "PRAGMA foreign_keys = ON",
-      `CREATE TABLE IF NOT EXISTS users (
+      `CREATE TABLE IF NOT EXISTS user (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
-      passwordHash TEXT NOT NULL,
-      role TEXT DEFAULT 'user'
+      emailVerified INTEGER NOT NULL,
+      image TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      role TEXT DEFAULT 'user',
+      passwordHash TEXT
+    )`,
+      `CREATE TABLE IF NOT EXISTS session (
+      id TEXT PRIMARY KEY,
+      expiresAt TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      ipAddress TEXT,
+      userAgent TEXT,
+      userId TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+    )`,
+      `CREATE TABLE IF NOT EXISTS account (
+      id TEXT PRIMARY KEY,
+      accountId TEXT NOT NULL,
+      providerId TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      accessToken TEXT,
+      refreshToken TEXT,
+      idToken TEXT,
+      accessTokenExpiresAt TEXT,
+      refreshTokenExpiresAt TEXT,
+      scope TEXT,
+      password TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+    )`,
+      `CREATE TABLE IF NOT EXISTS verification (
+      id TEXT PRIMARY KEY,
+      identifier TEXT NOT NULL,
+      value TEXT NOT NULL,
+      expiresAt TEXT NOT NULL,
+      createdAt TEXT,
+      updatedAt TEXT
     )`,
       `CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       total_classes INTEGER DEFAULT 0,
       user_id TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )`,
       `CREATE TABLE IF NOT EXISTS absences (
       id TEXT PRIMARY KEY,
@@ -91,24 +133,24 @@ export async function initDB() {
 
 // Extrae solo las propiedades nombradas de una Row de libsql
 // (evita las claves numéricas del array subyacente)
-function toObj<T>(row: any): T {
-  if (!row) return row;
-  const obj: any = {};
+function toObj<T>(row: Record<string, unknown>): T {
+  if (!row) return row as T;
+  const obj: Record<string, unknown> = {};
   for (const key of Object.keys(row)) {
     if (isNaN(Number(key))) obj[key] = row[key];
   }
   return obj as T;
 }
 
-function toDate<T>(row: any): T {
-  if (!row) return row;
-  const target = toObj<any>(row);
+function toDate<T>(row: Record<string, unknown>): T {
+  if (!row) return row as T;
+  const target = toObj<Record<string, unknown>>(row);
   if (target.date) target.date = new Date(target.date as string);
   if (target.due_date) target.due_date = new Date(target.due_date as string);
   return target as T;
 }
 
-function sanitizeValues(values: any[]): InValue[] {
+function sanitizeValues(values: unknown[]): InValue[] {
   return values.map((v) => {
     if (v instanceof Date) return v.toISOString();
     if (v === undefined) return null;
@@ -118,7 +160,7 @@ function sanitizeValues(values: any[]): InValue[] {
 
 // --- SERVICE ---
 export const dbService = {
-  run: async (sql: string, params: any[] = []) => {
+  run: async (sql: string, params: unknown[] = []) => {
     return db.execute({ sql, args: sanitizeValues(params) });
   },
 
@@ -126,7 +168,7 @@ export const dbService = {
   users: {
     getByEmail: async (email: string): Promise<UserPublic | null> => {
       const r = await db.execute({
-        sql: "SELECT * FROM users WHERE email = ?",
+        sql: "SELECT * FROM user WHERE email = ?",
         args: [email],
       });
       return r.rows[0] ? toObj<UserPublic>(r.rows[0]) : null;
@@ -134,21 +176,35 @@ export const dbService = {
 
     getById: async (id: string): Promise<UserPublic | null> => {
       const r = await db.execute({
-        sql: "SELECT * FROM users WHERE id = ?",
+        sql: "SELECT * FROM user WHERE id = ?",
         args: [id],
       });
       return r.rows[0] ? toObj<UserPublic>(r.rows[0]) : null;
     },
 
-    create: async (user: UserPublic) => {
+    create: async (user: {
+      id: string;
+      name: string;
+      email: string;
+      emailVerified?: boolean;
+      image?: string | null;
+      createdAt?: Date;
+      updatedAt?: Date;
+      role?: string;
+      passwordHash?: string | null;
+    }) => {
       return db.execute({
-        sql: "INSERT INTO users (id, name, email, passwordHash, role) VALUES (?, ?, ?, ?, ?)",
+        sql: "INSERT INTO user (id, name, email, emailVerified, image, createdAt, updatedAt, role, passwordHash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         args: sanitizeValues([
           user.id,
           user.name,
           user.email,
-          user.passwordHash,
+          user.emailVerified ? 1 : 0,
+          user.image || null,
+          user.createdAt || new Date(),
+          user.updatedAt || new Date(),
           user.role || "user",
+          user.passwordHash || null,
         ]),
       });
     },
@@ -398,12 +454,13 @@ export const dbService = {
         args: [code],
       });
       if (!r.rows[0]) return null;
-      const res = toObj<any>(r.rows[0]);
+      const res = toObj<Record<string, unknown>>(r.rows[0]);
       return {
-        ...res,
+        id: res.id as string,
+        code: res.code as string,
         used: res.used === 1,
-        created_at: new Date(res.created_at),
-      };
+        created_at: new Date(res.created_at as string),
+      } as Invite;
     },
 
     markUsed: async (id: string) => {
