@@ -1,28 +1,49 @@
 import { beforeAll, beforeEach } from "bun:test";
-import { initDB, db } from "../src/lib/db";
+import { existsSync, mkdirSync, unlinkSync } from "fs";
 
-// Force test environment
+// Force test environment BEFORE any module imports
 Bun.env.NODE_ENV = "test";
-Bun.env.JWT_SECRET = "test-secret";
-Bun.env.DEV_LOGIN_ENABLED = "true";
+// Clear Turso credentials so tests use local SQLite, not production DB
+delete Bun.env.TURSO_DATABASE_URL;
+delete Bun.env.TURSO_AUTH_TOKEN;
+
+// Ensure data directory exists and clean up old test DB
+const testDbPath = "./data/test.sqlite";
+mkdirSync("./data", { recursive: true });
+if (existsSync(testDbPath)) {
+  try {
+    unlinkSync(testDbPath);
+  } catch {
+    /* file may not exist */
+  }
+}
+
+// Now import DB module — it will see NODE_ENV=test and no TURSO_DATABASE_URL
+const { initDB, db } = await import("../src/lib/db");
 
 beforeAll(async () => {
-  // Initial table creation
   await initDB();
 });
 
 beforeEach(async () => {
-  // Clean up all tables before each test to ensure isolation
-  // Note: order matters for foreign key constraints
-  await db.batch(
-    [
-      "DELETE FROM absences",
-      "DELETE FROM tasks",
-      "DELETE FROM practice_journals",
-      "DELETE FROM subjects",
-      "DELETE FROM invites",
-      "DELETE FROM users",
-    ],
-    "write",
-  );
+  // Clean up data between tests
+  const tables = [
+    "absences",
+    "tasks",
+    "practice_journals",
+    "subjects",
+    "invites",
+    "session",
+    "account",
+    "verification",
+    "user",
+  ];
+
+  for (const table of tables) {
+    try {
+      await db.execute(`DELETE FROM ${table}`);
+    } catch {
+      /* table might not exist yet */
+    }
+  }
 });

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
+import { useSubjects, useTasks, useAllAbsences } from "../hooks/useDashboardQueries";
 import {
   PieChart,
   Pie,
@@ -13,48 +13,26 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import type { Subject, Task, Absence } from "@dashboard/shared-types";
 
 export const AnalyticsDashboard: React.FC = () => {
-  const { user, token, loading: authLoading } = useAuth();
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [absences, setAbsences] = useState<Absence[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
 
-  const fetchData = async () => {
-    if (token) {
-      try {
-        const [subjData, taskData, absenceData] = await Promise.all([
-          api.getSubjects(token),
-          api.getTasks(token),
-          api.getAllAbsences(token), // ← sin subject_id, devuelve todas del usuario
-        ]);
-        setSubjects(subjData);
-        setTasks(taskData);
-        setAbsences(absenceData);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+  // React Query Hooks
+  const { data: subjects = [], isLoading: loadingSubjects } = useSubjects();
+  const { data: tasks = [], isLoading: loadingTasks } = useTasks();
+  const { data: absences = [], isLoading: loadingAbsences } = useAllAbsences();
+
+  const loading = loadingSubjects || loadingTasks || loadingAbsences;
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
     }
-  };
-
-  useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
   }, [user, authLoading]);
-
-  useEffect(() => {
-    fetchData();
-  }, [token]);
 
   if (authLoading || loading) {
     return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
+      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando analíticas"></div>
     );
   }
 
@@ -77,10 +55,13 @@ export const AnalyticsDashboard: React.FC = () => {
     },
   ].filter((d) => d.value > 0);
 
-  // Datos para Bar Chart (Asistencia por Materia - Porcentaje Real)
+  // Datos para Bar Chart (Asistencia por UC - Porcentaje Real)
   const attendanceData = subjects.map((s) => {
     const subjectAbsences = absences.filter((a) => a.subject_id === s.id);
-    const totalAbsenceValue = subjectAbsences.reduce((sum, a) => sum + a.calculated_value, 0);
+    const totalAbsenceValue = subjectAbsences.reduce(
+      (sum, a) => sum + (a.calculated_value || 0),
+      0,
+    );
     const percentage =
       s.total_classes > 0
         ? Math.max(0, Math.round(((s.total_classes - totalAbsenceValue) / s.total_classes) * 100))
@@ -93,7 +74,7 @@ export const AnalyticsDashboard: React.FC = () => {
   });
 
   return (
-    <div className="analytics-grid">
+    <div>
       <header style={{ marginBottom: "2.5rem" }}>
         <h1 style={{ margin: 0 }}>Analíticas Académicas</h1>
         <p className="oat-text-secondary">Resumen visual de tu progreso y asistencia.</p>
@@ -117,7 +98,7 @@ export const AnalyticsDashboard: React.FC = () => {
           >
             Distribución de Tareas
           </h2>
-          <div style={{ height: "300px" }}>
+          <div style={{ height: "300px" }} aria-label="Gráfico circular de distribución de tareas">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -140,7 +121,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </section>
 
-        {/* Gráfico 2: Asistencia por Materia (Porcentaje Real) */}
+        {/* Gráfico 2: Asistencia por UC (Porcentaje Real) */}
         <section className="oat-card">
           <h2
             style={{
@@ -149,12 +130,12 @@ export const AnalyticsDashboard: React.FC = () => {
               textAlign: "center",
             }}
           >
-            Asistencia por Materia (%)
+            Asistencia por UC (%)
           </h2>
-          <div style={{ height: "300px" }}>
+          <div style={{ height: "300px" }} aria-label="Gráfico de barras de asistencia por UC">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={attendanceData}>
-                <XAxis dataKey="name" />
+                <XAxis dataKey="name" padding={{ left: 0, right: 0 }} />
                 <YAxis domain={[0, 100]} />
                 <Tooltip />
                 <Bar dataKey="asistencia" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -175,7 +156,11 @@ export const AnalyticsDashboard: React.FC = () => {
       </div>
 
       <div style={{ marginTop: "2.5rem", textAlign: "right" }}>
-        <button onClick={() => (window.location.href = "/")} className="oat-btn oat-btn-outline">
+        <button
+          onClick={() => (window.location.href = "/")}
+          className="oat-btn oat-btn-outline"
+          aria-label="Volver al Dashboard"
+        >
           Volver al Dashboard
         </button>
       </div>

@@ -3,13 +3,6 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 import { TasksPage } from "../components/TasksPage";
 ---
 
-<script is:inline>
-  (function () {
-    const token = localStorage.getItem("auth_token");
-    if (!token) window.location.replace("/login");
-  })();
-</script>
-
 <DashboardLayout title="Tareas">
   <TasksPage client:only="react" />
 </DashboardLayout>

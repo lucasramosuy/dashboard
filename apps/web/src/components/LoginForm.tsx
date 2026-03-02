@@ -13,8 +13,8 @@ export const LoginForm: React.FC = () => {
   const { login, register, user, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
-    if (user && !authLoading) {
-      window.location.assign("/");
+    if (typeof window !== "undefined" && user && !authLoading) {
+      window.location.replace("/");
     }
   }, [user, authLoading]);
 

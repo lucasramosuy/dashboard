@@ -3,13 +3,6 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 import { SubjectsPage } from "../components/SubjectsPage";
 ---
 
-<script is:inline>
-  (function () {
-    const token = localStorage.getItem("auth_token");
-    if (!token) window.location.replace("/login");
-  })();
-</script>
-
-<DashboardLayout title="Materias">
+<DashboardLayout title="UC">
   <SubjectsPage client:only="react" />
 </DashboardLayout>

@@ -1,104 +1,98 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { Modal } from "./Modal";
 import { SubjectForm } from "./SubjectForm";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
 import type { Subject } from "@dashboard/shared-types";
+import {
+  useSubjects,
+  useCreateSubject,
+  useUpdateSubject,
+  useDeleteSubject,
+} from "../hooks/useDashboardQueries";
 
 export const SubjectList: React.FC = () => {
-  const { user, token, loading: authLoading } = useAuth();
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+
+  // React Query Hooks (Container-Presenter)
+  const { data: subjects = [], isLoading } = useSubjects();
+  const createSubject = useCreateSubject();
+  const updateSubject = useUpdateSubject();
+  const deleteSubject = useDeleteSubject();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | undefined>(undefined);
-  const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
-  const fetchSubjects = async () => {
-    if (!token) return;
-    try {
-      const data = await api.getSubjects(token);
-      setSubjects(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token) fetchSubjects();
-  }, [token]);
-
   const handleSubmit = async (data: Partial<Subject>) => {
-    if (!token) return;
-    setSubmitting(true);
-    try {
-      if (editingSubject) {
-        await api.updateSubject(token, editingSubject.id, data);
-      } else {
-        await api.createSubject(token, data);
-      }
-      setModalOpen(false);
-      setEditingSubject(undefined);
-      await fetchSubjects();
-      showToast(`Materia ${editingSubject ? "actualizada" : "creada"} correctamente`);
-    } catch (e: any) {
-      showToast(e.message, "error");
-    } finally {
-      setSubmitting(false);
+    if (editingSubject) {
+      updateSubject.mutate(
+        { id: editingSubject.id, data },
+        {
+          onSuccess: () => {
+            setModalOpen(false);
+            setEditingSubject(undefined);
+            showToast("UC actualizada correctamente");
+          },
+          onError: (e: any) => showToast(e.message, "error"),
+        },
+      );
+    } else {
+      createSubject.mutate(data, {
+        onSuccess: () => {
+          setModalOpen(false);
+          setEditingSubject(undefined);
+          showToast("UC creada correctamente");
+        },
+        onError: (e: any) => showToast(e.message, "error"),
+      });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!token) return;
-    try {
-      await api.deleteSubject(token, id);
-      setDeletingId(null);
-      await fetchSubjects();
-      showToast("Materia eliminada");
-    } catch (e: any) {
-      showToast(e.message, "error");
-    }
+  const handleDelete = (id: string) => {
+    deleteSubject.mutate(id, {
+      onSuccess: () => {
+        setDeletingId(null);
+        showToast("UC eliminada");
+      },
+      onError: (e: any) => showToast(e.message, "error"),
+    });
   };
 
-  if (authLoading || loading) {
-    return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
-    );
+  if (authLoading || isLoading) {
+    return <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando UC"></div>;
   }
 
   return (
     <>
       <div className="oat-card">
         <header className="subjects-header">
-          <h1 style={{ margin: 0 }}>Materias</h1>
+          <h1 style={{ margin: 0 }}>Unidades Curriculares</h1>
           <button
             onClick={() => {
               setEditingSubject(undefined);
               setModalOpen(true);
             }}
             className="oat-btn oat-btn-primary"
+            aria-label="Nueva UC"
           >
             + Nueva
           </button>
         </header>
 
         {subjects.length === 0 ? (
-          <p className="oat-text-secondary">No hay materias registradas aún.</p>
+          <p className="oat-text-secondary">No hay UC registradas aún.</p>
         ) : (
           <div className="table-responsive">
-            <table className="subjects-table">
+            <table className="subjects-table" aria-label="Lista de UC">
               <thead>
                 <tr>
                   <th>Nombre</th>
@@ -124,6 +118,7 @@ export const SubjectList: React.FC = () => {
                           }}
                           className="oat-btn oat-btn-outline"
                           style={{ fontSize: "0.75rem" }}
+                          aria-label={`Editar UC ${s.name}`}
                         >
                           Editar
                         </button>
@@ -136,6 +131,7 @@ export const SubjectList: React.FC = () => {
                               onClick={() => handleDelete(s.id)}
                               className="oat-btn oat-btn-outline"
                               style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                              aria-label="Confirmar eliminación"
                             >
                               Sí
                             </button>
@@ -143,6 +139,7 @@ export const SubjectList: React.FC = () => {
                               onClick={() => setDeletingId(null)}
                               className="oat-btn oat-btn-outline"
                               style={{ fontSize: "0.75rem" }}
+                              aria-label="Cancelar eliminación"
                             >
                               No
                             </button>
@@ -152,6 +149,7 @@ export const SubjectList: React.FC = () => {
                             onClick={() => setDeletingId(s.id)}
                             className="oat-btn oat-btn-outline"
                             style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                            aria-label={`Eliminar UC ${s.name}`}
                           >
                             Eliminar
                           </button>
@@ -168,13 +166,13 @@ export const SubjectList: React.FC = () => {
         <Modal
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
-          title={editingSubject ? "Editar Materia" : "Nueva Materia"}
+          title={editingSubject ? "Editar UC" : "Nueva UC"}
         >
           <SubjectForm
             initialData={editingSubject}
             onSubmit={handleSubmit}
             onCancel={() => setModalOpen(false)}
-            loading={submitting}
+            loading={createSubject.isPending || updateSubject.isPending}
           />
         </Modal>
       </div>

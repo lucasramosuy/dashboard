@@ -23,7 +23,7 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
   return (
     <form onSubmit={handleSubmit}>
       <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="name">Nombre de la Materia</label>
+        <label htmlFor="name">Nombre</label>
         <input
           id="name"
           type="text"

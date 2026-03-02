@@ -1,24 +1,27 @@
 import { Hono } from "hono";
-import { jwt } from "hono/jwt";
+
 import { dbService } from "../lib/db";
-import { JWT_SECRET } from "../lib/auth";
+
 import type { Subject } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
-const subjectsRouter = new Hono();
+import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
+import { createSubjectSchema, updateSubjectSchema } from "@dashboard/shared-types";
 
-subjectsRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
+const subjectsRouter = new Hono<AuthEnv>();
+
+subjectsRouter.use("/*", authMiddleware);
 
 // GET all subjects
 subjectsRouter.get("/", async (c) => {
-  const payload = c.get("jwtPayload");
-  return c.json(await dbService.subjects.getAll(payload.id));
+  const user = c.get("user");
+  return c.json(await dbService.subjects.getAll(user.id));
 });
 
 // GET at-risk subjects
 subjectsRouter.get("/at-risk", async (c) => {
-  const payload = c.get("jwtPayload");
-  const subjects = await dbService.subjects.getAll(payload.id);
+  const user = c.get("user");
+  const subjects = await dbService.subjects.getAll(user.id);
 
   const results = await Promise.all(
     subjects.map(async (s) => {
@@ -45,10 +48,9 @@ subjectsRouter.get("/at-risk", async (c) => {
 // GET subject by ID
 subjectsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix: verificar ownership antes de devolver el recurso
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -57,22 +59,14 @@ subjectsRouter.get("/:id", async (c) => {
 
 // POST create subject
 subjectsRouter.post("/", async (c) => {
-  const payload = c.get("jwtPayload");
-  const body = await c.req.json();
-
-  if (!body.name || body.total_classes === undefined) {
-    return c.json({ error: "Missing required fields" }, 400);
-  }
-
-  if (typeof body.total_classes !== "number" || body.total_classes < 0) {
-    return c.json({ error: "total_classes must be a non-negative number" }, 400);
-  }
+  const user = c.get("user");
+  const body = createSubjectSchema.parse(await c.req.json());
 
   const newSubject: Subject = {
     id: randomUUID(),
-    name: String(body.name).trim(),
+    name: body.name.trim(),
     total_classes: body.total_classes,
-    user_id: payload.id,
+    user_id: user.id,
   };
 
   await dbService.subjects.create(newSubject);
@@ -82,26 +76,16 @@ subjectsRouter.post("/", async (c) => {
 // PATCH update subject
 subjectsRouter.patch("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const body = await c.req.json();
+  const body = updateSubjectSchema.parse(await c.req.json());
   const updateData: Partial<Subject> = {};
-  if (body.name) updateData.name = String(body.name).trim();
-  if (body.total_classes !== undefined) {
-    if (typeof body.total_classes !== "number" || body.total_classes < 0) {
-      return c.json({ error: "total_classes must be a non-negative number" }, 400);
-    }
-    updateData.total_classes = body.total_classes;
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    return c.json({ error: "No valid fields to update" }, 400);
-  }
+  if (body.name) updateData.name = body.name.trim();
+  if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
 
   await dbService.subjects.update(id, updateData);
   return c.json({ ...(await dbService.subjects.getById(id)), ...updateData });
@@ -110,10 +94,10 @@ subjectsRouter.patch("/:id", async (c) => {
 // DELETE subject
 subjectsRouter.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
   // ✅ IDOR fix
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 

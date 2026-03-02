@@ -23,13 +23,14 @@ Estructura propuesta (monorepo):
 /
 ├─ apps/
 │ ├─ web/ # Astro + React + Oat (frontend)
+│ │ └─ Dockerfile
 │ └─ api/ # Bun + Hono (backend)
+│ └─ Dockerfile
 ├─ packages/
 │ └─ shared-types/ # Tipos TypeScript compartidos (Subject, Task, Practice, etc.)
-├─ infra/ # Configs de deploy (render.yaml, dockerfiles opcionales)
-├─ .editorconfig
+├─ render.yaml # Config de deploy para Render
 ├─ .gitignore
-├─ package.json # Scripts de orquestación (opcional, puede ser solo Bun)
+├─ package.json # Scripts de orquestación (Bun workspaces)
 └─ README.md
 
 ---
@@ -61,7 +62,7 @@ Estilos
 Componentes dinámicos
 
 - Utilizar los Web Components y JS mínimo que ofrece Oat para elementos como diálogos, menús, etc.
-- Mantener React solo donde se necesite estado complejo: tablas con filtros, vistas Kanban, formularios modales, etc.
+- Mantener React solo donde se necesite estado complejo, utilizando `@tanstack/react-query` y hooks para aislar responsabilidades (Container-Presenter pattern).
 
 ### Theming (light/dark) con Oat
 
@@ -78,17 +79,17 @@ Rutas principales (según la app actual):
 
 - /login – Página de login.
 - / – Dashboard principal.
-- /subjects – Lista de materias/UC.
-- /subjects/[id] – Detalle de materia (estadísticas, inasistencias, tareas relacionadas).
+- /subjects – Lista de UC.
+- /subjects/[id] – Detalle de UC (estadísticas, inasistencias, tareas relacionadas).
 - /tasks – Gestor de tareas (lista + Kanban).
 - /practice – Diario de prácticas.
 
 Layout
 
 - Layout raíz con sidebar colapsable:
-  - Navegación: Dashboard, Materias, Tareas, Prácticas.
+  - Navegación: Dashboard, UC, Tareas, Prácticas.
   - Estado de colapso manejado con React (contexto o useState en un componente envolvente).
-  - Header o área superior con mensaje de estado general (“Tienes X tareas hoy, Y esta semana, N materias en alerta/peligro”).
+  - Header o área superior con mensaje de estado general (“Tienes X tareas hoy, Y esta semana, N UC en alerta/peligro”).
 
 ### Estados
 
@@ -96,7 +97,7 @@ AuthContext
 
 - Estado: user, isLoading.
 - Acciones: login(credentials), logout().
-- Usa fetch contra /api/auth/login, /api/auth/logout, /api/auth/me.
+- Usa el cliente de **Better Auth** (`authClient.signIn.email`, `authClient.signOut`) en lugar de fetch directo. Las sesiones se gestionan con HTTP-only cookies.
 
 ThemeContext
 
@@ -107,23 +108,27 @@ ThemeContext
 ### Integración con API
 
 Cliente HTTP en `apps/web/src/lib/api.ts`.
+Cliente de autenticación en `apps/web/src/lib/auth-client.ts` (Better Auth React client).
 
 Definir API_BASE:
 
 const API_BASE =
-import.meta.env.PROD
-? '/api'
-: 'http://localhost:8787/api';
+import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
+? import.meta.env.PUBLIC_API_BASE
+: "/api";
+
+En desarrollo, Astro proxyea `/api` → `localhost:8787` (configurado en `astro.config.mjs`).
+En producción, `PUBLIC_API_BASE` apunta al backend real.
 
 Exponer métodos tipados:
 
-- Auth: login, logout, me.
-- Subjects: getSubjects, getSubject(id), getSubjectsAtRisk.
-- Tasks: getTasks, getTasksToday, getTasksWeek, createTask, updateTask, deleteTask.
-- Practice: getPracticeEntries, createPracticeEntry, updatePracticeEntry, deletePracticeEntry.
-- Absences: getAbsences(subjectId), createAbsence, deleteAbsence.
+- Auth: login (vía authClient), logout (vía authClient), register (custom endpoint con invite code).
+- Subjects: getSubjects, getSubject(id), getAtRiskSubjects, createSubject, updateSubject, deleteSubject.
+- Tasks: getTasks, getTask(id), createTask, updateTask, deleteTask, updateTaskStatus.
+- Practice: getJournals, getJournalByDate, upsertJournal.
+- Absences: getAbsences(subjectId), getAllAbsences, createAbsence, deleteAbsence.
 
-Tipos importados desde packages/shared-types.
+Tipos abstractos y esquemas de validación (Zod) importados desde `packages/shared-types` para Single Source of Truth full-stack.
 
 ---
 
@@ -135,14 +140,12 @@ Tipos importados desde packages/shared-types.
 
 ### Endpoints
 
-Portar la lógica de Zo a las siguientes rutas (prefijo /api):
+Rutas (prefijo /api):
 
-Auth
+Auth (gestionado por **Better Auth**)
 
-- POST /api/auth/login
-- POST /api/auth/logout
-- GET /api/auth/me
-- POST /api/auth/register (opcional, se puede mantener solo para desarrollo).
+- `GET|POST /api/auth/*` — Manejado por Better Auth wildcard handler (login, logout, sesión, etc.).
+- `POST /api/auth/register` — Endpoint custom (valida invite code, crea usuario vía Better Auth server-side API).
 
 Subjects
 
@@ -178,42 +181,49 @@ Utilidades
 
 ### Persistencia
 
-Almacenamiento: **SQLite** gestionado a través de `bun:sqlite`.
+Almacenamiento: **SQLite** local en desarrollo, **Turso** (LibSQL) en producción.
 
 Módulo `lib/db.ts` en `apps/api`:
 
-- Singleton de `Database` que detecta el entorno (`:memory:` para tests, `database.sqlite` para dev/prod).
+- Usa `@libsql/client` para conectar a SQLite local o Turso según variables de entorno.
 - `initDB()`: Inicializa tablas con integridad referencial (`ON DELETE CASCADE`) y claves foráneas activas.
 - `dbService`: Capa de abstracción CRUD con conversión automática de tipos (ej. strings ISO de SQLite a objetos `Date` de JS).
 
+Módulo `lib/auth.better.ts` en `apps/api`:
+
+- Usa `Kysely` con `@libsql/kysely-libsql` como adaptador de DB para Better Auth.
+- Configura `betterAuth()` con `emailAndPassword`, `trustedOrigins` y `baseURL`.
+
 Esquema de Tablas:
 
-- `users`: id, name, email, passwordHash, role.
+- `user`: id, name, email, emailVerified, image, createdAt, updatedAt (gestionada por Better Auth).
+- `session`: id, expiresAt, token, userId, etc. (gestionada por Better Auth).
+- `account`: id, accountId, providerId, userId, etc. (gestionada por Better Auth).
+- `verification`: id, identifier, value, expiresAt, etc. (gestionada por Better Auth).
 - `subjects`: id, name, total_classes, user_id (FK).
 - `absences`: id, subject_id (FK), date, type, calculated_value.
 - `tasks`: id, subject_id (FK), title, description, status, due_date.
 - `practice_journals`: id, subject_id (FK), date, content.
-  Config vía env:
+- `invites`: id, code (UNIQUE), used, created_at.
 
-- DATA_DIR con default ./data.
+Config vía env:
+
+- `DATABASE_PATH` con default `./data/database.sqlite` (dev local).
+- `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` para producción con Turso.
+- `BETTER_AUTH_URL` con default `http://localhost:8787`.
 
 ### Auth
 
-Modelo de usuario simple:
+Gestionado por **Better Auth** (`lib/auth.better.ts`).
 
-- id, email, name, passwordHash (o password plain en dev), role?.
-
-Sesiones:
-
-- Opción A: cookie firmada (session ID) gestionada en JSON.
-- Opción B: JWT con secret (más simple en hosting).
+- Sesiones: HTTP-only cookies gestionadas automáticamente por Better Auth.
+- Registro: endpoint custom `POST /api/auth/register` que valida invite code y luego llama a `auth.api.signUpEmail()` internamente.
+- Login/Logout: manejados por Better Auth wildcard handler.
 
 Usuario dev (solo desarrollo):
 
-- email: demo@example.com
-- password: demo123
-- Si el usuario no existe, se crea automáticamente en users.json.
-- Esta lógica debe estar claramente marcada como “dev only” y controlada por una env DEV_LOGIN_ENABLED=true.
+- Se crea mediante `seed.ts` (`bun run seed`).
+- `DEV_LOGIN_ENABLED` controla si se permite login con credenciales demo.
 
 ### Lógica de negocio
 
@@ -222,7 +232,7 @@ Inasistencias
 - Absence.type: 'standard' | 'justified'.
 - calculated_value: 1.0 para standard, 0.5 para justified.
 
-Porcentaje de inasistencias de una materia:
+Porcentaje de inasistencias de una UC:
 
 porcentaje = sum(calculated_value) / total_classes \* 100
 
@@ -232,7 +242,7 @@ Estados:
 - > = 15% y < 20% → En alerta.
 - > = 20% → En peligro.
 
-- /api/subjects/at-risk calcula y devuelve solo materias en alerta o peligro.
+- /api/subjects/at-risk calcula y devuelve solo UC en alerta o peligro.
 - /api/tasks/today y /api/tasks/week filtran por fechas (hoy, semana actual) según due_date.
 
 ---
@@ -246,8 +256,9 @@ Paquete TypeScript con tipos compartidos:
 - PracticeJournal
 - Absence
 - User
+- Esquemas y Validaciones (Zod schemas universales)
 
-Se publica dentro del monorepo (import local) y se utiliza tanto en apps/api como en apps/web para garantizar consistencia.
+Se publica dentro del monorepo (import local) y se utiliza tanto en apps/api como en apps/web para garantizar consistencia total en interfaces y contratos de red.
 
 ---
 
@@ -260,29 +271,27 @@ Render ofrece una capa free razonable para servicios web y sitios estáticos, ad
 Backend – apps/api
 
 - Tipo: Web Service.
-- Runtime: usar Bun (vía Dockerfile si es necesario):
+- Runtime: Bun vía Dockerfile (`apps/api/Dockerfile`).
 
-FROM oven/bun:latest
-WORKDIR /app
-COPY . .
-RUN bun install
-CMD ["bun", "run", "src/server.ts"]
+Variables de entorno en producción:
 
-Variables de entorno:
-
-- DATA_DIR=/data (montado como volumen o usando filesystem local de Render).
-- DEV_LOGIN_ENABLED=false en producción.
+- `NODE_ENV=production`.
+- `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` (base de datos Turso).
+- `CORS_ORIGINS=https://dashboard.lucasramos.uy`.
+- `BETTER_AUTH_URL` (URL pública del backend).
+- `DEV_LOGIN_ENABLED=false`.
 
 Frontend – apps/web
 
-- Tipo: Static Site.
-- Build:
-  - Build command: cd apps/web && bun install && bun run build
-  - Public dir: apps/web/dist.
+- Tipo: Web Service (SSR con Astro/Node adapter).
+- Dockerfile: `apps/web/Dockerfile`.
+- Build arg: `PUBLIC_API_BASE=https://api.lucasramos.uy/api`.
 
-Ruteo /api
+Dominios:
 
-- Configurar en Render que /api/\* se enrute al Web Service apps/api (mismo dominio o subdominio, según setup).
+- Web: `https://dashboard.lucasramos.uy`.
+- API: `https://api.lucasramos.uy`.
+- CORS configurado para permitir el dominio del frontend.
 
 ### 3.2. Opción alternativa: Cloudflare Pages + otro backend
 
@@ -329,8 +338,9 @@ apps/api
 
 Config en el frontend:
 
-- Si import.meta.env.DEV → API_BASE = 'http://localhost:8787/api'.
-- Si prod → API_BASE = '/api'.
+- En desarrollo: Astro proxyea `/api` → `http://localhost:8787` (configurado en `astro.config.mjs`). `API_BASE = '/api'`.
+- En producción: `PUBLIC_API_BASE` apunta al backend real (e.g. `https://api.lucasramos.uy/api`).
+- El cliente Better Auth (`auth-client.ts`) determina `baseURL` automáticamente desde `PUBLIC_API_BASE` o `window.location.origin`.
 
 ### 4.2. Deploy
 

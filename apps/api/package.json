@@ -18,8 +18,13 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
+    "@better-auth/cli": "^1.4.20",
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.17.0",
-    "hono": "4.12.2"
+    "@libsql/kysely-libsql": "^0.4.1",
+    "better-auth": "^1.5.0",
+    "hono": "4.12.2",
+    "kysely": "^0.28.11",
+    "zod": "^4.3.6"
   }
 }

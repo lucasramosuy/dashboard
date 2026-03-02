@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { api } from "../lib/api";
 import { Modal } from "./Modal";
 import { TaskForm } from "./TaskForm";
 import { StatusBadge } from "./StatusBadge";
 import { Toast } from "./Toast";
 import { useToast } from "../hooks/useToast";
-import type { Task, Subject } from "@dashboard/shared-types";
+import type { Task } from "@dashboard/shared-types";
+import {
+  useTasks,
+  useSubjects,
+  useCreateTask,
+  useUpdateTask,
+  useDeleteTask,
+} from "../hooks/useDashboardQueries";
 
 const STATUS_LABELS: Record<Task["status"], string> = {
   todo: "Pendiente",
@@ -26,82 +32,72 @@ function formatDate(date?: Date | string): string {
 }
 
 export const TaskList: React.FC = () => {
-  const { user, token, loading: authLoading } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+
+  // React Query Hooks
+  const { data: unorderedTasks = [], isLoading: loadingTasks } = useTasks();
+  const { data: subjects = [], isLoading: loadingSubjects } = useSubjects();
+
+  const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-  const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast, showToast, hideToast } = useToast();
 
-  const fetchData = async () => {
-    if (!token) return;
-    try {
-      const [taskData, subjectData] = await Promise.all([
-        api.getTasks(token),
-        api.getSubjects(token),
-      ]);
-      // Ordenar por fecha de vencimiento ascendente
-      const sorted = [...taskData].sort(
-        (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
-      );
-      setTasks(sorted);
-      setSubjects(subjectData);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingTasks || loadingSubjects;
+
+  // Ordenar por fecha de vencimiento ascendente
+  const tasks = [...unorderedTasks].sort(
+    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+  );
 
   useEffect(() => {
-    if (!authLoading && !user) window.location.href = "/login";
+    if (typeof window !== "undefined" && !authLoading && !user) {
+      window.location.replace("/login");
+    }
   }, [user, authLoading]);
 
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
-
   const handleSubmit = async (data: Partial<Task>) => {
-    if (!token) return;
-    setSubmitting(true);
-    try {
-      if (editingTask) {
-        await api.updateTask(token, editingTask.id, data);
-      } else {
-        await api.createTask(token, data);
-      }
-      setModalOpen(false);
-      setEditingTask(undefined);
-      await fetchData();
-      showToast(`Tarea ${editingTask ? "actualizada" : "creada"} correctamente`);
-    } catch (e: any) {
-      showToast(e.message, "error");
-    } finally {
-      setSubmitting(false);
+    if (editingTask) {
+      updateTask.mutate(
+        { id: editingTask.id, data },
+        {
+          onSuccess: () => {
+            setModalOpen(false);
+            setEditingTask(undefined);
+            showToast("Tarea actualizada correctamente");
+          },
+          onError: (e: any) => showToast(e.message, "error"),
+        },
+      );
+    } else {
+      createTask.mutate(data, {
+        onSuccess: () => {
+          setModalOpen(false);
+          setEditingTask(undefined);
+          showToast("Tarea creada correctamente");
+        },
+        onError: (e: any) => showToast(e.message, "error"),
+      });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!token) return;
-    try {
-      await api.deleteTask(token, id);
-      setDeletingId(null);
-      await fetchData();
-      showToast("Tarea eliminada");
-    } catch (e: any) {
-      showToast(e.message, "error");
-    }
+  const handleDelete = (id: string) => {
+    deleteTask.mutate(id, {
+      onSuccess: () => {
+        setDeletingId(null);
+        showToast("Tarea eliminada");
+      },
+      onError: (e: any) => showToast(e.message, "error"),
+    });
   };
 
   if (authLoading || loading) {
     return (
-      <div className="oat-spinner-wrapper">
-        <div className="oat-spinner" />
-        <span>Cargando...</span>
-      </div>
+      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando tareas"></div>
     );
   }
 
@@ -116,6 +112,7 @@ export const TaskList: React.FC = () => {
               setModalOpen(true);
             }}
             className="oat-btn oat-btn-primary"
+            aria-label="Nueva Tarea"
           >
             + Nueva
           </button>
@@ -125,7 +122,7 @@ export const TaskList: React.FC = () => {
           <p className="oat-text-secondary">No hay tareas registradas aún.</p>
         ) : (
           <div className="table-responsive">
-            <table className="subjects-table">
+            <table className="subjects-table" aria-label="Lista de tareas">
               <thead>
                 <tr>
                   <th>Título</th>
@@ -159,6 +156,7 @@ export const TaskList: React.FC = () => {
                           }}
                           className="oat-btn oat-btn-outline"
                           style={{ fontSize: "0.75rem" }}
+                          aria-label={`Editar tarea ${t.title}`}
                         >
                           Editar
                         </button>
@@ -171,6 +169,7 @@ export const TaskList: React.FC = () => {
                               onClick={() => handleDelete(t.id)}
                               className="oat-btn oat-btn-outline"
                               style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                              aria-label="Confirmar eliminación"
                             >
                               Sí
                             </button>
@@ -178,6 +177,7 @@ export const TaskList: React.FC = () => {
                               onClick={() => setDeletingId(null)}
                               className="oat-btn oat-btn-outline"
                               style={{ fontSize: "0.75rem" }}
+                              aria-label="Cancelar eliminación"
                             >
                               No
                             </button>
@@ -187,6 +187,7 @@ export const TaskList: React.FC = () => {
                             onClick={() => setDeletingId(t.id)}
                             className="oat-btn oat-btn-outline"
                             style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                            aria-label={`Eliminar tarea ${t.title}`}
                           >
                             Eliminar
                           </button>
@@ -210,7 +211,7 @@ export const TaskList: React.FC = () => {
             subjects={subjects}
             onSubmit={handleSubmit}
             onCancel={() => setModalOpen(false)}
-            loading={submitting}
+            loading={createTask.isPending || updateTask.isPending}
           />
         </Modal>
       </div>

@@ -1,40 +1,42 @@
 import { Hono } from "hono";
-import { jwt } from "hono/jwt";
+
 import { dbService } from "../lib/db";
-import { JWT_SECRET } from "../lib/auth";
+
 import type { Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
-const VALID_STATUSES = ["todo", "in-progress", "done"] as const;
-type TaskStatus = (typeof VALID_STATUSES)[number];
+import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
+import {
+  createTaskSchema,
+  updateTaskSchema,
+  updateTaskStatusSchema,
+} from "@dashboard/shared-types";
 
-const tasksRouter = new Hono();
+const tasksRouter = new Hono<AuthEnv>();
 
-tasksRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
+tasksRouter.use("/*", authMiddleware);
 
 // GET all tasks (optional filter by subject_id)
 tasksRouter.get("/", async (c) => {
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
   const subjectId = c.req.query("subject_id");
 
   if (subjectId) {
-    // ✅ IDOR fix: verificar que el subject pertenece al usuario antes de filtrar
-    if (!(await dbService.ownership.subjectBelongsToUser(subjectId, payload.id))) {
+    if (!(await dbService.ownership.subjectBelongsToUser(subjectId, user.id))) {
       return c.json({ error: "Not found" }, 404);
     }
     return c.json(await dbService.tasks.getBySubject(subjectId));
   }
 
-  return c.json(await dbService.tasks.getByUser(payload.id));
+  return c.json(await dbService.tasks.getByUser(user.id));
 });
 
 // GET task by ID
 tasksRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
@@ -43,30 +45,20 @@ tasksRouter.get("/:id", async (c) => {
 
 // POST create task
 tasksRouter.post("/", async (c) => {
-  const payload = c.get("jwtPayload");
-  const body = await c.req.json();
+  const user = c.get("user");
+  const body = createTaskSchema.parse(await c.req.json());
 
-  if (!body.subject_id || !body.title || !body.due_date) {
-    return c.json({ error: "Missing required fields (subject_id, title, due_date)" }, 400);
-  }
-
-  // ✅ IDOR fix: verificar que el subject pertenece al usuario
-  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, user.id))) {
     return c.json({ error: "Subject not found" }, 404);
-  }
-
-  // ✅ Validar status si se provee
-  if (body.status && !VALID_STATUSES.includes(body.status)) {
-    return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
   }
 
   const newTask: Task = {
     id: randomUUID(),
     subject_id: body.subject_id,
-    title: String(body.title).trim(),
-    description: body.description ? String(body.description).trim() : undefined,
+    title: body.title.trim(),
+    description: body.description?.trim(),
     due_date: new Date(body.due_date),
-    status: (body.status as TaskStatus) || "todo",
+    status: body.status || "todo",
   };
 
   await dbService.tasks.create(newTask);
@@ -76,19 +68,13 @@ tasksRouter.post("/", async (c) => {
 // PATCH /:id/status — debe ir ANTES que PATCH /:id
 tasksRouter.patch("/:id/status", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const body = await c.req.json();
-
-  // ✅ Validar status
-  if (!body.status || !VALID_STATUSES.includes(body.status)) {
-    return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
-  }
+  const body = updateTaskStatusSchema.parse(await c.req.json());
 
   await dbService.tasks.updateStatus(id, body.status);
   return c.json({ ...(await dbService.tasks.getById(id)), status: body.status });
@@ -97,30 +83,19 @@ tasksRouter.patch("/:id/status", async (c) => {
 // PATCH /:id — actualización genérica
 tasksRouter.patch("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const body = await c.req.json();
+  const body = updateTaskSchema.parse(await c.req.json());
   const updateData: Partial<Task> = {};
 
-  if (body.title) updateData.title = String(body.title).trim();
-  if (body.description !== undefined) updateData.description = String(body.description).trim();
+  if (body.title) updateData.title = body.title.trim();
+  if (body.description !== undefined) updateData.description = body.description.trim();
   if (body.due_date) updateData.due_date = new Date(body.due_date);
-  if (body.status) {
-    // ✅ Validar status
-    if (!VALID_STATUSES.includes(body.status)) {
-      return c.json({ error: "status must be 'todo', 'in-progress' or 'done'" }, 400);
-    }
-    updateData.status = body.status as TaskStatus;
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    return c.json({ error: "No valid fields to update" }, 400);
-  }
+  if (body.status) updateData.status = body.status;
 
   await dbService.tasks.update(id, updateData);
   return c.json({ ...(await dbService.tasks.getById(id)), ...updateData });
@@ -129,10 +104,9 @@ tasksRouter.patch("/:id", async (c) => {
 // DELETE task
 tasksRouter.delete("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.taskBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.taskBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 

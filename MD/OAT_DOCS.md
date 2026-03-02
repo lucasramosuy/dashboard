@@ -30,7 +30,7 @@ Para un dashboard con sidebar, usar la siguiente estructura semántica:
     <aside>
       <nav>
         <ul>
-          <li><a href="/subjects">Materias</a></li>
+          <li><a href="/subjects">UC</a></li>
           <li><a href="/tasks">Tareas</a></li>
         </ul>
       </nav>
@@ -51,7 +51,7 @@ Oat usa <article> para representar contenedores con sombra y padding.
 ```html
 <article>
   <header>Título de la Tarjeta</header>
-  <p>Contenido descriptivo de la materia o tarea.</p>
+  <p>Contenido descriptivo de la UC o tarea.</p>
   <footer>Acciones o metadata</footer>
 </article>
 ```

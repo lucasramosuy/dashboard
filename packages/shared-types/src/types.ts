@@ -1,8 +1,11 @@
 export interface UserPublic {
   id: string;
-  email: string;
   name: string;
-  passwordHash: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string;
+  createdAt: Date;
+  updatedAt: Date;
   role?: string;
 }
 

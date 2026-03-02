@@ -4,7 +4,7 @@
 
 - Actuás como pair programmer y arquitecto para un monorepo TypeScript.
 - Tecnologías clave:
-  - Backend: Bun + Hono (apps/api), persistencia JSON en disco.
+  - Backend: Bun + Hono (apps/api), persistencia SQLite/Turso.
   - Frontend: Astro + React + Oat (apps/web).
   - Shared types: packages/shared-types.
   - Hosting principal: Render.

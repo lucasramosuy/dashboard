@@ -1,6 +1,6 @@
 # Dashboard
 
-Dashboard académico para gestión de materias, tareas, inasistencias, diario de práctica y analíticas.
+Dashboard académico para gestión de UC, tareas, inasistencias, diario de práctica y analíticas.
 
 ## Estructura del proyecto
 
@@ -30,14 +30,13 @@ cd dashboard
 bun install
 
 # 3. Configurar variables de entorno
-#    Copiar los .env de ejemplo y ajustar los valores:
-cp apps/api/.env.example apps/api/.env
+#    Crear apps/api/.env con los valores necesarios:
 #    Variables requeridas en apps/api/.env:
-#      JWT_SECRET=<un-secret-seguro>
 #      NODE_ENV=development
 #    Variables opcionales:
 #      TURSO_DATABASE_URL=<url-turso>  (si no se define, usa SQLite local)
 #      TURSO_AUTH_TOKEN=<token-turso>
+#      BETTER_AUTH_URL=http://localhost:8787
 #      DEV_LOGIN_ENABLED=true          (habilita login demo en dev)
 #      CORS_ORIGINS=http://localhost:4321
 
@@ -50,22 +49,23 @@ bun run dev
 ```
 
 Esto levanta:
+
 - **API** en `http://localhost:8787`
 - **Web** en `http://localhost:4321`
 
 ## Scripts disponibles
 
-| Comando | Descripción |
-|---|---|
-| `bun run dev` | Levanta API + Web en paralelo |
-| `bun run dev:api` | Solo la API |
-| `bun run dev:web` | Solo el frontend |
-| `bun run build` | Build de producción (API + Web) |
-| `bun run test` | Ejecuta tests de la API |
-| `bun run test:watch` | Tests en modo watch |
-| `bun run format` | Formatea el código con Prettier |
-| `bun run lint` | Lint con ESLint |
-| `bun run check` | Lint + type-check completo |
+| Comando              | Descripción                     |
+| -------------------- | ------------------------------- |
+| `bun run dev`        | Levanta API + Web en paralelo   |
+| `bun run dev:api`    | Solo la API                     |
+| `bun run dev:web`    | Solo el frontend                |
+| `bun run build`      | Build de producción (API + Web) |
+| `bun run test`       | Ejecuta tests de la API         |
+| `bun run test:watch` | Tests en modo watch             |
+| `bun run format`     | Formatea el código con Prettier |
+| `bun run lint`       | Lint con ESLint                 |
+| `bun run check`      | Lint + type-check completo      |
 
 ## Tests
 
@@ -87,5 +87,5 @@ Máximo 10 invites activos simultáneamente.
 
 - **Backend:** [Hono](https://hono.dev/) + [Bun](https://bun.sh/) + SQLite / [Turso](https://turso.tech/)
 - **Frontend:** [Astro](https://astro.build/) + [React](https://react.dev/)
-- **Auth:** JWT propio (sin dependencias externas de auth)
+- **Auth:** [Better Auth](https://www.better-auth.com/) (sesiones HTTP-only cookies)
 - **Monorepo:** Bun workspaces

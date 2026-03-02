@@ -11,7 +11,7 @@ Este archivo define las restricciones técnicas y de estilo para el **Dashboard*
   Prohibido usar APIs de Node.js (ej. `fs`, `path`) si existe una alternativa en Bun (`Bun.file`, `Bun.write`, `import.meta.dir`).
 
 - **Gestión de paquetes:** Usar siempre `bun install` y `bun run`.
-  No generar archivos `package-lock.json` (usar `bun.lockb`).
+  No generar archivos `package-lock.json` (usar `bun.lock`).
 
 ---
 
@@ -32,13 +32,15 @@ Este archivo define las restricciones técnicas y de estilo para el **Dashboard*
 
 ---
 
-## 3. Backend (Hono + JSON DB)
+## 3. Backend (Hono + SQLite/Turso)
 
-- **Persistencia:** La base de datos son archivos JSON.
-  Cada lectura de disco debe pasar por una función de validación/limpieza.
-  Importante: Al leer fechas de JSON, convertirlas explícitamente a objetos `Date` si el tipo de TS así lo requiere.
+- **Persistencia:** La base de datos es **SQLite** local en desarrollo y **Turso** (LibSQL) en producción.
+  Se accede vía `@libsql/client` a través de `dbService` en `lib/db.ts`.
+  Importante: Al leer fechas de SQLite, convertirlas explícitamente a objetos `Date` si el tipo de TS así lo requiere.
 
-- **CORS:** Siempre permitir el origen del frontend en desarrollo (`http://localhost:4321`).
+- **Auth:** Gestionado por **Better Auth** (`lib/auth.better.ts`). No implementar auth custom.
+
+- **CORS:** Siempre permitir el origen del frontend en desarrollo (`http://localhost:4321`). Controlado por `CORS_ORIGINS`.
 
 ---
 
