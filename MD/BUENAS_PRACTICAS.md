@@ -4,7 +4,7 @@
 
 ## 1. Estructura del handler y flujo de control
 
-## 1.1. Patrón general recomendado
+### 1.1. Patrón general recomendado
 
 - Usar funciones `async` para handlers que llamen APIs o servicios (ej. `authClient.signOut()`).
 - Encapsular la lógica potencialmente fallida dentro de un `try/catch`.
@@ -23,7 +23,7 @@ const handleAction = async () => {
 };
 ```
 
-## 1.2. Evitar finally para decisiones críticas
+### 1.2. Evitar finally para decisiones críticas
 
 - Mala práctica típica en logout:
 
@@ -54,9 +54,9 @@ const handleLogout = async () => {
 };
 ```
 
-# 2. Manejo de errores a nivel código
+## 2. Manejo de errores a nivel código
 
-## 2.1. Capturar errores donde tenga sentido
+### 2.1. Capturar errores donde tenga sentido
 
 - Capturá el error lo más cerca posible del lugar donde puedas tomar una decisión (mostrar mensaje, reintentar, cancelar navegación, etc.).
 - No uses catch masivo en una capa muy alta si luego no sabés qué hacer concretamente con el error.
@@ -73,7 +73,7 @@ const handleLogout = async () => {
 };
 ```
 
-## 2.2. No dejar catch vacío
+### 2.2. No dejar catch vacío
 
 - Evitar:
 
@@ -98,7 +98,7 @@ try {
 }
 ```
 
-## 2.3. Normalizar y tipar errores cuando sea posible
+### 2.3. Normalizar y tipar errores cuando sea posible
 
 En TypeScript, es común que el catch reciba unknown. Buen patrón:
 
@@ -120,9 +120,9 @@ const handleLogout = async () => {
 };
 ```
 
-# 3. Logging: buenas prácticas
+## 3. Logging: buenas prácticas
 
-## 3.1. Evitar uso directo masivo de console.log
+### 3.1. Evitar uso directo masivo de console.log
 
 - No llenar el código con console.log repartidos.
 - Centralizar el logging en un pequeño módulo (logger) con niveles (debug, info, warn, error).
@@ -167,7 +167,7 @@ const handleLogout = async () => {
 };
 ```
 
-## 3.2. No loguear datos sensibles
+### 3.2. No loguear datos sensibles
 
 - Evitar loguear:
   - Tokens JWT, API keys, cookies.
@@ -189,9 +189,9 @@ logger.error("SignOut failed", {
 });
 ```
 
-# 4. UX de errores: lo que ve el usuario
+## 4. UX de errores: lo que ve el usuario
 
-## 4.1. Separar mensaje técnico del mensaje al usuario
+### 4.1. Separar mensaje técnico del mensaje al usuario
 
 - El log es para desarrollo y soporte.
 - El mensaje al usuario debe ser corto, claro y no técnico.
@@ -208,14 +208,14 @@ try {
 }
 ```
 
-## 4.2. Usar patrones consistentes para feedback
+### 4.2. Usar patrones consistentes para feedback
 
 - Para acciones puntuales (logout, submit): toast, snackbar, mensaje cercano al botón.
 - Para errores globales (falló toda la app): error boundary + pantalla de error.
 
-# 5. Error boundaries y errores globales
+## 5. Error boundaries y errores globales
 
-## 5.1. Uso de Error Boundaries en React
+### 5.1. Uso de Error Boundaries en React
 
 Para errores de renderizado (no errores en handlers async), usar un Error Boundary:
 
@@ -251,9 +251,9 @@ class AppErrorBoundary extends React.Component<
 </AppErrorBoundary>
 ```
 
-# 6. Navegación después del logout
+## 6. Navegación después del logout
 
-## 6.1. Usar el router cuando sea posible
+### 6.1. Usar el router cuando sea posible
 
 En una SPA con React Router (u otro), preferible:
 
@@ -276,7 +276,7 @@ const handleLogout = async () => {
   - Mantiene el control del historial.
   - Mejor experiencia de usuario.
 
-## 6.2. Cuándo usar window.location.replace
+### 6.2. Cuándo usar window.location.replace
 
 - window.location.replace("/login") puede tener sentido si:
   - Querés resetear completamente el estado global (store, caches, etc.).
@@ -300,9 +300,9 @@ const handleLogout = async () => {
 
 - Este patrón debe usarse conscientemente: siempre va a redirigir, incluso si el logout falla.
 
-# 7. Buenas prácticas específicas para TypeScript
+## 7. Buenas prácticas específicas para TypeScript
 
-## 7.1. Tipar correctamente handlers y props
+### 7.1. Tipar correctamente handlers y props
 
 - Tipar el componente y el handler para aprovechar TS al máximo.
 
@@ -330,7 +330,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({ onLoggedOut }) => {
 };
 ```
 
-## 7.2. Función utilitaria para errores
+### 7.2. Función utilitaria para errores
 
 - Reutilizable en toda la app:
 
@@ -342,9 +342,9 @@ export const toError = (err: unknown): Error => {
 };
 ```
 
-# 8. Organización del código
+## 8. Organización del código
 
-## 8.1. Separar preocupaciones
+### 8.1. Separar preocupaciones
 
 - Componente: UI + llamada al handler.
 - Handler: orquestación (llamar servicio de auth, router, feedback).
@@ -364,7 +364,7 @@ src/
     errors.ts
 ```
 
-## 8.2. Evitar lógica pesada directamente en el JSX
+### 8.2. Evitar lógica pesada directamente en el JSX
 
 - Malo:
 
@@ -391,7 +391,7 @@ src/
 
 Con handleLogout definido fuera del JSX.
 
-# 9. Checklist rápido para revisar tu código
+## 9. Checklist rápido para revisar tu código
 
 - Antes de dar por bueno un handler como handleLogout, revisá:
   - [ ] ¿Tiene try/catch alrededor de la operación async crítica?
