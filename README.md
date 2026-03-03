@@ -1,6 +1,7 @@
 # Dashboard
 
 Dashboard académico para gestión de UC, tareas, inasistencias, diario de práctica y analíticas.
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/46d2c2ebddaa45c7aeda299263839fc7)]
 
 ## Estructura del proyecto
 

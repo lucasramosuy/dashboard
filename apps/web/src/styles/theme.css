@@ -1,4 +1,4 @@
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/inter/index.css";
 
 /* ============================================================
    ZENITH DESIGN SYSTEM — theme.css
@@ -176,7 +176,7 @@ body {
     box-shadow 0.2s;
 }
 
-.oat-input:hover:not(:focus):not(:disabled) {
+.oat-input:hover:not(:focus, :disabled) {
   border-color: var(--oat-accent);
 }
 
