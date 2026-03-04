@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 
 import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 import { createSubjectSchema, updateSubjectSchema } from "@dashboard/shared-types";
+import { subjectsService } from "../services/subjectsService";
 
 const subjectsRouter = new Hono<AuthEnv>();
 
@@ -45,7 +46,12 @@ subjectsRouter.get("/at-risk", async (c) => {
   return c.json(results.filter((s) => s.status !== "normal"));
 });
 
-// GET subject by ID
+// GET CFE duration rules
+subjectsRouter.get("/cfe-rules", (c) => {
+  return c.json(subjectsService.getAllTracks());
+});
+
+// GET subject by ID (con promedio de calificaciones)
 subjectsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
   const user = c.get("user");
@@ -54,7 +60,26 @@ subjectsRouter.get("/:id", async (c) => {
     return c.json({ error: "Not found" }, 404);
   }
 
-  return c.json(await dbService.subjects.getById(id));
+  const subject = await dbService.subjects.getById(id);
+
+  // Pre-computar promedio de grade de las tasks asociadas
+  const tasks = await dbService.tasks.getBySubject(id);
+  const gradedTasks = tasks.filter((t: any) => t.grade != null);
+  const gradeAvg =
+    gradedTasks.length > 0
+      ? Math.round(
+          (gradedTasks.reduce((sum: number, t: any) => sum + Number(t.grade), 0) /
+            gradedTasks.length) *
+            10,
+        ) / 10
+      : null;
+
+  return c.json({
+    ...subject,
+    gradeAvg,
+    gradedCount: gradedTasks.length,
+    totalTasks: tasks.length,
+  });
 });
 
 // POST create subject
@@ -67,6 +92,8 @@ subjectsRouter.post("/", async (c) => {
     name: body.name.trim(),
     total_classes: body.total_classes,
     user_id: user.id,
+    track: body.track ?? null,
+    duration_weeks: body.duration_weeks ?? null,
   };
 
   await dbService.subjects.create(newSubject);
@@ -86,6 +113,8 @@ subjectsRouter.patch("/:id", async (c) => {
   const updateData: Partial<Subject> = {};
   if (body.name) updateData.name = body.name.trim();
   if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
+  if (body.track !== undefined) updateData.track = body.track;
+  if (body.duration_weeks !== undefined) updateData.duration_weeks = body.duration_weeks;
 
   await dbService.subjects.update(id, updateData);
   return c.json({ ...(await dbService.subjects.getById(id)), ...updateData });

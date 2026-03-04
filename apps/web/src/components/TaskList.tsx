@@ -128,6 +128,8 @@ export const TaskList: React.FC = () => {
                   <th>Título</th>
                   <th>Vencimiento</th>
                   <th>Estado</th>
+                  <th>Tipo</th>
+                  <th>Nota</th>
                   <th style={{ textAlign: "right" }}>Acciones</th>
                 </tr>
               </thead>
@@ -146,6 +148,12 @@ export const TaskList: React.FC = () => {
                       <StatusBadge variant={STATUS_VARIANTS[t.status]}>
                         {STATUS_LABELS[t.status]}
                       </StatusBadge>
+                    </td>
+                    <td style={{ fontSize: "0.875rem", color: "var(--oat-text-muted)" }}>
+                      {t.type ? t.type.charAt(0).toUpperCase() + t.type.slice(1) : "—"}
+                    </td>
+                    <td style={{ fontSize: "0.875rem", fontWeight: 600 }}>
+                      {t.grade != null ? t.grade : "—"}
                     </td>
                     <td>
                       <div className="subjects-actions">
