@@ -77,3 +77,21 @@ export const registerSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   inviteCode: z.string().min(1, "El código de invitación es requerido"),
 });
+
+// --- ICAL / INTEGRATIONS ---
+
+export const updateIcalSchema = z.object({
+  ical_url: z
+    .string()
+    .transform((val) => {
+      const trimmed = val.trim();
+      if (trimmed.startsWith("webcal://")) {
+        return trimmed.replace("webcal://", "https://");
+      }
+      return trimmed;
+    })
+    .refine((val) => val === "" || val.startsWith("http"), {
+      message: "Debe ser una URL válida (http/https/webcal)",
+    })
+    .optional(),
+});

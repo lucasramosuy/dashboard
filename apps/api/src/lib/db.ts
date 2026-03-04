@@ -44,7 +44,9 @@ export async function initDB() {
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
       role TEXT DEFAULT 'user',
-      passwordHash TEXT
+      passwordHash TEXT,
+      ical_url TEXT,
+      last_ical_sync TEXT
     )`,
       `CREATE TABLE IF NOT EXISTS session (
       id TEXT PRIMARY KEY,
@@ -98,12 +100,15 @@ export async function initDB() {
     )`,
       `CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
+      subject_id TEXT,
+      user_id TEXT,
       title TEXT NOT NULL,
       description TEXT,
       status TEXT CHECK(status IN ('todo', 'in-progress', 'done')) DEFAULT 'todo',
       due_date TEXT NOT NULL,
-      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
+      source TEXT DEFAULT 'manual',
+      FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )`,
       `CREATE TABLE IF NOT EXISTS practice_journals (
       id TEXT PRIMARY KEY,
@@ -118,9 +123,31 @@ export async function initDB() {
       used INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     )`,
+      `CREATE TABLE IF NOT EXISTS ical_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      url TEXT,
+      start_date TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+    )`,
     ],
     "write",
   );
+
+  // Intentar agregar columnas si ya existía la tabla y no las tiene
+  try {
+    await db.execute("ALTER TABLE user ADD COLUMN ical_url TEXT");
+  } catch {
+    /* ignored, column might already exist */
+  }
+
+  try {
+    await db.execute("ALTER TABLE user ADD COLUMN last_ical_sync TEXT");
+  } catch {
+    /* ignored, column might already exist */
+  }
 
   const config = getDbConfig();
   const location = config.url.startsWith("file::memory:")
@@ -476,6 +503,33 @@ export const dbService = {
         args: [],
       });
       return Number(r.rows[0].count);
+    },
+  },
+
+  // --- ICAL EVENTS ---
+  icalEvents: {
+    getByUser: async (userId: string): Promise<any[]> => {
+      const r = await db.execute({
+        sql: "SELECT * FROM ical_events WHERE user_id = ? ORDER BY start_date ASC",
+        args: [userId],
+      });
+      return r.rows.map(toDate<any>);
+    },
+
+    deleteByUser: async (userId: string) => {
+      return db.execute({
+        sql: "DELETE FROM ical_events WHERE user_id = ?",
+        args: [userId],
+      });
+    },
+
+    insertBatch: async (events: any[]) => {
+      if (events.length === 0) return;
+      const statements = events.map((e) => ({
+        sql: "INSERT INTO ical_events (id, user_id, title, description, url, start_date) VALUES (?, ?, ?, ?, ?, ?)",
+        args: sanitizeValues([e.id, e.user_id, e.title, e.description, e.url, e.start_date]),
+      }));
+      await db.batch(statements, "write");
     },
   },
 };

@@ -31,6 +31,12 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    additionalFields: {
+      ical_url: { type: "string", required: false },
+      last_ical_sync: { type: "date", required: false },
+    },
+  },
   trustedOrigins: Bun.env.CORS_ORIGINS
     ? Bun.env.CORS_ORIGINS.split(",")
     : ["http://localhost:4321"],

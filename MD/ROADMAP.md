@@ -112,13 +112,13 @@
 
 ---
 
-# ✅ Fase 5.7 — Push a GitHub + Setup de entorno Windows
+### ✅ Fase 5.7 — Push a GitHub + Setup de entorno Windows
 
 **Objetivo:** dejar el código en un estado limpio y versionado en GitHub, y verificar que el entorno de desarrollo funciona correctamente en Windows antes de continuar con las fases siguientes.
 
 ---
 
-## Por qué insertar esta fase aquí
+#### Por qué insertar esta fase aquí
 
 La Fase 5 cierra el ciclo de funcionalidad core (auth + invites), lo que significa que el proyecto ya tiene una base estable, testeada y sin deuda técnica urgente. Es el mejor punto de corte antes de arrancar con integraciones externas (iCal, Schoology) que van a requerir más iteración y posiblemente más herramientas. Migrar el entorno _durante_ una fase de integración compleja es un riesgo innecesario.
 
@@ -132,7 +132,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 5.7.1. Limpieza y preparación del repo
+#### 5.7.1. Limpieza y preparación del repo
 
 - [x] Verificar que `.gitignore` excluye correctamente:
   - `node_modules/`, `.turbo/`, `dist/`, `*.db`, `*.db-shm`, `*.db-wal`
@@ -147,7 +147,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 5.7.2. Push a GitHub
+#### 5.7.2. Push a GitHub
 
 - [x] Crear el repositorio en GitHub (privado).
 - [x] Hacer el push inicial desde el VPS:
@@ -162,7 +162,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 5.7.3. Setup del entorno en Windows
+#### 5.7.3. Setup del entorno en Windows
 
 - [x] Instalar herramientas base:
   - **Git for Windows** (incluye Git Bash)
@@ -193,14 +193,14 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 5.7.4. Configurar flujo de trabajo Git
+#### 5.7.4. Configurar flujo de trabajo Git
 
 - [x] Definir rama principal: `dev`.
 - [x] Verificar que se puede hacer push desde Windows sin problemas de SSH keys (agregar la clave pública de Windows a GitHub si es diferente a la del VPS).
 
 ---
 
-## 5.7.5. Smoke test final
+#### 5.7.5. Smoke test final
 
 - [x] Desde Windows, hacer un cambio menor (ej.: un comentario en `README.md`), comitearlo y pushearlo.
 - [x] Confirmar que el VPS puede hacer `git pull` y recibir ese cambio.
@@ -208,7 +208,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-# ✅ Fase 6 — Migración a Better Auth
+## ✅ Fase 6 — Migración a Better Auth
 
 **Objetivo:** reemplazar el sistema de autenticación custom (JWT propio) por **Better Auth**, aprovechando que provee gestión de sesiones, manejo automático de cookies y un cliente frontend out-of-the-box para Astro/React.
 
@@ -252,25 +252,25 @@ Factores técnicos concretos considerados:
 
 ---
 
-## ✅ Fase 6.6 — Auditoría de Deuda Técnica y Buenas Prácticas
+### ✅ Fase 6.6 — Auditoría de Deuda Técnica y Buenas Prácticas
 
 **Objetivo:** Antes de sumar nuevas integraciones complejas (como iCal), asegurar que la base de código actual es robusta, escalable y emplea patrones modernos y limpios tanto en el frontend como en el backend.
 
-### 6.6.1. Backend Integridad y Escalabilidad (Hono + Bun)
+#### 6.6.1. Backend Integridad y Escalabilidad (Hono + Bun)
 
 - [x] **Validación Zod Extrema:** Implementar `zod` y `@hono/zod-validator` en **absolutamente todos** los endpoints POST/PUT/PATCH para validar invariantes del negocio antes de tocar la DB.
 - [x] **Capa de Servicios (Service Layer):** Extraer la lógica de negocio compleja (ej. cálculos de asistencia, sincronización de sesiones) fuera de los controladores de rutas (Handlers) hacia funciones en `src/services/`.
 - [x] **Manejo Centralizado de Errores:** Implementar `app.onError` global en Hono para devolver respuestas JSON estructuradas consistentes (ej. `{ statusCode, code, message }`) en lugar de depender de try/catches individuales que exponen detalles internos.
 - [x] **Type-safety en Base de Datos:** Evaluar e implementar un generador de queries con tipado seguro como Kysely o Drizzle, o un tipado estricto exhaustivo sobre las tuplas de `@libsql/client` para prevenir errores de columnas en tiempo de ejecución.
 
-### 6.6.2. Frontend Arquitectura y Reactividad (React + Astro)
+#### 6.6.2. Frontend Arquitectura y Reactividad (React + Astro)
 
 - [x] **Data Fetching Sólido:** Migrar llamadas sueltas de `fetch` en `useEffect` a librerías de grado productivo como **TanStack Query (React Query)** para manejar automáticamente cacheo, deduplicación de requests, states predecibles (`isLoading`, `isError`) y re-fetching.
 - [x] **Separación Container-Presenter:** Aislar la lógica de negocio en Custom Hooks (ej. `useTasks()`, `useSubjects()`) separándola de los componentes de UI puramente visuales ("dumb components").
 - [x] **Reutilización del Sistema Abstracto de Diseño:** Auditar el uso de clases y utilidades de Oat para garantizar consistencia. Evitar estilos en línea (`style={{...}}`) siempre que sea posible.
 - [x] **A11y (Accesibilidad):** Auditar el uso correcto de ARIA Attributes, enfoques con teclado (`tabIndex`) y soporte nativo de lectores de pantalla en componentes dinámicos (modales, popovers).
 
-### 6.6.3. Código Limpio Común (Shared)
+#### 6.6.3. Código Limpio Común (Shared)
 
 - [x] **Shared Schemas:** Mover los esquemas de Zod al paquete `packages/shared-types` para reutilizar las mismas reglas de validación en el cliente (formularios) y en el servidor (endpoints).
 - [x] **Limpieza de Código Muerto:** Ejecutar herramientas tipo `knip` o buscar manualmente funciones, exportaciones y archivos huérfanos de la vieja implementación JWT/Local que hayan quedado perdidos.
@@ -278,41 +278,41 @@ Factores técnicos concretos considerados:
 
 ---
 
-# 🟡 Fase 7 — Integración iCal por usuario (Schoology)
+## ✅ Fase 7 — Integración iCal por usuario (Schoology)
 
 **Objetivo:** cada usuario puede vincular su feed iCal/webcal de Schoology y sincronizar eventos hacia el dashboard.
 
 ### 7.1. Modelo y DB (Ajustado para Better Auth)
 
-- [ ] Extender tabla `users` mediante esquema de Better Auth:
+- [x] Extender tabla `users` mediante esquema de Better Auth:
   - Modificar configuración en `lib/auth.better.ts` para inyectar un nuevo plugin o usar `additionalFields` (`ical_url`, `last_ical_sync`).
   - Ejecutar migraciones o alterar de forma segura en Kysely/Turso para crear las nuevas columnas en la tabla `user`.
-- [ ] Opcionalmente, permitir que estos campos se lean desde el Session object devuelto al frontend, ajustando las respuestas de Better Auth.
+- [x] Opcionalmente, permitir que estos campos se lean desde el Session object devuelto al frontend, ajustando las respuestas de Better Auth.
 
 ### 7.2. Endpoints de configuración y sync (Zod + Services)
 
-- [ ] Endpoint para configurar iCal (`PATCH /api/auth/me/ical` u homólogo):
+- [x] Endpoint para configurar iCal (`PATCH /api/auth/me/ical` u homólogo):
   - Validar payload usando `zod` (`@hono/zod-validator`) con esquemas en `shared-types`.
   - Normalizar `webcal://` a `https://`.
   - Actualizar el usuario logueado en DB según la sesión extraída desde `auth.api.getSession(c.req.raw)`.
-- [ ] Servicio de sincronización:
+- [x] Servicio de sincronización:
   - Crear `src/services/icalService.ts` manejando el parseo de `.ics` de manera desacoplada del controlador Hono.
   - Endpoint `POST /api/ical/sync`: invoca `icalService.syncUserCalendar(userId, userIcalUrl)`.
   - Convertir eventos a array de records validados y delegar a una función de inserción masiva (`dbService.tasks.createMassive`).
 
 ### 7.3. UI (React Query)
 
-- [ ] Dashboard: sección secundaria o de settings "Integraciones y Calendario".
+- [x] Dashboard: sección secundaria o de settings "Integraciones y Calendario".
   - Campo para URL de Schoology (webcal/https).
-- [ ] Integrar mutaciones usando TanStack Query (`useMutation`):
+- [x] Integrar mutaciones usando TanStack Query (`useMutation`):
   - Botón "Guardar" y "Sincronizar ahora" con manejo de stado predecible (`isLoading`, `isError`).
   - Mostrar feedback visual o Toasts del error lanzado por la API JSON.
 
 ### 7.4. Tests para iCal
 
-- [ ] Pruebas unitarias de parser en `apps/api/tests/ical.test.ts`.
-- [ ] Comprobación del parseo `webcal://` -> `https://`.
-- [ ] Ignorar creación repetitiva de la misma clase.
+- [x] Pruebas unitarias de parser en `apps/api/tests/ical.test.ts`.
+- [x] Comprobación del parseo `webcal://` -> `https://`.
+- [x] Ignorar creación repetitiva de la misma clase.
 
 ---
 
@@ -337,7 +337,7 @@ Factores técnicos concretos considerados:
 
 ### 9.1. Renombrar “UCs” → “UC (Unidad Curricular)”
 
-- [ ] En UI, traducir y referenciar listas cerradas siempre como "UC".
+- [x] En UI, traducir y referenciar listas cerradas siempre como "UC".
 
 ### 9.2 y 9.4. Single Source Of Truth (Paso 0 antes de la UI)
 
