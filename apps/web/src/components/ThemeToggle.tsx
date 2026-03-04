@@ -12,8 +12,7 @@ export const ThemeToggle = ({ variant = "floating" }: { variant?: "sidebar" | "f
   if (variant === "sidebar") {
     return (
       <button onClick={toggleTheme} aria-label="Toggle theme" className="theme-toggle-btn">
-        <span>{theme === "light" ? "🌙" : "☀️"}</span>
-        <span className="sidebar-label">{theme === "light" ? "Oscuro" : "Claro"}</span>
+        <span className="sidebar-icon-item">{theme === "light" ? "🌙" : "☀️"}</span>
       </button>
     );
   }

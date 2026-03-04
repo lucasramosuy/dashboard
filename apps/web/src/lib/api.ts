@@ -1,4 +1,4 @@
-import type { Subject, Task, Absence, PracticeJournal } from "@dashboard/shared-types";
+import type { Subject, Task, Absence, PracticeJournal, IcalEvent } from "@dashboard/shared-types";
 import { authClient } from "./auth-client";
 
 /**
@@ -228,5 +228,27 @@ export const api = {
       body: JSON.stringify({ status }),
     });
     return handleResponse<Task>(response);
+  },
+
+  // --- ICAL INTEGRATION ---
+  async updateIcalConfig(ical_url: string): Promise<void> {
+    const response = await apiFetch(`${API_BASE}/ical/config`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ical_url }),
+    });
+    await handleResponse(response);
+  },
+
+  async syncIcal(): Promise<{ success: boolean; syncedCount: number }> {
+    const response = await apiFetch(`${API_BASE}/ical/sync`, {
+      method: "POST",
+    });
+    return handleResponse(response);
+  },
+
+  async getIcalEvents(): Promise<IcalEvent[]> {
+    const response = await apiFetch(`${API_BASE}/ical/events`);
+    return handleResponse<IcalEvent[]>(response);
   },
 };

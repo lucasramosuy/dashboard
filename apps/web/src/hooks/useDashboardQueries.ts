@@ -189,3 +189,34 @@ export const useDeleteAbsence = () => {
     },
   });
 };
+
+// --- ICAL ---
+
+export const useUpdateIcalConfig = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ical_url: string) => api.updateIcalConfig(ical_url),
+    onSuccess: () => {
+      // Para forzar la actualización de authSession sin refresh
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+    },
+  });
+};
+
+export const useSyncIcal = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.syncIcal(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["ical_events"] });
+    },
+  });
+};
+
+export const useIcalEvents = () => {
+  return useQuery({
+    queryKey: ["ical_events"],
+    queryFn: () => api.getIcalEvents(),
+  });
+};

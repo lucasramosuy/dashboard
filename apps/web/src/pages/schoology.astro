@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { SchoologyPage } from "../components/SchoologyPage";
+---
+
+<DashboardLayout title="Integración Schoology">
+  <SchoologyPage client:only="react" />
+</DashboardLayout>

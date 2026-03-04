@@ -1,4 +1,4 @@
-@import "@fontsource-variable/inter/index.css";
+@import "@fontsource-variable/inter";
 
 /* ============================================================
    ZENITH DESIGN SYSTEM — theme.css
@@ -639,8 +639,8 @@ td {
    ============================================================ */
 /* Patrón base compartido */
 .logout-btn,
-.theme-toggle-btn {
-  width: 100%;
+.theme-toggle-btn,
+.profile-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -656,23 +656,33 @@ td {
 
 .logout-btn {
   color: var(--oat-danger);
-  margin-top: 0.75rem;
+  flex: 1;
+  justify-content: center;
+}
+.profile-btn {
+  color: var(--oat-text);
+  text-decoration: none;
+  width: 100%;
 }
 .theme-toggle-btn {
   color: var(--oat-text-muted);
+  flex: 1;
+  justify-content: center;
 }
 
 .logout-btn:hover {
   background: var(--oat-danger-light);
 }
-.theme-toggle-btn:hover {
+.theme-toggle-btn:hover,
+.profile-btn:hover {
   background: var(--oat-bg);
   color: var(--oat-text);
 }
 
 /* Label expandible al hacer hover en el sidebar */
 .logout-btn .sidebar-label,
-.theme-toggle-btn .sidebar-label {
+.theme-toggle-btn .sidebar-label,
+.profile-btn .sidebar-label {
   max-width: 0;
   opacity: 0;
   margin-left: 0;
@@ -684,7 +694,8 @@ td {
 }
 
 .app-sidebar:hover .logout-btn .sidebar-label,
-.app-sidebar:hover .theme-toggle-btn .sidebar-label {
+.app-sidebar:hover .theme-toggle-btn .sidebar-label,
+.app-sidebar:hover .profile-btn .sidebar-label {
   max-width: 200px;
   opacity: 1;
   margin-left: 0.75rem;

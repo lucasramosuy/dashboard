@@ -5,11 +5,16 @@ import { subjectsRouter } from "./routes/subjects";
 import { tasksRouter } from "./routes/tasks";
 import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
+import { icalRouter } from "./routes/ical";
 import { initDB } from "./lib/db";
 import { z } from "zod/v4";
+import { initCronJobs } from "./cron";
 
 // Initialize SQLite tables
 await initDB();
+
+// Initialize Cron Jobs (e.g. daily ical sync)
+initCronJobs();
 
 export const app = new Hono();
 
@@ -52,6 +57,7 @@ app.route("/api/subjects", subjectsRouter);
 app.route("/api/tasks", tasksRouter);
 app.route("/api/practice-journals", practiceJournalsRouter);
 app.route("/api/absences", absencesRouter);
+app.route("/api/ical", icalRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
@@ -61,8 +67,6 @@ const server = Bun.serve({
   port,
   fetch: app.fetch,
 });
-
-console.log("\x1b[32m%s\x1b[0m", `🚀 API Server running on port ${server.port}`);
 
 // ✅ Graceful shutdown para evitar puertos ocupados (EADDRINUSE) en Windows
 const shutdown = (signal: string) => {

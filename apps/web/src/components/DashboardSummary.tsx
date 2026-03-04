@@ -189,6 +189,19 @@ export const DashboardSummary: React.FC = () => {
             Ver analíticas →
           </span>
         </BentoLink>
+
+        {/* CARD 5: Integración Schoology → /schoology */}
+        <BentoLink href="/schoology" style={{ gridColumn: "1 / -1", marginTop: "1rem" }}>
+          <div className="bento-card-header">
+            <h2 className="bento-card-title">🔗 Integración Schoology</h2>
+          </div>
+          <p className="oat-text-secondary" style={{ fontSize: "0.875rem" }}>
+            Administra la cuenta vinculada de Webcal/iCal para tus tareas académicas.
+          </p>
+          <span className="bento-link-hint" aria-hidden="true" style={{ marginTop: "1rem" }}>
+            Configurar →
+          </span>
+        </BentoLink>
       </div>
     </div>
   );
