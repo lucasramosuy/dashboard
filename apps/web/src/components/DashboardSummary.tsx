@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { StatusBadge } from "./StatusBadge";
-import { useTasks, useAtRiskSubjects } from "../hooks/useDashboardQueries";
+import { useTasks, useAtRiskSubjects, useUpdateTask } from "../hooks/useDashboardQueries";
 
 // Wrapper clickeable para tarjetas bento
 const BentoLink: React.FC<{
@@ -25,6 +25,16 @@ export const DashboardSummary: React.FC = () => {
   // React Query Hooks (Data Fetching Sólido)
   const { data: atRisk = [], isLoading: loadingAtRisk } = useAtRiskSubjects();
   const { data: tasks = [], isLoading: loadingTasks } = useTasks();
+  const updateTask = useUpdateTask();
+
+  const handleToggleTask = (task: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    updateTask.mutate({
+      id: task.id,
+      data: { status: task.status === "done" ? "todo" : "done" },
+    });
+  };
 
   const loading = loadingAtRisk || loadingTasks;
 
@@ -99,40 +109,94 @@ export const DashboardSummary: React.FC = () => {
           </span>
         </BentoLink>
 
-        {/* CARD 2: Próximas Tareas → /tasks */}
-        <BentoLink href="/tasks">
-          <div className="bento-card-header">
-            <h2 className="bento-card-title">📅 Próximas Tareas</h2>
-          </div>
+        {/* CARD 2: Próximas Tareas */}
+        <div className="oat-card" style={{ display: "flex", flexDirection: "column" }}>
+          <a
+            href="/tasks"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+              display: "block",
+              marginBottom: "auto",
+            }}
+          >
+            <div className="bento-card-header">
+              <h2 className="bento-card-title">📅 Próximas Tareas</h2>
+            </div>
+          </a>
           {upcomingTasks.length === 0 ? (
             <p className="oat-text-secondary">Sin tareas pendientes.</p>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, marginTop: "0.5rem" }}>
               {upcomingTasks.map((t) => (
-                <li key={t.id} className="task-preview-item">
-                  <div>
-                    <div
-                      className="oat-text-primary"
-                      style={{ fontWeight: 600, fontSize: "0.875rem" }}
+                <li key={t.id} className="task-preview-item" style={{ padding: "0.75rem 0" }}>
+                  <div
+                    style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", flex: 1 }}
+                  >
+                    <button
+                      onClick={(e) => handleToggleTask(t, e)}
+                      aria-label="Alternar estado de la tarea"
+                      style={{
+                        padding: 0,
+                        width: "24px",
+                        height: "24px",
+                        minWidth: "24px",
+                        minHeight: "24px",
+                        marginTop: "2px",
+                        borderRadius: "50%",
+                        border: `2px solid ${t.status === "done" ? "var(--oat-success)" : "var(--oat-border)"}`,
+                        background: t.status === "done" ? "var(--oat-success)" : "transparent",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
                     >
-                      {t.title}
-                    </div>
-                    <small className="oat-text-secondary">
-                      Vence:{" "}
-                      {t.due_date instanceof Date
-                        ? t.due_date.toLocaleDateString("es-UY")
-                        : new Date(t.due_date).toLocaleDateString("es-UY")}
-                    </small>
+                      {t.status === "done" && (
+                        <span style={{ color: "white", fontSize: "14px", lineHeight: 1 }}>✓</span>
+                      )}
+                    </button>
+                    <a
+                      href={`/tasks`}
+                      style={{ textDecoration: "none", color: "inherit", flex: 1 }}
+                    >
+                      <div
+                        className="oat-text-primary"
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "0.875rem",
+                          textDecoration: t.status === "done" ? "line-through" : "none",
+                          color: t.status === "done" ? "var(--oat-text-muted)" : "inherit",
+                        }}
+                      >
+                        {t.title}
+                      </div>
+                      <small className="oat-text-secondary">
+                        Vence:{" "}
+                        {t.due_date instanceof Date
+                          ? t.due_date.toLocaleDateString("es-UY")
+                          : new Date(t.due_date).toLocaleDateString("es-UY")}
+                      </small>
+                    </a>
                   </div>
-                  <StatusBadge variant="warning">Pendiente</StatusBadge>
                 </li>
               ))}
             </ul>
           )}
-          <span className="bento-link-hint" aria-hidden="true">
+          <a
+            href="/tasks"
+            className="bento-link-hint"
+            style={{
+              textDecoration: "none",
+              color: "var(--oat-text-muted)",
+              marginTop: "1rem",
+              display: "block",
+            }}
+          >
             Ver tareas →
-          </span>
-        </BentoLink>
+          </a>
+        </div>
 
         {/* CARD 3: Acceso Rápido Práctica → /journal */}
         <BentoLink href="/journal" dark>

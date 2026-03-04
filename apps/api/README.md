@@ -9,12 +9,12 @@ Backend del dashboard académico.
 
 ## Scripts
 
-| Comando | Descripción |
-|---|---|
-| `bun run dev` | Servidor de desarrollo (puerto 8787) |
-| `bun test` | Ejecutar tests |
-| `bun run seed` | Seed de datos demo |
-| `bun run invites` | Generar códigos de invitación |
+| Comando           | Descripción                          |
+| ----------------- | ------------------------------------ |
+| `bun run dev`     | Servidor de desarrollo (puerto 8787) |
+| `bun test`        | Ejecutar tests                       |
+| `bun run seed`    | Seed de datos demo                   |
+| `bun run invites` | Generar códigos de invitación        |
 
 ## Variables de entorno
 

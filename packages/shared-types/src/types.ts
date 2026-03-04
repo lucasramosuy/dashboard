@@ -16,6 +16,7 @@ export interface Subject {
   name: string;
   total_classes: number;
   user_id: string;
+  slug?: string | null;
   track?: "semestral" | "anual" | null;
   duration_weeks?: number | null;
 }
@@ -31,11 +32,13 @@ export interface Absence {
 export interface Task {
   id: string;
   subject_id?: string | null;
+  user_id?: string | null;
   title: string;
   description?: string;
   status: "todo" | "in-progress" | "done";
   due_date: Date;
   source?: "manual" | "ical";
+  slug?: string | null;
   type?: "parcial" | "examen" | "trabajo" | "otro" | null;
   grade?: number | null;
   file_url?: string | null;
@@ -45,6 +48,7 @@ export interface Task {
 export interface PracticeJournal {
   id: string;
   subject_id: string;
+  user_id: string;
   date: Date;
   content: string;
 }

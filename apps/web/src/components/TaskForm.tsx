@@ -26,6 +26,7 @@ export const TaskForm: React.FC<Props> = ({
   const [title, setTitle] = useState(initialData?.title || "");
   const [subjectId, setSubjectId] = useState(initialData?.subject_id || "");
   const [dueDate, setDueDate] = useState(toDateInputValue(initialData?.due_date)); // ✅ siempre string
+  const dueDateInputRef = React.useRef<globalThis.HTMLInputElement>(null);
   const [description, setDescription] = useState(initialData?.description || "");
   const [status, setStatus] = useState<Task["status"]>(initialData?.status || "todo");
   const [taskType, setTaskType] = useState<string>(initialData?.type || "");
@@ -83,11 +84,21 @@ export const TaskForm: React.FC<Props> = ({
       <div style={{ marginBottom: "1rem" }}>
         <label htmlFor="due">Fecha de Entrega</label>
         <input
+          ref={dueDateInputRef}
           id="due"
           type="date"
           className="oat-input"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
+          onClick={() => {
+            if (dueDateInputRef.current && "showPicker" in globalThis.HTMLInputElement.prototype) {
+              try {
+                dueDateInputRef.current.showPicker();
+              } catch {
+                // ignore
+              }
+            }
+          }}
           required
         />
       </div>

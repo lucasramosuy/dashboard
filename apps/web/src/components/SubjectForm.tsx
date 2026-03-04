@@ -57,8 +57,11 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
           className="oat-input"
           value={track}
           onChange={(e) => handleTrackChange(e.target.value)}
+          required
         >
-          <option value="">Sin especificar</option>
+          <option value="" disabled>
+            Seleccioná un trayecto
+          </option>
           <option value="semestral">Semestral (15 semanas)</option>
           <option value="anual">Anual (30 semanas)</option>
         </select>

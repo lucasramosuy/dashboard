@@ -9,6 +9,18 @@ import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 import { createSubjectSchema, updateSubjectSchema } from "@dashboard/shared-types";
 import { subjectsService } from "../services/subjectsService";
 
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+};
+
 const subjectsRouter = new Hono<AuthEnv>();
 
 subjectsRouter.use("/*", authMiddleware);
@@ -92,6 +104,7 @@ subjectsRouter.post("/", async (c) => {
     name: body.name.trim(),
     total_classes: body.total_classes,
     user_id: user.id,
+    slug: generateSlug(body.name),
     track: body.track ?? null,
     duration_weeks: body.duration_weeks ?? null,
   };
@@ -111,7 +124,10 @@ subjectsRouter.patch("/:id", async (c) => {
 
   const body = updateSubjectSchema.parse(await c.req.json());
   const updateData: Partial<Subject> = {};
-  if (body.name) updateData.name = body.name.trim();
+  if (body.name) {
+    updateData.name = body.name.trim();
+    updateData.slug = generateSlug(body.name);
+  }
   if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
   if (body.track !== undefined) updateData.track = body.track;
   if (body.duration_weeks !== undefined) updateData.duration_weeks = body.duration_weeks;
@@ -122,16 +138,18 @@ subjectsRouter.patch("/:id", async (c) => {
 
 // DELETE subject
 subjectsRouter.delete("/:id", async (c) => {
-  const id = c.req.param("id");
+  const idOrSlug = c.req.param("id");
   const user = c.get("user");
 
   // ✅ IDOR fix
-  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(idOrSlug, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  await dbService.subjects.delete(id);
-  return c.json({ status: "deleted" });
+  const subject = await dbService.subjects.getById(idOrSlug);
+  if (subject) await dbService.subjects.delete(subject.id);
+
+  return c.json({ success: true });
 });
 
 export { subjectsRouter };
