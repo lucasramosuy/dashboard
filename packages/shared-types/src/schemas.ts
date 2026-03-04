@@ -29,7 +29,7 @@ export const updateSubjectSchema = z
 const taskStatusEnum = z.enum(["todo", "in-progress", "done"]);
 
 export const createTaskSchema = z.object({
-  subject_id: z.string().min(1, "subject_id es requerido"),
+  subject_id: z.string().optional().nullable(),
   title: z.string().min(1, "El título es requerido"),
   due_date: z.string().min(1, "due_date es requerido"),
   description: z.string().optional(),

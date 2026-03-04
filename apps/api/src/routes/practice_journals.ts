@@ -44,9 +44,7 @@ practiceJournalsRouter.post("/", async (c) => {
   const user = c.get("user");
   const body = createJournalSchema.parse(await c.req.json());
 
-  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, user.id))) {
-    return c.json({ error: "Subject not found" }, 404);
-  }
+  // subject_id en journals es el nombre de la especialidad (ej. "Derecho"), no un UUID de UC
 
   const parsedDate = new Date(body.date);
   if (isNaN(parsedDate.getTime())) {
@@ -56,6 +54,7 @@ practiceJournalsRouter.post("/", async (c) => {
   const newJournal: PracticeJournal = {
     id: randomUUID(),
     subject_id: body.subject_id,
+    user_id: user.id,
     date: parsedDate,
     content: body.content.trim(),
   };

@@ -137,7 +137,7 @@ export const TaskList: React.FC = () => {
                 {tasks.map((t) => (
                   <tr key={t.id} className="subjects-row">
                     <td>
-                      <a href={`/tasks/${t.id}`} className="subjects-link">
+                      <a href={`/tasks/${t.slug || t.id}`} className="subjects-link">
                         {t.title}
                       </a>
                     </td>

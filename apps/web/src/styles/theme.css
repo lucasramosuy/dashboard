@@ -718,6 +718,12 @@ td {
   font-size: 1.25rem;
 }
 
+/* ==== MOBILE MENU (FASE 8) GLOBALS ==== */
+.mobile-menu-fab,
+.mobile-menu-backdrop {
+  display: none;
+}
+
 /* ============================================================
    RESPONSIVE
    ============================================================ */
@@ -728,24 +734,193 @@ td {
 }
 
 @media (max-width: 768px) {
-  .sidebar-bottom {
-    display: none;
+  /* Ocultar sidebar en mobile */
+  .app-sidebar {
+    display: none !important;
   }
 
-  .mobile-actions .logout-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    padding: 0;
+  /* Mostrar Mobile Menu */
+  .mobile-menu-fab {
+    display: flex;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px; /* Más acorde a oat-pills y cards, en lugar de 50% */
+    background: var(--oat-primary);
+    color: var(--oat-bg);
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    align-items: center;
     justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 50;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .mobile-menu-fab:hover,
+  .mobile-menu-fab:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+  .mobile-menu-fab:active {
+    transform: translateY(0);
+  }
+
+  /* Backdrop Overlay */
+  .mobile-menu-backdrop {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    justify-content: flex-end; /* Sidebar sale de derecha a izquierda o en el centro */
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  /* Modal Dialog */
+  .mobile-menu-dialog {
+    width: 85%;
+    max-width: 340px;
+    height: 100%;
+    background: var(--oat-bg);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--oat-border);
+  }
+
+  .mobile-menu-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--oat-text);
+  }
+
+  .mobile-menu-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--oat-text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+
+  .mobile-menu-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--oat-text);
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .mobile-menu-link:hover,
+  .mobile-menu-link.active {
     background: var(--oat-card-bg);
-    border: 1px solid var(--oat-danger);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    color: var(--oat-primary);
+  }
+  .mobile-menu-icon {
+    font-size: 1.5rem;
+  }
+
+  .mobile-menu-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--oat-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Sobrescribir grid de SidebarActions para forzar un stack vertical en este footer menu */
+  .mobile-menu-footer > div > div {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Homogenizar botones del footer para que luzcan idénticos a los links del menú */
+  .mobile-menu-footer .profile-btn,
+  .mobile-menu-footer .theme-toggle-btn,
+  .mobile-menu-footer .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    justify-content: flex-start;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--oat-text);
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .mobile-menu-footer .logout-btn {
+    color: var(--oat-danger);
+  }
+
+  .mobile-menu-footer .profile-btn:hover,
+  .mobile-menu-footer .theme-toggle-btn:hover,
+  .mobile-menu-footer .logout-btn:hover {
+    background: var(--oat-card-bg);
+  }
+
+  /* Mostrar textos (Labels) ignorando el ocultamiento del Desktop Sidebar */
+  .mobile-menu-footer .sidebar-label {
+    max-width: none !important;
+    opacity: 1 !important;
+    margin-left: 0 !important;
+    display: block !important;
+  }
+
+  .mobile-menu-footer .sidebar-icon-item {
+    font-size: 1.5rem;
+    width: auto;
     margin: 0;
   }
+}
 
-  .mobile-actions .logout-btn .sidebar-label {
-    display: none;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
 

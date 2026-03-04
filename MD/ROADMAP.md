@@ -1,3 +1,5 @@
+# ROADMAP
+
 ## ✅ Fase 1 — Backend & DB básica
 
 - Monorepo con `apps/api`, `apps/web`, `packages/shared-types`.
@@ -316,24 +318,24 @@ Factores técnicos concretos considerados:
 
 ---
 
-# 🟡 Fase 8 — UX Mobile: nuevo panel flotante (menú `☰`)
+## ✅ Fase 8 — UX Mobile: nuevo panel flotante (menú `☰`)
 
 **Objetivo:** reemplazar el bottom navbar actual en mobile por un botón flotante tipo menú que despliega un panel grande con las opciones de navegación y acciones.
 
 ### 8.1. Diseño del nuevo menú mobile
 
-- [ ] Eliminar/ocultar el bottom‑nav actual en mobile (`DashboardLayout.astro`).
-- [ ] Añadir un botón flotante icono `☰` en la esquina inferior derecha (`< 768px`).
-- [ ] Crear el componente panel usando el principio de **Container-Presenter**. Separar lógica de apertura, hooks `useMobileMenu()` y lock de scroll en un componente `MenuContainer` que envuelva al puramente de vista.
+- [x] Eliminar/ocultar el bottom‑nav actual en mobile (`DashboardLayout.astro`).
+- [x] Añadir un botón flotante icono `☰` en la esquina inferior derecha (`< 768px`).
+- [x] Crear el componente panel usando el principio de **Container-Presenter**. Separar lógica de apertura, hooks `useMobileMenu()` y lock de scroll en un componente `MenuContainer` que envuelva al puramente de vista.
 
 ### 8.2. Contenido e Interacción
 
-- [ ] Botones para links rápidos de navegación y acciones clave: Dashboard, UC, Tareas, ThemeToggle y Logout.
-- [ ] Manejo semántico ARIA para que lectores de pantalla detecten que es un Dialog Modal (`role="dialog"`, atrapar Focus, Cerrar con `Esc`).
+- [x] Botones para links rápidos de navegación y acciones clave: Dashboard, UC, Tareas, ThemeToggle y Logout.
+- [x] Manejo semántico ARIA para que lectores de pantalla detecten que es un Dialog Modal (`role="dialog"`, atrapar Focus, Cerrar con `Esc`).
 
 ---
 
-# ✅ Fase 9 — Enriquecimiento académico y Tasks avanzadas
+## ✅ Fase 9 — Enriquecimiento académico y Tasks avanzadas
 
 ### 9.1. Renombrar “UCs” → “UC (Unidad Curricular)”
 
@@ -361,24 +363,31 @@ Factores técnicos concretos considerados:
 
 ---
 
-# 🟡 Fase 10 — Planner semanal tipo WeekToDo
+## 🟡 Fase 10 — Planner semanal tipo WeekToDo
 
 **Objetivo:** tener una vista semanal estilo WeekToDo que complemente `/tasks`.
 
 ### 10.1. Nueva ruta y Hooks de React Query
 
-- [ ] Nueva view `/planner` re-utilizando componentes visuales existentes.
-- [ ] Creación de hooks custom como `useWeeklyTasks()` basados en TanStack Query, apuntando a la api actual, pero filtrados/agrupados por día. Se recomienda agrupar del lado del backend (Service Layer) y retornar un JSON estructurado.
+- [x] Nueva view `/planner` re-utilizando componentes visuales existentes.
+- [x] Permitir que el usuario cree subtareas directamente desde el planner que viven allí y se quedan marcadas como "hechas" en el visual en el que estan.
+- [x] Creación de hooks custom como `useWeeklyTasks()` basados en TanStack Query, apuntando a la api actual, pero filtrados/agrupados por día. Se recomienda agrupar del lado del backend (Service Layer) y retornar un JSON estructurado.
 
 ### 10.2. Funcionalidad V1 y V2
 
-- [ ] V1: Estructura Read-only visual (lunes-domingo). Datos nutridos y cacheados por React Query.
-- [ ] V2: Mutaciones "Drag and Drop" atadas internamente a **Mutaciones Optimistas (Optimistic Updates)** de `react-query`. Así evitan spinners o bloqueos visuales al mover tarjetas de una columna a otra.
+- [x] V1: Estructura Read-only visual (lunes-domingo). Datos nutridos y cacheados por React Query.
+- [x] V2: Mutaciones "Drag and Drop" atadas internamente a **Mutaciones Optimistas (Optimistic Updates)** de `react-query`. Así evitan spinners o bloqueos visuales al mover tarjetas de una columna a otra.
 
 ---
 
-# 🟡 Fase 11 — Higiene, tests, calidad y deploy
+## 🟡 Fase 11 — Higiene, tests, calidad y deploy
 
+- [ ] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
+- [ ] Revisar y refactorizar todos los estilos del theme.css para que tengan consistencia en toda la app.
+- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/api.
+- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/web.
+- [ ] Limpiar DB de Turso para prod.
+- [ ] Crear invites para usuarios de prod.
 - [ ] Sync final de esquemas en producción. Ejecutar `npx @better-auth/cli migrate` y asegurarse de que Turso refleje todas las columnas extra (como las del feed iCal y notas).
 - [ ] Verificar consistencia de código estricto en la raíz:
   - `bun run format`, `bun run lint` y **sobre todo `bun run check`**, afirmando que Typescript valide en frontend, backend y `shared-types`.

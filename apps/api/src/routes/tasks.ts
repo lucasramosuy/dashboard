@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { dbService } from "../lib/db";
+import { tasksService } from "../services/tasksService";
 
 import type { Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
@@ -11,6 +12,18 @@ import {
   updateTaskSchema,
   updateTaskStatusSchema,
 } from "@dashboard/shared-types";
+
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+};
 
 const tasksRouter = new Hono<AuthEnv>();
 
@@ -31,6 +44,20 @@ tasksRouter.get("/", async (c) => {
   return c.json(await dbService.tasks.getByUser(user.id));
 });
 
+// GET weekly tasks
+tasksRouter.get("/weekly", async (c) => {
+  const user = c.get("user");
+  const start = c.req.query("start");
+  const end = c.req.query("end");
+
+  if (!start || !end) {
+    return c.json({ error: "Missing start or end query params" }, 400);
+  }
+
+  const groupedTasks = await tasksService.getWeeklyTasks(user.id, start, end);
+  return c.json(groupedTasks);
+});
+
 // GET task by ID
 tasksRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
@@ -48,17 +75,21 @@ tasksRouter.post("/", async (c) => {
   const user = c.get("user");
   const body = createTaskSchema.parse(await c.req.json());
 
-  if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, user.id))) {
-    return c.json({ error: "Subject not found" }, 404);
+  if (body.subject_id) {
+    if (!(await dbService.ownership.subjectBelongsToUser(body.subject_id, user.id))) {
+      return c.json({ error: "Subject not found" }, 404);
+    }
   }
 
   const newTask: Task = {
     id: randomUUID(),
-    subject_id: body.subject_id,
+    subject_id: body.subject_id || null,
+    user_id: user.id,
     title: body.title.trim(),
     description: body.description?.trim(),
     due_date: new Date(body.due_date),
     status: body.status || "todo",
+    slug: generateSlug(body.title),
     type: body.type ?? null,
     grade: body.grade ?? null,
     file_url: body.file_url ?? null,
@@ -96,7 +127,10 @@ tasksRouter.patch("/:id", async (c) => {
   const body = updateTaskSchema.parse(await c.req.json());
   const updateData: Partial<Task> = {};
 
-  if (body.title) updateData.title = body.title.trim();
+  if (body.title) {
+    updateData.title = body.title.trim();
+    updateData.slug = generateSlug(body.title);
+  }
   if (body.description !== undefined) updateData.description = body.description.trim();
   if (body.due_date) updateData.due_date = new Date(body.due_date);
   if (body.status) updateData.status = body.status;
@@ -111,14 +145,15 @@ tasksRouter.patch("/:id", async (c) => {
 
 // DELETE task
 tasksRouter.delete("/:id", async (c) => {
-  const id = c.req.param("id");
+  const idOrSlug = c.req.param("id");
   const user = c.get("user");
 
-  if (!(await dbService.ownership.taskBelongsToUser(id, user.id))) {
+  if (!(await dbService.ownership.taskBelongsToUser(idOrSlug, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  await dbService.tasks.delete(id);
+  const task = await dbService.tasks.getById(idOrSlug);
+  if (task) await dbService.tasks.delete(task.id);
   return c.json({ status: "deleted" });
 });
 

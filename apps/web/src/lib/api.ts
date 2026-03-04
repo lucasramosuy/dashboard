@@ -129,6 +129,11 @@ export const api = {
     return handleResponse<Task[]>(response);
   },
 
+  async getWeeklyTasks(start: string, end: string): Promise<Record<string, Task[]>> {
+    const response = await apiFetch(`${API_BASE}/tasks/weekly?start=${start}&end=${end}`);
+    return handleResponse<Record<string, Task[]>>(response);
+  },
+
   async createTask(data: Partial<Task>): Promise<Task> {
     const response = await apiFetch(`${API_BASE}/tasks`, {
       method: "POST",

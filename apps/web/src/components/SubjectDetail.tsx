@@ -25,6 +25,8 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const createAbsence = useCreateAbsence();
   const deleteAbsence = useDeleteAbsence();
 
+  const dateInputRef = React.useRef<globalThis.HTMLInputElement>(null);
+
   const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split("T")[0]);
   const [absenceValue, setAbsenceValue] = useState<number>(1);
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
@@ -94,7 +96,17 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
     <>
       <div className="subject-detail-container">
         <header className="subject-detail-header">
-          <h1>{subject.name}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <button
+              onClick={() => (window.location.href = "/subjects")}
+              className="oat-btn oat-btn-outline"
+              aria-label="Volver a lista de UC"
+              style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
+            >
+              ← Volver
+            </button>
+            <h1 style={{ margin: 0 }}>{subject.name}</h1>
+          </div>
           <StatusBadge variant={riskVariant}>
             {riskVariant === "success"
               ? "Bajo riesgo"
@@ -150,11 +162,24 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       Fecha
                     </label>
                     <input
+                      ref={dateInputRef}
                       id="absenceDate"
                       type="date"
                       className="oat-input"
                       value={absenceDate}
                       onChange={(e) => setAbsenceDate(e.target.value)}
+                      onClick={() => {
+                        if (
+                          dateInputRef.current &&
+                          "showPicker" in globalThis.HTMLInputElement.prototype
+                        ) {
+                          try {
+                            dateInputRef.current.showPicker();
+                          } catch {
+                            // ignore
+                          }
+                        }
+                      }}
                     />
                   </div>
                   <div style={{ flex: 1, minWidth: "140px" }}>
@@ -274,7 +299,10 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       borderBottom: "1px solid var(--oat-border)",
                     }}
                   >
-                    <a href={`/tasks/${t.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                    <a
+                      href={`/tasks/${t.slug || t.id}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
                       {t.title}
                     </a>
                     <StatusBadge variant={t.status === "done" ? "success" : "warning"}>
@@ -285,16 +313,6 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
               </ul>
             )}
           </section>
-        </div>
-
-        <div style={{ marginTop: "2rem" }}>
-          <button
-            onClick={() => (window.location.href = "/subjects")}
-            className="oat-btn oat-btn-outline"
-            aria-label="Volver a lista de UC"
-          >
-            ← Volver a UC
-          </button>
         </div>
       </div>
 

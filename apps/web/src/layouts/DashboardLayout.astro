@@ -1,6 +1,7 @@
 ---
 import Base from "./Base.astro";
 import { SidebarActions } from "../components/SidebarActions";
+import { MobileMenu } from "../components/MobileMenu";
 
 interface Props {
   title: string;
@@ -13,6 +14,7 @@ const navItems = [
   { href: "/", icon: "🏠", label: "Dashboard" },
   { href: "/subjects", icon: "📚", label: "UC" },
   { href: "/tasks", icon: "✅", label: "Tareas" },
+  { href: "/planner", icon: "📅", label: "Planner" },
   { href: "/journal", icon: "✍️", label: "Práctica" },
   { href: "/schoology", icon: "🔗", label: "Schoology" },
   { href: "/analytics", icon: "📊", label: "Analíticas" },
@@ -48,10 +50,8 @@ const navItems = [
       <slot />
     </main>
 
-    {/* Mobile Floating Actions */}
-    <div class="mobile-actions">
-      <SidebarActions client:only="react" variant="floating" />
-    </div>
+    {/* Menú flotante móvil (fase 8) */}
+    <MobileMenu client:only="react" navItems={navItems} currentPath={pathname} />
   </div>
 </Base>
 

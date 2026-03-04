@@ -104,7 +104,7 @@ export const SubjectList: React.FC = () => {
                 {subjects.map((s) => (
                   <tr key={s.id} className="subjects-row">
                     <td>
-                      <a href={`/subjects/${s.id}`} className="subjects-link">
+                      <a href={`/subjects/${s.slug || s.id}`} className="subjects-link">
                         {s.name}
                       </a>
                     </td>

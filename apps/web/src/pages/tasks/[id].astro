@@ -6,8 +6,6 @@ const { id } = Astro.params;
 if (!id) return Astro.redirect("/tasks");
 ---
 
-
-
 <DashboardLayout title="Detalle de Tarea">
   <TaskDetailPage id={id} client:only="react" />
 </DashboardLayout>
