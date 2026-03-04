@@ -4,7 +4,6 @@ import { useSubjects, useTasks, useAllAbsences } from "../hooks/useDashboardQuer
 import {
   PieChart,
   Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
@@ -37,21 +36,22 @@ export const AnalyticsDashboard: React.FC = () => {
   }
 
   // Datos para Pie Chart (Cumplimiento de Tareas)
+  // En recharts v3, el color se pasa directamente como `fill` en los datos
   const taskStatusData = [
     {
       name: "Completadas",
       value: tasks.filter((t) => t.status === "done").length,
-      color: "#10b981",
+      fill: "#10b981",
     },
     {
       name: "En Proceso",
       value: tasks.filter((t) => t.status === "in-progress").length,
-      color: "#3b82f6",
+      fill: "#3b82f6",
     },
     {
       name: "Pendientes",
       value: tasks.filter((t) => t.status === "todo").length,
-      color: "#f59e0b",
+      fill: "#f59e0b",
     },
   ].filter((d) => d.value > 0);
 
@@ -98,8 +98,11 @@ export const AnalyticsDashboard: React.FC = () => {
           >
             Distribución de Tareas
           </h2>
-          <div style={{ height: "300px" }} aria-label="Gráfico circular de distribución de tareas">
-            <ResponsiveContainer width="100%" height="100%">
+          <div
+            style={{ height: "300px", minWidth: 0 }}
+            aria-label="Gráfico circular de distribución de tareas"
+          >
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={taskStatusData}
@@ -109,11 +112,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   cy="50%"
                   outerRadius={80}
                   label
-                >
-                  {taskStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
+                />
                 <Tooltip />
                 <Legend />
               </PieChart>
@@ -132,8 +131,11 @@ export const AnalyticsDashboard: React.FC = () => {
           >
             Asistencia por UC (%)
           </h2>
-          <div style={{ height: "300px" }} aria-label="Gráfico de barras de asistencia por UC">
-            <ResponsiveContainer width="100%" height="100%">
+          <div
+            style={{ height: "300px", minWidth: 0 }}
+            aria-label="Gráfico de barras de asistencia por UC"
+          >
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={attendanceData}>
                 <XAxis dataKey="name" padding={{ left: 0, right: 0 }} />
                 <YAxis domain={[0, 100]} />

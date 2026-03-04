@@ -5,6 +5,8 @@ import { z } from "zod";
 export const createSubjectSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   total_classes: z.coerce.number().int().min(0, "total_classes debe ser un número no negativo"),
+  track: z.enum(["semestral", "anual"]).optional(),
+  duration_weeks: z.coerce.number().int().min(1).optional(),
 });
 
 export const updateSubjectSchema = z
@@ -15,6 +17,8 @@ export const updateSubjectSchema = z
       .int()
       .min(0, "total_classes debe ser un número no negativo")
       .optional(),
+    track: z.enum(["semestral", "anual"]).nullish(),
+    duration_weeks: z.coerce.number().int().min(1).nullish(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Se debe enviar al menos un campo para actualizar",
@@ -30,6 +34,10 @@ export const createTaskSchema = z.object({
   due_date: z.string().min(1, "due_date es requerido"),
   description: z.string().optional(),
   status: taskStatusEnum.optional(),
+  type: z.enum(["parcial", "examen", "trabajo", "otro"]).optional(),
+  grade: z.coerce.number().min(0).max(12).optional(),
+  file_url: z.string().url().optional(),
+  comments: z.string().optional(),
 });
 
 export const updateTaskSchema = z
@@ -38,6 +46,10 @@ export const updateTaskSchema = z
     description: z.string().optional(),
     due_date: z.string().optional(),
     status: taskStatusEnum.optional(),
+    type: z.enum(["parcial", "examen", "trabajo", "otro"]).nullish(),
+    grade: z.coerce.number().min(0).max(12).nullish(),
+    file_url: z.string().url().nullish(),
+    comments: z.string().nullish(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Se debe enviar al menos un campo para actualizar",

@@ -59,6 +59,10 @@ tasksRouter.post("/", async (c) => {
     description: body.description?.trim(),
     due_date: new Date(body.due_date),
     status: body.status || "todo",
+    type: body.type ?? null,
+    grade: body.grade ?? null,
+    file_url: body.file_url ?? null,
+    comments: body.comments ?? null,
   };
 
   await dbService.tasks.create(newTask);
@@ -96,6 +100,10 @@ tasksRouter.patch("/:id", async (c) => {
   if (body.description !== undefined) updateData.description = body.description.trim();
   if (body.due_date) updateData.due_date = new Date(body.due_date);
   if (body.status) updateData.status = body.status;
+  if (body.type !== undefined) updateData.type = body.type;
+  if (body.grade !== undefined) updateData.grade = body.grade;
+  if (body.file_url !== undefined) updateData.file_url = body.file_url;
+  if (body.comments !== undefined) updateData.comments = body.comments;
 
   await dbService.tasks.update(id, updateData);
   return c.json({ ...(await dbService.tasks.getById(id)), ...updateData });

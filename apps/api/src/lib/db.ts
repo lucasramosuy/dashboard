@@ -88,6 +88,8 @@ export async function initDB() {
       name TEXT NOT NULL,
       total_classes INTEGER DEFAULT 0,
       user_id TEXT NOT NULL,
+      track TEXT CHECK(track IN ('semestral', 'anual')),
+      duration_weeks INTEGER,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )`,
       `CREATE TABLE IF NOT EXISTS absences (
@@ -107,6 +109,10 @@ export async function initDB() {
       status TEXT CHECK(status IN ('todo', 'in-progress', 'done')) DEFAULT 'todo',
       due_date TEXT NOT NULL,
       source TEXT DEFAULT 'manual',
+      type TEXT CHECK(type IN ('parcial', 'examen', 'trabajo', 'otro')),
+      grade REAL,
+      file_url TEXT,
+      comments TEXT,
       FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )`,
@@ -147,6 +153,32 @@ export async function initDB() {
     await db.execute("ALTER TABLE user ADD COLUMN last_ical_sync TEXT");
   } catch {
     /* ignored, column might already exist */
+  }
+
+  // Fase 9: nuevas columnas en subjects
+  for (const col of [
+    "ALTER TABLE subjects ADD COLUMN track TEXT",
+    "ALTER TABLE subjects ADD COLUMN duration_weeks INTEGER",
+  ]) {
+    try {
+      await db.execute(col);
+    } catch {
+      /* ya existe */
+    }
+  }
+
+  // Fase 9: nuevas columnas en tasks
+  for (const col of [
+    "ALTER TABLE tasks ADD COLUMN type TEXT",
+    "ALTER TABLE tasks ADD COLUMN grade REAL",
+    "ALTER TABLE tasks ADD COLUMN file_url TEXT",
+    "ALTER TABLE tasks ADD COLUMN comments TEXT",
+  ]) {
+    try {
+      await db.execute(col);
+    } catch {
+      /* ya existe */
+    }
   }
 
   const config = getDbConfig();

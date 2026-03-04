@@ -333,7 +333,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-# 🟡 Fase 9 — Enriquecimiento académico y Tasks avanzadas
+# ✅ Fase 9 — Enriquecimiento académico y Tasks avanzadas
 
 ### 9.1. Renombrar “UCs” → “UC (Unidad Curricular)”
 
@@ -341,23 +341,23 @@ Factores técnicos concretos considerados:
 
 ### 9.2 y 9.4. Single Source Of Truth (Paso 0 antes de la UI)
 
-- [ ] Actualizar paquetes de tipos y esquemas:
+- [x] Actualizar paquetes de tipos y esquemas:
   - En `packages/shared-types`, extender `SubjectSchema` y `TaskSchema` con los nuevos campos propuestos (Trayecto, Duración, Tipo, Calificación, Archivo, Comentarios).
   - Propagar esquema hacia la DB (Turso/Kysely).
 
 ### 9.3. Reglas de duración (Reglamento CFE en Service Layer)
 
-- [ ] En `/subjects` se debe sugerir cantidad de `total_classes`.
-- [ ] Añadir métodos de cálculo aislado en `src/services/subjectsService.ts`:
+- [x] En `/subjects` se debe sugerir cantidad de `total_classes`.
+- [x] Añadir métodos de cálculo aislado en `src/services/subjectsService.ts`:
   - Las UC semestrales = 15 semanas (15 sugerido).
   - Las UC anuales = 30 semanas (30 sugerido).
-- [ ] Formulario frontend aprovecha el esquema compartido y una consulta inicial para pre-poblar.
+- [x] Formulario frontend aprovecha el esquema compartido y una consulta inicial para pre-poblar.
 
 ### 9.5 y 9.6. Integración iCal y Notas
 
-- [ ] Frontend: Nuevas columnas dinámicas en tabla de Tasks.
-- [ ] Endpoint `/api/subjects/:id` puede pre-computar promedios de `grade` vía SQL queries optimizadas con Kysely para retornar el dígito limpio al UI.
-- [ ] `TaskForm` validará campos con scheme Zod compartido, enviando mutaciones a React Query de forma robusta.
+- [x] Frontend: Nuevas columnas dinámicas en tabla de Tasks.
+- [x] Endpoint `/api/subjects/:id` puede pre-computar promedios de `grade` vía SQL queries optimizadas con Kysely para retornar el dígito limpio al UI.
+- [x] `TaskForm` validará campos con scheme Zod compartido, enviando mutaciones a React Query de forma robusta.
 
 ---
 
