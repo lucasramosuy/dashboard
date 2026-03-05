@@ -1,17 +1,10 @@
 ---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
-import { TaskDetailPage } from "../../components/TaskDetailPage";
+import { TaskDetailPage } from "../../components/tasks/TaskDetailPage";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/tasks");
 ---
-
-<script is:inline>
-  (function () {
-    const token = localStorage.getItem("auth_token");
-    if (!token) window.location.replace("/login");
-  })();
-</script>
 
 <DashboardLayout title="Detalle de Tarea">
   <TaskDetailPage id={id} client:only="react" />

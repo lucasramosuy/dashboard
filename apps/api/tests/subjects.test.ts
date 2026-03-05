@@ -1,20 +1,26 @@
-import { describe, it, expect, beforeEach } from "bun:test"; // ← beforeAll eliminado
+import { describe, it, expect, beforeEach } from "bun:test";
 import { app } from "../src/server";
+import { auth } from "../src/lib/auth.better";
 import type { Subject } from "@dashboard/shared-types";
+
+// Helper: crea usuario de test y obtiene session cookie
+async function getTestCookie(): Promise<string> {
+  const email = `subjects-${Date.now()}@test.com`;
+  await auth.api.signUpEmail({ body: { email, password: "test12345", name: "Test" } });
+  const res = await app.request("/api/auth/sign-in/email", {
+    method: "POST",
+    body: JSON.stringify({ email, password: "test12345" }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.headers.get("set-cookie") || "";
+}
 
 describe("Subjects API Tests", () => {
   let subjectId: string;
-  let token: string;
+  let cookie: string;
 
   beforeEach(async () => {
-    // ← era beforeAll
-    const res = await app.request("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "demo@example.com", password: "demo123" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const body = (await res.json()) as any;
-    token = body.token;
+    cookie = await getTestCookie();
   });
 
   it("POST /api/subjects should create a new subject", async () => {
@@ -23,7 +29,7 @@ describe("Subjects API Tests", () => {
       body: JSON.stringify({ name: "Matemáticas I", total_classes: 32 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
@@ -36,19 +42,18 @@ describe("Subjects API Tests", () => {
   });
 
   it("GET /api/subjects should return a list of subjects", async () => {
-    // Crear materia primero para que la lista no esté vacía
     const createRes = await app.request("/api/subjects", {
       method: "POST",
       body: JSON.stringify({ name: "Matemáticas I", total_classes: 32 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     subjectId = ((await createRes.json()) as Subject).id;
 
     const res = await app.request("/api/subjects", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Subject[];
@@ -62,13 +67,13 @@ describe("Subjects API Tests", () => {
       body: JSON.stringify({ name: "Matemáticas I", total_classes: 32 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     subjectId = ((await createRes.json()) as Subject).id;
 
     const res = await app.request(`/api/subjects/${subjectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Subject;
@@ -78,7 +83,7 @@ describe("Subjects API Tests", () => {
 
   it("GET /api/subjects/at-risk should return at-risk subjects", async () => {
     const res = await app.request("/api/subjects/at-risk", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as any[];
@@ -88,22 +93,22 @@ describe("Subjects API Tests", () => {
   it("DELETE /api/subjects/:id should remove a subject", async () => {
     const createRes = await app.request("/api/subjects", {
       method: "POST",
-      body: JSON.stringify({ name: "Materia a borrar", total_classes: 10 }),
+      body: JSON.stringify({ name: "UC a borrar", total_classes: 10 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     subjectId = ((await createRes.json()) as Subject).id;
 
     const res = await app.request(`/api/subjects/${subjectId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
 
     const checkRes = await app.request(`/api/subjects/${subjectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(checkRes.status).toBe(404);
   });

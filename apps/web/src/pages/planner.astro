@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { PlannerPage } from "../components/planner/PlannerPage";
+---
+
+<DashboardLayout title="Planner Semanal">
+  <PlannerPage client:only="react" />
+</DashboardLayout>

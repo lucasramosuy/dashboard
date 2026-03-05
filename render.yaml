@@ -5,8 +5,8 @@ services:
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     envVars:
-      - key: JWT_SECRET
-        generateValue: true
+      - key: BETTER_AUTH_URL
+        value: https://api.lucasramos.uy
       - key: DEV_LOGIN_ENABLED
         value: "false"
       - key: NODE_ENV

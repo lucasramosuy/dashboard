@@ -4,6 +4,9 @@ import tsParser from "@typescript-eslint/parser";
 import astro from "eslint-plugin-astro";
 
 export default [
+  {
+    ignores: ["**/dist/**", "**/.astro/**", "**/node_modules/**", "**/*.d.ts"],
+  },
   // Base JS + globals compartidos
   {
     ...js.configs.recommended,
@@ -24,6 +27,20 @@ export default [
         Response: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        // Browser DOM Types
+        HTMLButtonElement: "readonly",
+        HTMLDivElement: "readonly",
+        HTMLInputElement: "readonly",
+        HTMLTextAreaElement: "readonly",
+        HTMLFormElement: "readonly",
+        HTMLElement: "readonly",
+        Node: "readonly",
+        Element: "readonly",
+        Document: "readonly",
+        Window: "readonly",
+        Event: "readonly",
+        KeyboardEvent: "readonly",
+        MouseEvent: "readonly",
       },
     },
     rules: {

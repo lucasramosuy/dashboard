@@ -1,28 +1,33 @@
-import { describe, it, expect, beforeEach } from "bun:test"; // ← beforeAll eliminado
+import { describe, it, expect, beforeEach } from "bun:test";
 import { app } from "../src/server";
+import { auth } from "../src/lib/auth.better";
 import type { Task, Subject } from "@dashboard/shared-types";
+
+async function getTestCookie(): Promise<string> {
+  const email = `tasks-${Date.now()}@test.com`;
+  await auth.api.signUpEmail({ body: { email, password: "test12345", name: "Test" } });
+  const res = await app.request("/api/auth/sign-in/email", {
+    method: "POST",
+    body: JSON.stringify({ email, password: "test12345" }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.headers.get("set-cookie") || "";
+}
 
 describe("Tasks API Tests", () => {
   let taskId: string;
   let subjectId: string;
-  let token: string;
+  let cookie: string;
 
   beforeEach(async () => {
-    // ← era beforeAll
-    const loginRes = await app.request("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "demo@example.com", password: "demo123" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const auth = (await loginRes.json()) as any;
-    token = auth.token;
+    cookie = await getTestCookie();
 
     const subRes = await app.request("/api/subjects", {
       method: "POST",
       body: JSON.stringify({ name: "Subject for Tasks", total_classes: 10 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     const sub = (await subRes.json()) as Subject;
@@ -35,12 +40,12 @@ describe("Tasks API Tests", () => {
       body: JSON.stringify({
         subject_id: subjectId,
         title: "Estudiar para parcial",
-        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // ← mañana
+        due_date: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
         description: "Capítulos 1 al 5",
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
@@ -53,7 +58,6 @@ describe("Tasks API Tests", () => {
   });
 
   it("GET /api/tasks should return all tasks of user", async () => {
-    // Crear tarea primero para que la lista no esté vacía
     const createRes = await app.request("/api/tasks", {
       method: "POST",
       body: JSON.stringify({
@@ -63,13 +67,13 @@ describe("Tasks API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     taskId = ((await createRes.json()) as Task).id;
 
     const res = await app.request("/api/tasks", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Task[];
@@ -86,12 +90,12 @@ describe("Tasks API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
     const res = await app.request(`/api/tasks?subject_id=${subjectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as Task[];
@@ -108,7 +112,7 @@ describe("Tasks API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     taskId = ((await createRes.json()) as Task).id;
@@ -118,7 +122,7 @@ describe("Tasks API Tests", () => {
       body: JSON.stringify({ status: "done" }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
@@ -137,19 +141,19 @@ describe("Tasks API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     taskId = ((await createRes.json()) as Task).id;
 
     const res = await app.request(`/api/tasks/${taskId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
 
     const checkRes = await app.request(`/api/tasks/${taskId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(checkRes.status).toBe(404);
   });

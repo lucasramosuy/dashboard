@@ -1,18 +1,11 @@
 ---
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
-import { SubjectDetailPage } from "../../components/SubjectDetailPage";
+import { SubjectDetailPage } from "../../components/subjects/SubjectDetailPage";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/subjects");
 ---
 
-<script is:inline>
-  (function () {
-    const token = localStorage.getItem("auth_token");
-    if (!token) window.location.replace("/login");
-  })();
-</script>
-
-<DashboardLayout title="Detalle de Materia">
+<DashboardLayout title="Detalle de UC">
   <SubjectDetailPage id={id} client:only="react" />
 </DashboardLayout>

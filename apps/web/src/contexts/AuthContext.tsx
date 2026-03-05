@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect } from "react";
+import * as Sentry from "@sentry/react";
 import type { UserPublic } from "@dashboard/shared-types";
 import { api } from "../lib/api";
+import { authClient } from "../lib/auth-client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { logger, toError } from "../lib/logger";
+
+const queryClient = new QueryClient();
 
 interface AuthContextType {
   user: UserPublic | null;
-  token: string | null;
+  token: string | null; // We keep this typed for backward compatibility, but won't use it
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   register: (data: {
@@ -20,50 +26,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserPublic | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: sessionData, isPending, error, refetch } = authClient.useSession();
 
-  // Restaurar sesión desde localStorage al montar el provider.
+  const user = sessionData?.user as UserPublic | null;
+  const loading = isPending;
+  const token = null; // ya no usamos tokens manuales front-to-back
+
   useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
-
-    // Blindaje Anti-401: Si no hay token, detenerse inmediatamente sin llamar a la API
-    if (!savedToken || savedToken === "undefined" || savedToken === "null") {
-      setLoading(false);
-      return;
+    // Si hay un error de sesión y no estamos cargando, podríamos loguear
+    if (error && !isPending) {
+      logger.error("[AuthContext] Error validando sesión:", error);
     }
-
-    setToken(savedToken);
-    api
-      .getMe(savedToken)
-      .then(setUser)
-      .catch((err) => {
-        console.error("[AuthContext] Error validando token inicial:", err);
-        localStorage.removeItem("auth_token");
-        setToken(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  }, [error, isPending]);
 
   const login = async (email: string, pass: string) => {
     try {
-      const response = await api.login(email, pass);
-      const newToken = response.token;
-
-      // Persistencia atómica
-      localStorage.setItem("auth_token", newToken);
-      const verifiedToken = localStorage.getItem("auth_token");
-      if (verifiedToken !== newToken) {
-        throw new Error("Error crítico: El token no se pudo persistir en localStorage");
-      }
-
-      // ✅ Usar user que ya viene en la respuesta del login, sin segunda llamada
-      setToken(newToken);
-      setUser(response.user);
-    } catch (error) {
-      console.error("[Auth Error] Error al loguear:", error);
-      localStorage.removeItem("auth_token");
+      await api.login(email, pass);
+      await refetch();
+    } catch (err: unknown) {
+      const error = toError(err);
+      logger.error("[Auth Error] Error al loguear:", error);
       throw error;
     }
   };
@@ -75,37 +57,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     inviteCode: string;
   }) => {
     try {
-      const response = await api.register(data);
-      const newToken = response.token;
-
-      localStorage.setItem("auth_token", newToken);
-      setToken(newToken);
-      setUser(response.user);
-    } catch (error) {
-      console.error("[Auth Error] Error al registrar:", error);
-      localStorage.removeItem("auth_token");
+      await api.register(data);
+      await refetch();
+    } catch (err: unknown) {
+      const error = toError(err);
+      logger.error("[Auth Error] Error al registrar:", error);
       throw error;
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("auth_token");
-    window.location.replace("/login");
-  };
-
-  const refreshMe = async () => {
-    if (token) {
-      const me = await api.getMe(token);
-      setUser(me);
+  const logout = async () => {
+    try {
+      await authClient.signOut();
+      window.location.replace("/login");
+    } catch (err: unknown) {
+      const error = toError(err);
+      logger.error("[Auth Error] Error al cerrar sesión:", error);
+      // Fallback seguro por si la sesión de red falla pero necesitamos limpiar UI
+      window.location.replace("/login");
     }
   };
 
+  const refreshMe = async () => {
+    await refetch();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshMe }}>
-      {children}
-    </AuthContext.Provider>
+    <Sentry.ErrorBoundary
+      fallback={
+        <div style={{ padding: "2rem", color: "red", background: "var(--oat-bg)" }}>
+          Ocurrió un error en la interfaz. Por favor recarga la página.
+        </div>
+      }
+    >
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshMe }}>
+          {children}
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </Sentry.ErrorBoundary>
   );
 };
 
@@ -114,7 +104,7 @@ export const useAuth = () => {
   if (context === undefined) {
     if (typeof window !== "undefined") {
       // Solo en cliente, nunca en SSR
-      console.warn("useAuth debe usarse dentro de <AuthProvider>");
+      logger.warn("useAuth debe usarse dentro de <AuthProvider>");
     }
     return {
       user: null,

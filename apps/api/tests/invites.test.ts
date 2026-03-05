@@ -33,7 +33,7 @@ describe("Invites & Registration API Tests", () => {
 
     expect(regRes.status).toBe(201);
     const body = (await regRes.json()) as any;
-    expect(body).toHaveProperty("token");
+    expect(body).toHaveProperty("user");
     expect(body.user.name).toBe("Test User");
 
     // 3. Verificar que el invite esté marcado como usado
@@ -66,7 +66,7 @@ describe("Invites & Registration API Tests", () => {
 
     expect(regRes.status).toBe(403);
     const body = (await regRes.json()) as any;
-    expect(body.error).toContain("invalid or already used");
+    expect(body.error).toContain("inválido o ha sido usado");
   });
 
   it("should fail registration with a non-existent invite", async () => {
@@ -128,7 +128,7 @@ describe("Invites & Registration API Tests", () => {
 
     expect(regRes.status).toBe(409);
     const body = (await regRes.json()) as any;
-    expect(body.error).toContain("already in use");
+    expect(body.error).toContain("ya está en uso");
   });
 
   it("countActive should correctly count unused invites", async () => {

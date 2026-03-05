@@ -1,24 +1,40 @@
 import { Hono } from "hono";
-import { jwt } from "hono/jwt";
+
 import { dbService } from "../lib/db";
-import { JWT_SECRET } from "../lib/auth";
+
 import type { Subject } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
-const subjectsRouter = new Hono();
+import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
+import { createSubjectSchema, updateSubjectSchema } from "@dashboard/shared-types";
+import { subjectsService } from "../services/subjectsService";
 
-subjectsRouter.use("/*", jwt({ secret: JWT_SECRET, alg: "HS256" }));
+const generateSlug = (text: string) => {
+  return text
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+};
+
+const subjectsRouter = new Hono<AuthEnv>();
+
+subjectsRouter.use("/*", authMiddleware);
 
 // GET all subjects
 subjectsRouter.get("/", async (c) => {
-  const payload = c.get("jwtPayload");
-  return c.json(await dbService.subjects.getAll(payload.id));
+  const user = c.get("user");
+  return c.json(await dbService.subjects.getAll(user.id));
 });
 
 // GET at-risk subjects
 subjectsRouter.get("/at-risk", async (c) => {
-  const payload = c.get("jwtPayload");
-  const subjects = await dbService.subjects.getAll(payload.id);
+  const user = c.get("user");
+  const subjects = await dbService.subjects.getAll(user.id);
 
   const results = await Promise.all(
     subjects.map(async (s) => {
@@ -42,37 +58,55 @@ subjectsRouter.get("/at-risk", async (c) => {
   return c.json(results.filter((s) => s.status !== "normal"));
 });
 
-// GET subject by ID
+// GET CFE duration rules
+subjectsRouter.get("/cfe-rules", (c) => {
+  return c.json(subjectsService.getAllTracks());
+});
+
+// GET subject by ID (con promedio de calificaciones)
 subjectsRouter.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix: verificar ownership antes de devolver el recurso
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  return c.json(await dbService.subjects.getById(id));
+  const subject = await dbService.subjects.getById(id);
+
+  // Pre-computar promedio de grade de las tasks asociadas
+  const tasks = await dbService.tasks.getBySubject(id);
+  const gradedTasks = tasks.filter((t: any) => t.grade != null);
+  const gradeAvg =
+    gradedTasks.length > 0
+      ? Math.round(
+          (gradedTasks.reduce((sum: number, t: any) => sum + Number(t.grade), 0) /
+            gradedTasks.length) *
+            10,
+        ) / 10
+      : null;
+
+  return c.json({
+    ...subject,
+    gradeAvg,
+    gradedCount: gradedTasks.length,
+    totalTasks: tasks.length,
+  });
 });
 
 // POST create subject
 subjectsRouter.post("/", async (c) => {
-  const payload = c.get("jwtPayload");
-  const body = await c.req.json();
-
-  if (!body.name || body.total_classes === undefined) {
-    return c.json({ error: "Missing required fields" }, 400);
-  }
-
-  if (typeof body.total_classes !== "number" || body.total_classes < 0) {
-    return c.json({ error: "total_classes must be a non-negative number" }, 400);
-  }
+  const user = c.get("user");
+  const body = createSubjectSchema.parse(await c.req.json());
 
   const newSubject: Subject = {
     id: randomUUID(),
-    name: String(body.name).trim(),
+    name: body.name.trim(),
     total_classes: body.total_classes,
-    user_id: payload.id,
+    user_id: user.id,
+    slug: generateSlug(body.name),
+    track: body.track ?? null,
+    duration_weeks: body.duration_weeks ?? null,
   };
 
   await dbService.subjects.create(newSubject);
@@ -82,26 +116,21 @@ subjectsRouter.post("/", async (c) => {
 // PATCH update subject
 subjectsRouter.patch("/:id", async (c) => {
   const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const user = c.get("user");
 
-  // ✅ IDOR fix
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(id, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  const body = await c.req.json();
+  const body = updateSubjectSchema.parse(await c.req.json());
   const updateData: Partial<Subject> = {};
-  if (body.name) updateData.name = String(body.name).trim();
-  if (body.total_classes !== undefined) {
-    if (typeof body.total_classes !== "number" || body.total_classes < 0) {
-      return c.json({ error: "total_classes must be a non-negative number" }, 400);
-    }
-    updateData.total_classes = body.total_classes;
+  if (body.name) {
+    updateData.name = body.name.trim();
+    updateData.slug = generateSlug(body.name);
   }
-
-  if (Object.keys(updateData).length === 0) {
-    return c.json({ error: "No valid fields to update" }, 400);
-  }
+  if (body.total_classes !== undefined) updateData.total_classes = body.total_classes;
+  if (body.track !== undefined) updateData.track = body.track;
+  if (body.duration_weeks !== undefined) updateData.duration_weeks = body.duration_weeks;
 
   await dbService.subjects.update(id, updateData);
   return c.json({ ...(await dbService.subjects.getById(id)), ...updateData });
@@ -109,16 +138,18 @@ subjectsRouter.patch("/:id", async (c) => {
 
 // DELETE subject
 subjectsRouter.delete("/:id", async (c) => {
-  const id = c.req.param("id");
-  const payload = c.get("jwtPayload");
+  const idOrSlug = c.req.param("id");
+  const user = c.get("user");
 
   // ✅ IDOR fix
-  if (!(await dbService.ownership.subjectBelongsToUser(id, payload.id))) {
+  if (!(await dbService.ownership.subjectBelongsToUser(idOrSlug, user.id))) {
     return c.json({ error: "Not found" }, 404);
   }
 
-  await dbService.subjects.delete(id);
-  return c.json({ status: "deleted" });
+  const subject = await dbService.subjects.getById(idOrSlug);
+  if (subject) await dbService.subjects.delete(subject.id);
+
+  return c.json({ success: true });
 });
 
 export { subjectsRouter };

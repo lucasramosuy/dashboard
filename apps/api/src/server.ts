@@ -1,3 +1,20 @@
+import "./instrument";
+import * as Sentry from "@sentry/bun";
+import { logger } from "./lib/logger";
+
+// 2. Hono API Specific Client
+// We create a dedicated client to send Hono-specific errors to a separate project
+const honoClient = new Sentry.NodeClient({
+  dsn: Bun.env.SENTRY_HONO_DSN,
+  // En producción: 20% de traces; en dev: 100%.
+  tracesSampleRate: Bun.env.NODE_ENV === "production" ? 0.2 : 1.0,
+  sendDefaultPii: true,
+  integrations: [],
+  transport: Sentry.makeFetchTransport,
+  stackParser: Sentry.defaultStackParser,
+});
+honoClient.init();
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRouter } from "./routes/auth";
@@ -5,19 +22,58 @@ import { subjectsRouter } from "./routes/subjects";
 import { tasksRouter } from "./routes/tasks";
 import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
+import { icalRouter } from "./routes/ical";
+import { sentryTunnelRouter } from "./routes/sentry_tunnel";
 import { initDB } from "./lib/db";
-
-// --- CONFIGURATION GUARD ---
-const JWT_SECRET = Bun.env.JWT_SECRET;
-if (!JWT_SECRET || JWT_SECRET === "dev-secret-change-me") {
-  console.warn("\n\x1b[33m%s\x1b[0m", "⚠️  WARNING: Using default or missing JWT_SECRET.");
-  console.warn("\x1b[33m%s\x1b[0m", "   Environment is insecure for production use.\n");
-}
+import { auth } from "./lib/auth.better";
+import { z } from "zod/v4";
+import { initCronJobs } from "./cron";
 
 // Initialize SQLite tables
 await initDB();
 
+// Initialize Cron Jobs (e.g. daily ical sync)
+initCronJobs();
+
 export const app = new Hono();
+
+// ✅ Error handler centralizado — respuestas JSON consistentes
+app.onError(async (err, c) => {
+  if (err instanceof z.ZodError) {
+    logger.error("[Zod Error]", err.issues);
+    return c.json({ error: "Validation error", details: err.format() }, 400);
+  }
+  logger.error("[API Error]", err.stack || err);
+
+  // Intentamos obtener el usuario actual para Sentry Logging
+  const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  // Aislamos el scope para que este error se mande específicamente con el cliente Hono
+  Sentry.withIsolationScope(() => {
+    Sentry.setCurrentClient(honoClient);
+
+    Sentry.captureException(err, {
+      captureContext: {
+        user: sessionData?.user
+          ? {
+              id: sessionData.user.id,
+              email: sessionData.user.email,
+              username: sessionData.user.name,
+            }
+          : undefined,
+        extra: {
+          path: c.req.path,
+          method: c.req.method,
+        },
+      },
+    });
+  });
+
+  return c.json({ error: err.message || "Internal server error" }, 500);
+});
+
+// ✅ 404 handler — JSON en vez de HTML
+app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 // ✅ CORS dinámico — soporta múltiples orígenes desde variable de entorno
 const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(",");
@@ -35,16 +91,36 @@ app.use(
 );
 
 app.route("/api/auth", authRouter);
+app.on(["GET", "POST"], "/api/auth/*", async (c) => {
+  return auth.handler(c.req.raw);
+});
+
 app.route("/api/subjects", subjectsRouter);
 app.route("/api/tasks", tasksRouter);
 app.route("/api/practice-journals", practiceJournalsRouter);
 app.route("/api/absences", absencesRouter);
+app.route("/api/ical", icalRouter);
+app.route("/api/sentry-tunnel", sentryTunnelRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-console.log("\x1b[32m%s\x1b[0m", "🚀 API Server running on port 8787");
+app.get("/api/test-error", () => {
+  throw new Error("Sentry Example API Error");
+});
 
-export default {
-  port: 8787,
+const port = Bun.env.PORT || 8787;
+
+const server = Bun.serve({
+  port,
   fetch: app.fetch,
+});
+
+// ✅ Graceful shutdown para evitar puertos ocupados (EADDRINUSE) en Windows
+const shutdown = (signal: string) => {
+  console.log(`\n[${signal}] Cerrando servidor Bun y liberando el puerto ${server.port}...`);
+  server.stop(true); // Detiene conexiones activas y libera el puerto
+  process.exit(0);
 };
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));

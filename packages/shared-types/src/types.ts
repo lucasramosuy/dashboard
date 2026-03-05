@@ -1,9 +1,14 @@
 export interface UserPublic {
   id: string;
-  email: string;
   name: string;
-  passwordHash: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string;
+  createdAt: Date;
+  updatedAt: Date;
   role?: string;
+  ical_url?: string | null;
+  last_ical_sync?: Date | null;
 }
 
 export interface Subject {
@@ -11,6 +16,9 @@ export interface Subject {
   name: string;
   total_classes: number;
   user_id: string;
+  slug?: string | null;
+  track?: "semestral" | "anual" | null;
+  duration_weeks?: number | null;
 }
 
 export interface Absence {
@@ -23,16 +31,25 @@ export interface Absence {
 
 export interface Task {
   id: string;
-  subject_id: string;
+  subject_id?: string | null;
+  user_id?: string | null;
   title: string;
   description?: string;
-  due_date: Date;
   status: "todo" | "in-progress" | "done";
+  due_date: Date;
+  source?: "manual" | "ical";
+  slug?: string | null;
+  type?: "parcial" | "examen" | "trabajo" | "otro" | null;
+  grade?: number | null;
+  file_url?: string | null;
+  comments?: string | null;
+  is_planner?: boolean | number;
 }
 
 export interface PracticeJournal {
   id: string;
   subject_id: string;
+  user_id: string;
   date: Date;
   content: string;
 }
@@ -42,4 +59,13 @@ export interface Invite {
   code: string;
   used: boolean;
   created_at: Date;
+}
+
+export interface IcalEvent {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  url?: string;
+  start_date: Date;
 }

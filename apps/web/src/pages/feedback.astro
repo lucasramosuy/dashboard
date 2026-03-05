@@ -1,0 +1,10 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { FeedbackPage } from "../components/feedback/FeedbackPage";
+---
+
+<DashboardLayout title="Reportar Bug">
+  <div class="dash-container" style="padding: 2rem 1rem; max-width: 600px; margin: 0 auto;">
+    <FeedbackPage client:only="react" />
+  </div>
+</DashboardLayout>
