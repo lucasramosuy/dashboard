@@ -1,5 +1,6 @@
 import type { Subject, Task, Absence, PracticeJournal, IcalEvent } from "@dashboard/shared-types";
 import { authClient } from "./auth-client";
+import * as Sentry from "@sentry/astro";
 
 /**
  * Cliente de API para el dashboard académico.
@@ -49,7 +50,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
     } catch {
       // Si no se puede parsear el JSON de error, mantener el mensaje original
     }
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage);
+    Sentry.captureException(error, {
+      extra: {
+        status: response.status,
+        url: response.url,
+      },
+    });
+    throw error;
   }
   const data = await response.json();
   return reviveDates(data) as T;
@@ -123,8 +131,16 @@ export const api = {
     return handleResponse<Subject[]>(response);
   },
 
-  async getTasks(subjectId?: string): Promise<Task[]> {
-    const url = subjectId ? `${API_BASE}/tasks?subject_id=${subjectId}` : `${API_BASE}/tasks`;
+  async getTasks(subjectId?: string, includePlanner = false): Promise<Task[]> {
+    let url = `${API_BASE}/tasks`;
+    const params: string[] = [];
+    if (subjectId) params.push(`subject_id=${subjectId}`);
+    if (includePlanner) params.push(`include_planner=true`);
+
+    if (params.length > 0) {
+      url += `?${params.join("&")}`;
+    }
+
     const response = await apiFetch(url);
     return handleResponse<Task[]>(response);
   },

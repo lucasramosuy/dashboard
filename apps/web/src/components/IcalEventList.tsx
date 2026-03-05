@@ -2,7 +2,6 @@ import React from "react";
 import { useIcalEvents } from "../hooks/useDashboardQueries";
 import { IcalEvent } from "@dashboard/shared-types";
 
-// Helper para parsear la fecha y capitalizar el primer caracter
 const formatDate = (date: Date) => {
   const str = new Intl.DateTimeFormat("es-UY", {
     weekday: "long",
@@ -19,24 +18,24 @@ export const IcalEventList: React.FC = () => {
 
   if (isPending) {
     return (
-      <div className="oat-card" style={{ marginTop: "1rem" }}>
-        <p className="oat-text-secondary">Cargando eventos sincronizados...</p>
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm mt-4">
+        <p className="text-theme-text-muted">Cargando eventos sincronizados...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="oat-card" style={{ marginTop: "1rem", borderColor: "var(--oat-error)" }}>
-        <p style={{ color: "var(--oat-error)" }}>Error al cargar eventos: {error.message}</p>
+      <div className="bg-theme-card-bg border border-theme-danger rounded-xl p-6 shadow-sm mt-4">
+        <p className="text-theme-danger">Error al cargar eventos: {error.message}</p>
       </div>
     );
   }
 
   if (!events || events.length === 0) {
     return (
-      <div className="oat-card" style={{ marginTop: "1rem", textAlign: "center", padding: "2rem" }}>
-        <p className="oat-text-secondary">
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-8 shadow-sm mt-4 text-center">
+        <p className="text-theme-text-muted">
           No hay eventos sincronizados pendientes. Configura tu URL de Schoology y sincroniza para
           comenzar.
         </p>
@@ -45,66 +44,34 @@ export const IcalEventList: React.FC = () => {
   }
 
   return (
-    <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <h2 className="oat-text-bold" style={{ fontSize: "1.25rem", margin: "0" }}>
-        Próximos eventos
-      </h2>
-      <div
-        style={{
-          display: "grid",
-          gap: "1rem",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        }}
-      >
+    <div className="mt-6 flex flex-col gap-4">
+      <h2 className="text-xl font-bold m-0 text-theme-text">Próximos eventos</h2>
+      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
         {events.map((e: IcalEvent) => (
-          <div key={e.id} className="oat-card" style={{ padding: "1rem" }}>
-            <h3 className="oat-text-bold" style={{ margin: "0 0 0.5rem 0", fontSize: "1.1rem" }}>
-              {e.title}
-            </h3>
+          <div
+            key={e.id}
+            className="bg-theme-card-bg border border-theme-border rounded-xl p-4 shadow-sm"
+          >
+            <h3 className="font-bold m-0 mb-2 text-lg text-theme-text">{e.title}</h3>
             {e.description && (
-              <p
-                className="oat-text-secondary"
-                style={{ fontSize: "0.875rem", margin: "0 0 1rem 0", whiteSpace: "pre-wrap" }}
-              >
+              <p className="text-theme-text-muted text-sm m-0 mb-4 whitespace-pre-wrap">
                 {e.description.length > 200
                   ? `${e.description.substring(0, 200)}...`
                   : e.description}
               </p>
             )}
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-                alignItems: "flex-start",
-              }}
-            >
+            <div className="flex flex-col gap-2 items-start">
               {e.url && (
                 <a
                   href={e.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    fontSize: "0.875rem",
-                    color: "var(--oat-primary)",
-                    textDecoration: "underline",
-                  }}
+                  className="text-sm text-theme-primary underline"
                 >
                   Ver en plataforma ↗
                 </a>
               )}
-              <div
-                style={{
-                  display: "inline-block",
-                  background: "var(--oat-bg)",
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: "4px",
-                  fontSize: "0.75rem",
-                  color: "var(--oat-primary)",
-                  border: "1px solid var(--oat-border)",
-                }}
-              >
+              <div className="inline-block bg-theme-bg px-2 py-1 rounded text-xs text-theme-primary border border-theme-border">
                 📅{" "}
                 {formatDate(e.start_date instanceof Date ? e.start_date : new Date(e.start_date))}
               </div>

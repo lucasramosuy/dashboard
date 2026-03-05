@@ -37,23 +37,28 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  const inputCls =
+    "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
+
   return (
-    <div className="oat-card login-card">
-      <div className="login-logo">
+    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-10 shadow-sm">
+      <div className="text-center text-3xl mb-3">
         <span>📚</span>
       </div>
-      <h1 className="login-title">{isRegister ? "Crear Cuenta" : "Iniciar Sesión"}</h1>
+      <h1 className="text-2xl font-bold text-center m-0 mb-8 text-theme-text">
+        {isRegister ? "Crear Cuenta" : "Iniciar Sesión"}
+      </h1>
 
       <form onSubmit={handleSubmit} noValidate>
         {isRegister && (
-          <div className="login-field">
-            <label htmlFor="name" className="login-label">
+          <div className="mb-5">
+            <label htmlFor="name" className="block mb-2 text-sm text-theme-text-muted font-medium">
               Nombre Completo
             </label>
             <input
               id="name"
               type="text"
-              className="oat-input"
+              className={inputCls}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -63,8 +68,8 @@ export const LoginForm: React.FC = () => {
           </div>
         )}
 
-        <div className="login-field">
-          <label htmlFor="email" className="login-label">
+        <div className="mb-5">
+          <label htmlFor="email" className="block mb-2 text-sm text-theme-text-muted font-medium">
             Correo Electrónico
           </label>
           <input
@@ -72,7 +77,7 @@ export const LoginForm: React.FC = () => {
             type="email"
             autoComplete="email"
             autoFocus
-            className="oat-input"
+            className={inputCls}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -81,15 +86,18 @@ export const LoginForm: React.FC = () => {
           />
         </div>
 
-        <div className="login-field">
-          <label htmlFor="password" className="login-label">
+        <div className="mb-5">
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm text-theme-text-muted font-medium"
+          >
             Contraseña
           </label>
           <input
             id="password"
             type="password"
             autoComplete={isRegister ? "new-password" : "current-password"}
-            className="oat-input"
+            className={inputCls}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -99,14 +107,17 @@ export const LoginForm: React.FC = () => {
         </div>
 
         {isRegister && (
-          <div className="login-field">
-            <label htmlFor="inviteCode" className="login-label">
+          <div className="mb-5">
+            <label
+              htmlFor="inviteCode"
+              className="block mb-2 text-sm text-theme-text-muted font-medium"
+            >
               Código de Invitación
             </label>
             <input
               id="inviteCode"
               type="text"
-              className="oat-input"
+              className={inputCls}
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value)}
               required
@@ -117,7 +128,10 @@ export const LoginForm: React.FC = () => {
         )}
 
         {error && (
-          <div className="c" role="alert">
+          <div
+            className="px-4 py-3 bg-theme-danger-light text-theme-danger rounded-lg mb-5 text-sm border border-theme-danger"
+            role="alert"
+          >
             {error}
           </div>
         )}
@@ -125,11 +139,11 @@ export const LoginForm: React.FC = () => {
         <button
           type="submit"
           disabled={loading || !email || !password || (isRegister && (!name || !inviteCode))}
-          className="oat-btn oat-btn-primary login-submit"
+          className="w-full py-3 mt-2 rounded-lg font-semibold text-base border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-none cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
-              <span className="oat-spinner oat-spinner--sm" />
+              <span className="inline-block w-4 h-4 border-2 border-theme-border border-t-theme-primary rounded-full animate-spin" />
               {isRegister ? "Creando cuenta..." : "Iniciando sesión..."}
             </>
           ) : isRegister ? (
@@ -140,14 +154,13 @@ export const LoginForm: React.FC = () => {
         </button>
       </form>
 
-      <div className="login-toggle" style={{ marginTop: "1.5rem", textAlign: "center" }}>
+      <div className="mt-6 text-center">
         <button
           onClick={() => {
             setIsRegister(!isRegister);
             setError(null);
           }}
-          className="oat-btn oat-btn-ghost"
-          style={{ fontSize: "0.9rem" }}
+          className="bg-transparent border-none text-theme-text-muted text-sm font-medium cursor-pointer hover:text-theme-text transition-colors duration-150 underline-offset-2 hover:underline"
         >
           {isRegister ? "¿Ya tienes cuenta? Inicia sesión" : "¿Tenes código? Regístrate"}
         </button>

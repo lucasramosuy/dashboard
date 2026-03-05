@@ -13,12 +13,10 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ variant }) => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", width: "100%" }}>
+        <div className="flex flex-col gap-1 w-full">
           <ProfileButton />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.25rem" }}>
-            <ThemeToggle variant={variant} />
-            <LogoutButton />
-          </div>
+          <ThemeToggle variant={variant} />
+          <LogoutButton />
         </div>
       </AuthProvider>
     </ThemeProvider>

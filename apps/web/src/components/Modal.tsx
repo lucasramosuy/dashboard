@@ -11,44 +11,13 @@ export const Modal: React.FC<Props> = ({ isOpen, onClose, title, children }) => 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="oat-modal-overlay"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        className="oat-modal-content oat-card"
-        style={{
-          maxWidth: "500px",
-          width: "90%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
-      >
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            borderBottom: "1px solid #eee",
-            marginBottom: "1rem",
-            paddingBottom: "0.5rem",
-          }}
-        >
-          <h3 style={{ margin: 0 }}>{title}</h3>
+    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-lg max-w-[500px] w-[90%] max-h-[90vh] overflow-y-auto">
+        <header className="flex justify-between items-center border-b border-theme-border mb-4 pb-2">
+          <h3 className="m-0 text-theme-text font-bold">{title}</h3>
           <button
             onClick={onClose}
-            className="oat-btn oat-btn-outline"
-            style={{ padding: "0 8px" }}
+            className="inline-flex items-center justify-center px-2 py-1 rounded-lg border border-theme-border bg-transparent text-theme-text-muted hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
           >
             &times;
           </button>

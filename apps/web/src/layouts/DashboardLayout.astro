@@ -18,6 +18,7 @@ const navItems = [
   { href: "/journal", icon: "✍️", label: "Práctica" },
   { href: "/schoology", icon: "🔗", label: "Schoology" },
   { href: "/analytics", icon: "📊", label: "Analíticas" },
+  { href: "/feedback", icon: "🐛", label: "Reportar Bug" },
 ];
 ---
 
@@ -60,7 +61,7 @@ const navItems = [
   .app-shell {
     display: flex;
     min-height: 100vh;
-    background: var(--oat-bg);
+    background: var(--theme-bg);
   }
 
   /* ===== SIDEBAR BENTO ===== */
@@ -69,8 +70,8 @@ const navItems = [
     width: 72px;
     margin: 1rem 0 1rem 1rem;
     height: calc(100vh - 2rem);
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-border);
+    background: var(--theme-card-bg);
+    border: 1px solid var(--theme-border);
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: 1.25rem 0.75rem;
@@ -100,7 +101,7 @@ const navItems = [
   .sidebar-brand-text {
     font-weight: 700;
     font-size: 0.95rem;
-    color: var(--oat-text);
+    color: var(--theme-text);
     white-space: nowrap;
   }
 
@@ -119,7 +120,7 @@ const navItems = [
     padding: 0.75rem 0.5rem;
     border-radius: 10px;
     text-decoration: none;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     font-weight: 500;
     font-size: 0.875rem;
     white-space: nowrap;
@@ -130,8 +131,8 @@ const navItems = [
 
   .app-nav-link:hover,
   .app-nav-link.active {
-    background: var(--oat-bg);
-    color: var(--oat-text);
+    background: var(--theme-bg);
+    color: var(--theme-text);
   }
 
   .app-nav-link.active {
@@ -169,7 +170,7 @@ const navItems = [
   /* Bottom */
   .sidebar-bottom {
     padding-top: 1rem;
-    border-top: 1px solid var(--oat-border);
+    border-top: 1px solid var(--theme-border);
     overflow: hidden;
   }
 
@@ -178,7 +179,7 @@ const navItems = [
     flex: 1;
     min-width: 0;
     padding: 2.5rem;
-    background: var(--oat-bg);
+    background: var(--theme-bg);
   }
 
   /* ===== MOBILE ACTIONS (theme + logout) ===== */
@@ -193,112 +194,18 @@ const navItems = [
   }
 
   .mobile-theme-btn {
-    width: auto;
-    height: 36px;
-    padding: 0 0.875rem;
-    border-radius: 8px; /* pill rectangular */
-    margin: 0;
-    font-size: 0.8rem;
-    justify-content: center;
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-    display: flex;
-    align-items: center;
-
-    cursor: pointer;
+    display: none;
   }
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .app-shell {
-      flex-direction: column;
-      padding-bottom: 72px;
-    }
-
     .app-sidebar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      top: auto;
-      width: 100% !important;
-      height: 64px;
-      margin: 0;
-      border-radius: 0;
-      border-top: 1px solid var(--oat-border);
-      border-bottom: none;
-      border-left: none;
-      border-right: none;
-      flex-direction: row;
-      align-items: center;
-      padding: 0 1rem;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.07);
-    }
-
-    .sidebar-brand,
-    .sidebar-bottom {
-      display: none;
-    }
-
-    .sidebar-nav {
-      flex-direction: row;
-      justify-content: space-around;
-      width: 100%;
-      gap: 0;
-    }
-
-    .app-nav-link {
-      flex-direction: column;
-      gap: 0.2rem;
-      padding: 0.4rem 0.75rem;
-      border-radius: 8px;
-      font-size: 0.65rem;
-    }
-
-    .sidebar-label {
-      max-width: 100px !important;
-      opacity: 1 !important;
-      margin-left: 0 !important;
-      font-size: 0.65rem;
-    }
-
-    .sidebar-icon-item {
-      font-size: 1.2rem;
-      width: auto;
+      display: none !important;
     }
 
     .app-main {
       padding: 1.5rem 1rem;
-    }
-
-    .mobile-actions {
-      display: flex;
-      /*flex-direction: row;       /* en fila, no columna
-      gap: 0.5rem;
-      bottom: calc(64px + 0.75rem);
-      right: 0.75rem;*/
-    }
-
-    /* El logout reutiliza la clase pero en mobile lo hacemos redondo */
-    .mobile-actions .logout-btn {
-      width: auto;
-      height: 36px;
-      padding: 0 0.875rem;
-      border-radius: 8px; /* pill rectangular */
-      margin: 0;
-      font-size: 0.8rem;
-      justify-content: center;
-      background: var(--oat-card-bg);
-      border: 1px solid var(--oat-danger);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .mobile-actions .logout-btn .sidebar-label {
-      max-width: unset;
-      opacity: 1;
-      margin-left: 0.4rem;
+      padding-bottom: 5rem; /* Space for the floating button */
     }
   }
 </style>

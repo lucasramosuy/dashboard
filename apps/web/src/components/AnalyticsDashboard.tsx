@@ -15,28 +15,25 @@ import {
 
 export const AnalyticsDashboard: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-
-  // React Query Hooks
   const { data: subjects = [], isLoading: loadingSubjects } = useSubjects();
   const { data: tasks = [], isLoading: loadingTasks } = useTasks();
   const { data: absences = [], isLoading: loadingAbsences } = useAllAbsences();
-
   const loading = loadingSubjects || loadingTasks || loadingAbsences;
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !authLoading && !user) {
-      window.location.replace("/login");
-    }
+    if (typeof window !== "undefined" && !authLoading && !user) window.location.replace("/login");
   }, [user, authLoading]);
 
   if (authLoading || loading) {
     return (
-      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando analíticas"></div>
+      <div
+        className="flex flex-col items-center justify-center gap-4 p-16 text-theme-text-muted text-sm"
+        aria-busy="true"
+        aria-label="Cargando analíticas"
+      ></div>
     );
   }
 
-  // Datos para Pie Chart (Cumplimiento de Tareas)
-  // En recharts v3, el color se pasa directamente como `fill` en los datos
   const taskStatusData = [
     {
       name: "Completadas",
@@ -48,14 +45,9 @@ export const AnalyticsDashboard: React.FC = () => {
       value: tasks.filter((t) => t.status === "in-progress").length,
       fill: "#3b82f6",
     },
-    {
-      name: "Pendientes",
-      value: tasks.filter((t) => t.status === "todo").length,
-      fill: "#f59e0b",
-    },
+    { name: "Pendientes", value: tasks.filter((t) => t.status === "todo").length, fill: "#f59e0b" },
   ].filter((d) => d.value > 0);
 
-  // Datos para Bar Chart (Asistencia por UC - Porcentaje Real)
   const attendanceData = subjects.map((s) => {
     const subjectAbsences = absences.filter((a) => a.subject_id === s.id);
     const totalAbsenceValue = subjectAbsences.reduce(
@@ -66,40 +58,21 @@ export const AnalyticsDashboard: React.FC = () => {
       s.total_classes > 0
         ? Math.max(0, Math.round(((s.total_classes - totalAbsenceValue) / s.total_classes) * 100))
         : 100;
-
-    return {
-      name: s.name,
-      asistencia: percentage,
-    };
+    return { name: s.name, asistencia: percentage };
   });
 
   return (
     <div>
-      <header style={{ marginBottom: "2.5rem" }}>
-        <h1 style={{ margin: 0 }}>Analíticas Académicas</h1>
-        <p className="oat-text-secondary">Resumen visual de tu progreso y asistencia.</p>
+      <header className="mb-10">
+        <h1 className="m-0 text-theme-text">Analíticas Académicas</h1>
+        <p className="text-theme-text-muted">Resumen visual de tu progreso y asistencia.</p>
       </header>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
-          gap: "2rem",
-        }}
-      >
-        {/* Gráfico 1: Cumplimiento de Tareas */}
-        <section className="oat-card">
-          <h2
-            style={{
-              fontSize: "1.25rem",
-              marginBottom: "1.5rem",
-              textAlign: "center",
-            }}
-          >
-            Distribución de Tareas
-          </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-8">
+        <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl mb-6 text-center text-theme-text">Distribución de Tareas</h2>
           <div
-            style={{ height: "300px", minWidth: 0 }}
+            className="h-[300px] min-w-0"
             aria-label="Gráfico circular de distribución de tareas"
           >
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -120,21 +93,9 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </section>
 
-        {/* Gráfico 2: Asistencia por UC (Porcentaje Real) */}
-        <section className="oat-card">
-          <h2
-            style={{
-              fontSize: "1.25rem",
-              marginBottom: "1.5rem",
-              textAlign: "center",
-            }}
-          >
-            Asistencia por UC (%)
-          </h2>
-          <div
-            style={{ height: "300px", minWidth: 0 }}
-            aria-label="Gráfico de barras de asistencia por UC"
-          >
+        <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl mb-6 text-center text-theme-text">Asistencia por UC (%)</h2>
+          <div className="h-[300px] min-w-0" aria-label="Gráfico de barras de asistencia por UC">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={attendanceData}>
                 <XAxis dataKey="name" padding={{ left: 0, right: 0 }} />
@@ -144,23 +105,16 @@ export const AnalyticsDashboard: React.FC = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <p
-            style={{
-              fontSize: "0.8rem",
-              color: "#888",
-              textAlign: "center",
-              marginTop: "1rem",
-            }}
-          >
+          <p className="text-xs text-theme-text-muted text-center mt-4">
             Un porcentaje inferior al 75% indica riesgo de quedar libre.
           </p>
         </section>
       </div>
 
-      <div style={{ marginTop: "2.5rem", textAlign: "right" }}>
+      <div className="mt-10 text-right">
         <button
           onClick={() => (window.location.href = "/")}
-          className="oat-btn oat-btn-outline"
+          className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
           aria-label="Volver al Dashboard"
         >
           Volver al Dashboard

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useAuth, AuthProvider } from "../contexts/AuthContext";
 import { authClient } from "../lib/auth-client";
 
+const inputCls =
+  "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
+
 const ProfileForm: React.FC = () => {
   const { user } = useAuth();
   const [name, setName] = useState("");
@@ -9,79 +12,69 @@ const ProfileForm: React.FC = () => {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    if (user) {
-      setName(user.name);
-    }
+    if (user) setName(user.name);
   }, [user]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setMessage(null);
-
-    const { error } = await authClient.updateUser({
-      name: name.trim(),
-    });
-
+    const { error } = await authClient.updateUser({ name: name.trim() });
     if (error) {
       setMessage({ type: "error", text: error.message || "Error al actualizar perfil" });
     } else {
       setMessage({ type: "success", text: "Datos actualizados correctamente" });
       setTimeout(() => setMessage(null), 3000);
     }
-
     setIsSaving(false);
   };
 
-  if (!user)
+  if (!user) {
     return (
-      <div className="oat-card">
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
         <p>Cargando información del perfil...</p>
       </div>
     );
+  }
 
   return (
-    <div className="oat-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <h2 className="oat-text-bold" style={{ fontSize: "1.25rem", margin: 0 }}>
-        Datos Personales
-      </h2>
+    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
+      <h2 className="text-xl font-bold m-0 text-theme-text">Datos Personales</h2>
 
-      <form
-        onSubmit={handleUpdate}
-        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-      >
-        <div className="login-field">
-          <label>Email (Solo lectura)</label>
+      <form onSubmit={handleUpdate} className="flex flex-col gap-4">
+        <div>
+          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+            Email (Solo lectura)
+          </label>
           <input
             type="email"
             value={user.email}
             disabled
-            style={{ opacity: 0.7, cursor: "not-allowed" }}
+            className={`${inputCls} opacity-70 cursor-not-allowed`}
           />
         </div>
 
-        <div className="login-field">
-          <label>Nombre a mostrar</label>
+        <div>
+          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+            Nombre a mostrar
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Lucas Ramos"
             required
+            className={inputCls}
           />
         </div>
 
         {message && (
           <div
-            style={{
-              padding: "0.75rem",
-              borderRadius: "8px",
-              background:
-                message.type === "error" ? "rgba(255, 68, 68, 0.1)" : "rgba(76, 175, 80, 0.1)",
-              color: message.type === "error" ? "var(--oat-danger)" : "var(--oat-success)",
-              border: `1px solid ${message.type === "error" ? "var(--oat-danger)" : "var(--oat-success)"}`,
-              fontSize: "0.875rem",
-            }}
+            className={`px-4 py-3 rounded-lg text-sm border ${
+              message.type === "error"
+                ? "bg-theme-danger-light text-theme-danger border-theme-danger"
+                : "bg-theme-success-light text-theme-success border-theme-success"
+            }`}
           >
             {message.text}
           </div>
@@ -89,7 +82,7 @@ const ProfileForm: React.FC = () => {
 
         <button
           type="submit"
-          className="login-btn oat-text-bold"
+          className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
           disabled={isSaving || !name.trim()}
         >
           {isSaving ? "Guardando..." : "Guardar cambios"}

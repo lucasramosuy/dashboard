@@ -177,6 +177,7 @@ export function PlannerBoard() {
       title: newTaskTitle,
       due_date: new Date(`${newTaskDate}T12:00:00Z`),
       status: "todo",
+      is_planner: true,
     });
   };
 
@@ -185,8 +186,12 @@ export function PlannerBoard() {
 
   if (isLoading) {
     return (
-      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando planner">
-        <div className="oat-spinner" />
+      <div
+        className="flex justify-center items-center p-16"
+        aria-busy="true"
+        aria-label="Cargando planner"
+      >
+        <div className="w-8 h-8 border-3 border-theme-border border-t-theme-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -212,7 +217,7 @@ export function PlannerBoard() {
             Hoy
           </button>
           {updateTaskDateMutation.isPending && (
-            <span style={{ color: "var(--oat-text-muted)", fontSize: "0.8rem" }}>Guardando...</span>
+            <span className="text-theme-text-muted text-xs">Guardando...</span>
           )}
         </header>
 
@@ -314,24 +319,12 @@ export function PlannerBoard() {
 
       {/* Modal nueva tarea */}
       <Modal isOpen={isTaskModalOpen} onClose={() => setTaskModalOpen(false)} title={`Nueva tarea`}>
-        <form
-          onSubmit={handleCreateTask}
-          style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "0.75rem" }}
-        >
+        <form onSubmit={handleCreateTask} className="flex flex-col gap-4 mt-3">
           <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "0.4rem",
-                fontSize: "0.85rem",
-                color: "var(--oat-text-muted)",
-              }}
-            >
-              Título
-            </label>
+            <label className="block mb-1 text-sm text-theme-text-muted">Título</label>
             <input
               type="text"
-              className="oat-input"
+              className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               placeholder="Ej. Leer capítulo 3"
@@ -339,17 +332,17 @@ export function PlannerBoard() {
               required
             />
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+          <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="oat-btn oat-btn-outline"
+              className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
               onClick={() => setTaskModalOpen(false)}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="oat-btn oat-btn-primary"
+              className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
               disabled={createTaskMutation.isPending}
             >
               {createTaskMutation.isPending ? "Agregando..." : "Agregar"}
@@ -424,6 +417,7 @@ export function PlannerBoard() {
 
 /* ============================================================
    CSS del Planner — estilo WeekToDo
+   Variables actualizadas a --theme-* (Tailwind v4)
    ============================================================ */
 const PLANNER_CSS = `
   .planner-root {
@@ -440,7 +434,7 @@ const PLANNER_CSS = `
     width: 36px;
     background: transparent;
     border: none;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     font-size: 2rem;
     cursor: pointer;
     display: flex;
@@ -451,8 +445,8 @@ const PLANNER_CSS = `
     user-select: none;
   }
   .planner-nav-arrow:hover {
-    color: var(--oat-text);
-    background: var(--oat-card-bg);
+    color: var(--theme-text);
+    background: var(--theme-card-bg);
   }
 
   /* Centro */
@@ -474,8 +468,8 @@ const PLANNER_CSS = `
   }
   .planner-today-btn {
     background: transparent;
-    border: 1px solid var(--oat-border);
-    color: var(--oat-text);
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text);
     padding: 0.35rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -484,8 +478,8 @@ const PLANNER_CSS = `
     transition: background 0.15s, border-color 0.15s;
   }
   .planner-today-btn:hover {
-    background: var(--oat-card-bg);
-    border-color: var(--oat-text-muted);
+    background: var(--theme-card-bg);
+    border-color: var(--theme-text-muted);
   }
 
   /* Grilla de 7 días */
@@ -495,16 +489,16 @@ const PLANNER_CSS = `
     grid-template-columns: repeat(7, 1fr);
     gap: 0;
     overflow: hidden;
-    border: 1px solid var(--oat-border);
+    border: 1px solid var(--theme-border);
     border-radius: 12px;
-    background: var(--oat-card-bg);
+    background: var(--theme-card-bg);
   }
 
   /* Columna del día */
   .planner-col {
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--oat-border);
+    border-right: 1px solid var(--theme-border);
     overflow: hidden;
     min-width: 0;
   }
@@ -516,7 +510,7 @@ const PLANNER_CSS = `
   .planner-col__header {
     padding: 1rem 0.75rem 0.75rem;
     text-align: center;
-    border-bottom: 1px solid var(--oat-border);
+    border-bottom: 1px solid var(--theme-border);
     position: relative;
     flex-shrink: 0;
   }
@@ -525,7 +519,7 @@ const PLANNER_CSS = `
     font-size: 0.95rem;
     font-weight: 600;
     text-transform: capitalize;
-    color: var(--oat-text);
+    color: var(--theme-text);
     line-height: 1.3;
   }
   .planner-col__day--today {
@@ -535,7 +529,7 @@ const PLANNER_CSS = `
   .planner-col__date {
     display: block;
     font-size: 0.75rem;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     margin-top: 0.15rem;
   }
   .planner-col--today .planner-col__header {
@@ -549,7 +543,7 @@ const PLANNER_CSS = `
     right: 0.5rem;
     background: transparent;
     border: none;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     font-size: 1.1rem;
     cursor: pointer;
     width: 22px;
@@ -562,8 +556,8 @@ const PLANNER_CSS = `
     line-height: 1;
   }
   .planner-col__add:hover {
-    background: var(--oat-bg);
-    color: var(--oat-text);
+    background: var(--theme-bg);
+    color: var(--theme-text);
   }
 
   /* Área de tareas */
@@ -579,13 +573,13 @@ const PLANNER_CSS = `
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--oat-border);
+    border-bottom: 1px solid var(--theme-border);
     cursor: grab;
     transition: background 0.1s;
     min-height: 32px;
   }
   .planner-item:hover {
-    background: var(--oat-bg);
+    background: var(--theme-bg);
   }
   .planner-item.dragging {
     opacity: 0.4;
@@ -601,22 +595,22 @@ const PLANNER_CSS = `
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 1.5px solid var(--oat-border);
+    border: 1.5px solid var(--theme-border);
     background: transparent;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    color: var(--oat-bg);
+    color: var(--theme-bg);
     transition: border-color 0.15s, background 0.15s;
   }
   .planner-item__check:hover {
-    border-color: var(--oat-text-muted);
+    border-color: var(--theme-text-muted);
   }
   .planner-item__check--done {
-    background: var(--oat-text-muted);
-    border-color: var(--oat-text-muted);
+    background: var(--theme-text-muted);
+    border-color: var(--theme-text-muted);
   }
 
   /* Título de tarea */
@@ -624,7 +618,7 @@ const PLANNER_CSS = `
     flex: 1;
     font-size: 0.85rem;
     line-height: 1.3;
-    color: var(--oat-text);
+    color: var(--theme-text);
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
@@ -632,12 +626,12 @@ const PLANNER_CSS = `
   }
   .planner-item--done .planner-item__title {
     text-decoration: line-through;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
   }
 
   /* Líneas vacías tipo libreta */
   .planner-col__line {
-    border-bottom: 1px solid var(--oat-border);
+    border-bottom: 1px solid var(--theme-border);
     min-height: 32px;
     opacity: 0.5;
   }
@@ -655,8 +649,8 @@ const PLANNER_CSS = `
     padding: 1rem;
   }
   .planner-detail {
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-border);
+    background: var(--theme-card-bg);
+    border: 1px solid var(--theme-border);
     border-radius: 12px;
     width: 100%;
     max-width: 520px;
@@ -668,23 +662,23 @@ const PLANNER_CSS = `
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1.25rem;
-    border-bottom: 1px solid var(--oat-border);
+    border-bottom: 1px solid var(--theme-border);
   }
   .planner-detail__date {
     font-size: 0.85rem;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
   }
   .planner-detail__close {
     background: transparent;
     border: none;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     font-size: 1.4rem;
     cursor: pointer;
     padding: 0;
     line-height: 1;
   }
   .planner-detail__close:hover {
-    color: var(--oat-text);
+    color: var(--theme-text);
   }
   .planner-detail__body {
     padding: 1.25rem;
@@ -698,18 +692,18 @@ const PLANNER_CSS = `
   .planner-detail__title {
     font-size: 1.05rem;
     font-weight: 600;
-    color: var(--oat-text);
+    color: var(--theme-text);
   }
   .planner-detail__title--done {
     text-decoration: line-through;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
   }
   .planner-detail__notes {
     font-size: 0.85rem;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     margin: 0;
     padding-top: 0.75rem;
-    border-top: 1px solid var(--oat-border);
+    border-top: 1px solid var(--theme-border);
     line-height: 1.5;
     white-space: pre-wrap;
   }

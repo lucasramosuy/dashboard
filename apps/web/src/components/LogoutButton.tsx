@@ -7,6 +7,7 @@ export const LogoutButton: React.FC = () => {
   return (
     <button onClick={logout} className="logout-btn" aria-label="Cerrar sesión">
       <span className="sidebar-icon-item">🚪</span>
+      <span className="sidebar-label">Cerrar sesión</span>
     </button>
   );
 };

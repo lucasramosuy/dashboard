@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect } from "react";
+import * as Sentry from "@sentry/react";
 import type { UserPublic } from "@dashboard/shared-types";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth-client";
@@ -82,11 +83,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshMe }}>
-        {children}
-      </AuthContext.Provider>
-    </QueryClientProvider>
+    <Sentry.ErrorBoundary
+      fallback={
+        <div style={{ padding: "2rem", color: "red", background: "var(--oat-bg)" }}>
+          Ocurrió un error en la interfaz. Por favor recarga la página.
+        </div>
+      }
+    >
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshMe }}>
+          {children}
+        </AuthContext.Provider>
+      </QueryClientProvider>
+    </Sentry.ErrorBoundary>
   );
 };
 

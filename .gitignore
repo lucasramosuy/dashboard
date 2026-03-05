@@ -47,5 +47,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Data
 /data
 
-#Ignore vscode AI rules
+# Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# Ignore Antigravity AI rules
+.github/instructions/

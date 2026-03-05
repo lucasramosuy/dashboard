@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { FeedbackPage } from "../components/FeedbackPage";
+---
+
+<DashboardLayout title="Reportar Bug">
+  <FeedbackPage client:only="react" />
+</DashboardLayout>

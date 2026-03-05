@@ -15,20 +15,21 @@ Este archivo define las restricciones técnicas y de estilo para el **Dashboard*
 
 ---
 
-## 2. Frontend (Astro + React + Oat)
+## 2. Frontend (Astro + React + Tailwind CSS)
 
-- **Prioridad de UI (Oat):**
-  - No instalar frameworks de CSS (Tailwind, Bootstrap, etc.).
-  - Usar etiquetas HTML semánticas (`<article>`, `<section>`, `<nav>`, `<aside>`) para aprovechar el styling automático de Oat.
-  - Las clases personalizadas deben seguir el prefijo `.oat-` si extienden el sistema.
+- **Prioridad de UI (Tailwind CSS):**
+  - El modelo mental y visual depende exclusivamente de Tailwind.
+  - Todo trabajo de CSS o estilado nuevo debe pasar por clases utilitarias en React o Astro, limitando el uso de `theme.css` a `tailwind base`.
+  - Se abandonó Oat UI. No agregar dependencias, CDN ni utilidades vinculadas a la misma.
 
 - **Uso de React:**
   - Usar React solo para componentes que requieren estado complejo o interactividad (formularios, modales, gráficos).
+  - Utilizar React intensivamente para componentes de interfaz repetibles (`/apps/web/src/components/ui/Button.tsx`, etc.).
   - Todo componente React en Astro debe llevar la directiva `client:load` o `client:visible` según corresponda para asegurar la interactividad.
 
 - **Theming:**
-  - No usar bibliotecas de _Dark Mode_. El tema se controla vía `document.body.dataset.theme`.
-  - Las variaciones de color se hacen mediante variables CSS en `src/styles/theme.css`.
+  - La config de tailwind debe incluir `darkMode: ['class', '[data-theme="dark"]']`
+  - El tema se controla vía `document.body.dataset.theme` para activar las clases `dark:`.
 
 ---
 
