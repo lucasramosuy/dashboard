@@ -27,8 +27,8 @@ async function validateSession(
   cookieHeader: string,
 ): Promise<{ valid: boolean; user?: Record<string, unknown> }> {
   const API_BASE =
-    process.env.PUBLIC_API_BASE && process.env.PUBLIC_API_BASE.trim() !== ""
-      ? process.env.PUBLIC_API_BASE
+    import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
+      ? import.meta.env.PUBLIC_API_BASE
       : "http://localhost:8787/api";
 
   try {

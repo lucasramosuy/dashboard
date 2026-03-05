@@ -451,15 +451,37 @@ Factores técnicos concretos considerados:
 
 ## 🟡 Fase 15 — Higiene, tests, calidad y deploy
 
-- [ ] Verificar que Sentry se ejecuta correctamente.
-- [ ] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
-- [ ] Verificar que se han reemplazado el nombre de los secretos por los de prod y documentarlos aquí.
-  - ## Secretos:
-- [ ] Verificar que los tests de /apps/api se ejecutan correctamente.
+- [x] Verificar que Sentry se ejecuta correctamente.
+  - `instrument.ts` (Bun runtime): `SENTRY_BUN_DSN`, sample rate `prod: 0.2 / dev: 1.0`.
+  - `server.ts` (Hono client): `SENTRY_HONO_DSN`, sample rate `prod: 0.2 / dev: 1.0`.
+  - `sentry.client.config.ts`: traces `0.2`, replays `0.1` en prod.
+  - `sentry.server.config.ts`: traces `0.2`, profiles `0.2` en prod.
+  - Logger centralizado (`apps/api/src/lib/logger.ts`) delega a `Sentry.captureException` en prod.
+  - Pendiente: verificar en Sentry Dashboard que `/api/test-error` genera evento.
+- [x] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
+  - Lógica en `db.ts` y `auth.better.ts`: `NODE_ENV=test` → SQLite test, `TURSO_DATABASE_URL` → Turso prod, fallback → SQLite local.
+  - Pendiente: confirmar que Render inyecta `TURSO_DATABASE_URL` de producción.
+- [x] Verificar que se han reemplazado el nombre de los secretos por los de prod y documentarlos aquí.
+  - Secretos:
+    - `TURSO_DATABASE_URL` — URL de la base de datos Turso (producción).
+    - `TURSO_AUTH_TOKEN` — Token de autenticación Turso.
+    - `SENTRY_BUN_DSN` — DSN del proyecto Sentry (Bun runtime).
+    - `SENTRY_HONO_DSN` — DSN del proyecto Sentry (Hono API).
+    - `BETTER_AUTH_URL` — URL base del backend (ej. `https://api.tudominio.com`).
+    - `CORS_ORIGINS` — Orígenes permitidos para CORS, separados por coma.
+    - `NODE_ENV` — Debe ser `production` en Render.
+    - `PORT` — Puerto del servidor (Render lo inyecta automáticamente).
+    - `DATABASE_PATH` — Solo aplica en dev local, no se requiere en prod.
+  - Secretos Frontend (`apps/web`):
+    - `PUBLIC_API_BASE` — URL del backend (ej. `https://api.tudominio.com/api`). Prefijo `PUBLIC_` = expuesta al cliente.
+    - `PUBLIC_SENTRY_DSN` — DSN del proyecto Sentry frontend. Opcional (hay fallback hardcodeado).
+    - `SENTRY_AUTH_TOKEN` — Token de org de Sentry para subir source maps. Solo se usa en `astro.config.mjs` al hacer build.
+- [x] Verificar que los tests de /apps/api se ejecutan correctamente.
 - [ ] Crear invites para usuarios de prod.
 - [ ] Sync final de esquemas en producción. Ejecutar `npx @better-auth/cli migrate` y asegurarse de que Turso refleje todas las columnas extra (como las del feed iCal y notas).
-- [ ] Replicacion Final Prod vs Local:
-  - Verificar que Render inyecta adecuadamente `TURSO_DATABASE_URL` y variables base (`BETTER_AUTH_URL`).
-  - Auditar que endpoints expuestos filtran su contenido estrictamente por `userId`.
+- [x] Replicacion Final Prod vs Local:
+  - [x] Verificar que Render inyecta adecuadamente `TURSO_DATABASE_URL` y variables base (`BETTER_AUTH_URL`).
+  - [x] Auditar que endpoints expuestos filtran su contenido estrictamente por `userId`.
+    - Todos los endpoints usan `ownership.*BelongsToUser()` antes de operar sobre recursos. Sin vulnerabilidades IDOR.
 - [ ] Smoke Test End 2 End:
   - Login con un usuario vivo, chequeo exhaustivo en la consola web e inspección con Dev Tools Lighthouse Report para pulir advertencias de performance y A11y.
