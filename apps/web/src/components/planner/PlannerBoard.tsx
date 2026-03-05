@@ -1,19 +1,12 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import type { Task } from "@dashboard/shared-types";
-import { Modal } from "../Modal";
-import { useAuth } from "../../contexts/AuthContext";
+import { Modal } from "../ui/Modal";
+import { PlannerSkeleton } from "../ui/Skeleton";
 
 export function PlannerBoard() {
-  const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && !authLoading && !user) {
-      window.location.replace("/login");
-    }
-  }, [user, authLoading]);
 
   // ----- ESTADO: SEMANA ACTUAL -----
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
@@ -185,15 +178,7 @@ export function PlannerBoard() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   if (isLoading) {
-    return (
-      <div
-        className="flex justify-center items-center p-16"
-        aria-busy="true"
-        aria-label="Cargando planner"
-      >
-        <div className="w-8 h-8 border-3 border-theme-border border-t-theme-primary rounded-full animate-spin" />
-      </div>
-    );
+    return <PlannerSkeleton />;
   }
 
   return (
@@ -297,10 +282,6 @@ export function PlannerBoard() {
                       </div>
                     );
                   })}
-                  {/* Líneas divisorias tipo libreta */}
-                  {Array.from({ length: Math.max(0, 8 - dayTasks.length) }).map((_, i) => (
-                    <div key={`line-${i}`} className="planner-col__line" />
-                  ))}
                 </div>
               </div>
             );
@@ -501,6 +482,7 @@ const PLANNER_CSS = `
     border-right: 1px solid var(--theme-border);
     overflow: hidden;
     min-width: 0;
+    background-color: var(--theme-card-bg);
   }
   .planner-col:last-child {
     border-right: none;
@@ -508,32 +490,38 @@ const PLANNER_CSS = `
 
   /* Header de columna */
   .planner-col__header {
-    padding: 1rem 0.75rem 0.75rem;
+    padding: 1.25rem 0.75rem 0.75rem;
     text-align: center;
-    border-bottom: 1px solid var(--theme-border);
+    border-bottom: 2px solid var(--theme-border);
     position: relative;
     flex-shrink: 0;
+    background: rgba(255,255,255,0.02);
   }
   .planner-col__day {
     margin: 0;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: capitalize;
     color: var(--theme-text);
-    line-height: 1.3;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
   }
   .planner-col__day--today {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: var(--theme-primary);
   }
   .planner-col__date {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 500;
     color: var(--theme-text-muted);
-    margin-top: 0.15rem;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+  }
+  .planner-col--today {
+    box-shadow: inset 0 3px 0 var(--theme-primary);
   }
   .planner-col--today .planner-col__header {
-    background: rgba(255,255,255,0.03);
+    background: rgba(var(--theme-primary-rgb), 0.05);
   }
 
   /* Botón agregar (+) */
@@ -544,49 +532,58 @@ const PLANNER_CSS = `
     background: transparent;
     border: none;
     color: var(--theme-text-muted);
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     cursor: pointer;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: background 0.15s, color 0.15s;
+    border-radius: 6px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1;
+    opacity: 0.4;
   }
   .planner-col__add:hover {
     background: var(--theme-bg);
-    color: var(--theme-text);
+    color: var(--theme-primary);
+    opacity: 1;
+    transform: scale(1.1);
   }
 
-  /* Área de tareas */
+  /* Área de tareas con RAYADO de cuaderno */
   .planner-col__tasks {
     flex: 1;
     overflow-y: auto;
     padding: 0;
+    background-image: linear-gradient(var(--theme-border) 1px, transparent 1px);
+    background-size: 100% 36px;
+    background-attachment: local;
+    /* Asegura que el drag and drop detecte toda el área */
+    min-height: 100%;
   }
 
   /* Item de tarea */
   .planner-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--theme-border);
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+    height: 36px; /* Coincide con background-size */
     cursor: grab;
-    transition: background 0.1s;
-    min-height: 32px;
+    transition: background 0.15s;
+    border-bottom: 1px solid transparent;
   }
   .planner-item:hover {
-    background: var(--theme-bg);
+    background: rgba(var(--theme-primary-rgb), 0.03);
   }
   .planner-item.dragging {
     opacity: 0.4;
     cursor: grabbing;
+    background: var(--theme-bg);
   }
   .planner-item--done {
-    opacity: 0.55;
+    opacity: 0.6;
   }
 
   /* Checkbox circular */
@@ -596,140 +593,159 @@ const PLANNER_CSS = `
     height: 18px;
     border-radius: 50%;
     border: 1.5px solid var(--theme-border);
-    background: transparent;
+    background: var(--theme-card-bg);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     color: var(--theme-bg);
-    transition: border-color 0.15s, background 0.15s;
+    transition: all 0.2s ease;
   }
-  .planner-item__check:hover {
-    border-color: var(--theme-text-muted);
+  .planner-item:hover .planner-item__check {
+    border-color: var(--theme-primary);
   }
   .planner-item__check--done {
-    background: var(--theme-text-muted);
-    border-color: var(--theme-text-muted);
+    background: var(--theme-primary);
+    border-color: var(--theme-primary);
   }
 
   /* Título de tarea */
   .planner-item__title {
     flex: 1;
     font-size: 0.85rem;
-    line-height: 1.3;
+    font-weight: 500;
     color: var(--theme-text);
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-top: 1px;
   }
   .planner-item--done .planner-item__title {
     text-decoration: line-through;
     color: var(--theme-text-muted);
-  }
-
-  /* Líneas vacías tipo libreta */
-  .planner-col__line {
-    border-bottom: 1px solid var(--theme-border);
-    min-height: 32px;
-    opacity: 0.5;
+    opacity: 0.8;
   }
 
   /* ============ DETAIL MODAL ============ */
   .planner-detail-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
   .planner-detail {
     background: var(--theme-card-bg);
     border: 1px solid var(--theme-border);
-    border-radius: 12px;
+    border-radius: 16px;
     width: 100%;
-    max-width: 520px;
+    max-width: 480px;
     overflow: hidden;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    transform: translateY(0);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
   .planner-detail__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1.25rem;
+    padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--theme-border);
+    background: rgba(255,255,255,0.02);
   }
   .planner-detail__date {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     color: var(--theme-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   .planner-detail__close {
-    background: transparent;
-    border: none;
+    background: var(--theme-bg);
+    border: 1px solid var(--theme-border);
     color: var(--theme-text-muted);
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0;
-    line-height: 1;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
   }
   .planner-detail__close:hover {
     color: var(--theme-text);
+    background: var(--theme-card-bg);
+    transform: rotate(90deg);
   }
   .planner-detail__body {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
   .planner-detail__task-row {
     display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
   .planner-detail__title {
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--theme-text);
+    line-height: 1.4;
+    margin-top: -2px;
   }
   .planner-detail__title--done {
     text-decoration: line-through;
     color: var(--theme-text-muted);
   }
   .planner-detail__notes {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--theme-text-muted);
     margin: 0;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--theme-border);
-    line-height: 1.5;
+    padding: 1rem;
+    background: var(--theme-bg);
+    border-radius: 12px;
+    border: 1px solid var(--theme-border);
+    line-height: 1.6;
     white-space: pre-wrap;
   }
   .planner-detail__notes--empty {
     font-style: italic;
-    opacity: 0.6;
+    opacity: 0.5;
+    text-align: center;
+    padding: 2rem 1rem;
   }
 
   /* ============ RESPONSIVE ============ */
-  @media (max-width: 900px) {
-    .planner-grid {
-      grid-template-columns: repeat(5, 1fr);
-    }
-    .planner-col:nth-child(n+6) {
-      display: none;
-    }
+  @media (max-width: 1100px) {
+    .planner-grid { grid-template-columns: repeat(5, 1fr); }
+    .planner-col:nth-child(n+6) { display: none; }
   }
-  @media (max-width: 600px) {
+  @media (max-width: 768px) {
+    .planner-grid { grid-template-columns: repeat(3, 1fr); }
+    .planner-col:nth-child(n+4) { display: none; }
+    .planner-nav-arrow { width: 30px; }
+  }
+  @media (max-width: 480px) {
     .planner-nav-arrow { display: none; }
-    .planner-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .planner-col:nth-child(n+4) {
-      display: none;
-    }
-    .planner-col__day { font-size: 0.85rem; }
-    .planner-col__date { font-size: 0.65rem; }
+    .planner-grid { grid-template-columns: 1fr; }
+    .planner-col:not(.planner-col--today) { display: none; }
   }
 `;

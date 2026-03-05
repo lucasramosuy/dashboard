@@ -1,26 +1,38 @@
 ---
-import Base from "../layouts/Base.astro";
+import DashboardLayout from "../layouts/DashboardLayout.astro";
 ---
 
-<Base title="404 - Página no encontrada">
+<DashboardLayout title="404 - Página no encontrada">
   <div
-    style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 2rem; background-color: var(--dash-bg);"
+    class="flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] px-4 text-center w-full max-w-lg mx-auto"
   >
-    <header style="margin-bottom: 2.5rem; text-align: center;">
-      <h1 class="dash-text-bold" style="font-size: 2.5rem; margin: 0;">Error 404</h1>
-      <p class="dash-text-secondary">Parece que te has perdido.</p>
-    </header>
-
     <div
-      class="dash-card"
-      style="width: 100%; max-width: 500px; text-align: center; padding: 2.5rem;"
+      class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-theme-bg border border-theme-border mb-8 shadow-sm text-4xl"
     >
-      <span style="font-size: 4rem; display: block; margin-bottom: 1rem;">🧭</span>
-      <h2 class="dash-h2" style="margin-bottom: 1rem;">Página no encontrada</h2>
-      <p style="margin-bottom: 2rem; color: var(--dash-text-muted);">
-        La página que buscas no existe o ha sido movida.
-      </p>
-      <a href="/" class="dash-btn dash-btn-primary" style="width: 100%;">Volver al Dashboard</a>
+      🧭
+    </div>
+
+    <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-theme-text mb-4">
+      Página no encontrada
+    </h1>
+
+    <p class="text-lg text-theme-text-muted max-w-md mx-auto mb-10 leading-relaxed">
+      Lo sentimos, la ruta que estás intentando visitar no existe o ha sido movida temporalmente.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-sm">
+      <button
+        class="inline-flex items-center justify-center rounded-button font-medium transition-all duration-150 focus-visible:ring-2 disabled:opacity-50 h-12 px-6 text-base border border-zinc-200 bg-surface hover:bg-zinc-50 dark:border-zinc-800 dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-tertiary w-full sm:w-auto cursor-pointer"
+        onclick="window.history.length > 2 ? window.history.back() : (window.location.href = '/')"
+      >
+        Volver atrás
+      </button>
+      <a
+        href="/"
+        class="inline-flex items-center justify-center rounded-button font-medium transition-all duration-150 focus-visible:ring-2 disabled:opacity-50 h-12 px-6 text-base bg-interactive text-surface hover:bg-interactive-hover dark:bg-interactive-dark dark:text-surface-dark dark:hover:bg-interactive-dark-hover w-full sm:w-auto no-underline"
+      >
+        Ir al Panel
+      </a>
     </div>
   </div>
-</Base>
+</DashboardLayout>

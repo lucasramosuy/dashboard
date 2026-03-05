@@ -43,6 +43,13 @@ function reviveDates(obj: any): any {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    // Sesión expirada: redirigir al login con contexto
+    if (response.status === 401 && typeof window !== "undefined") {
+      window.location.href = "/login?reason=session_expired";
+      // Retornar una promesa que nunca resuelve para detener la ejecución
+      return new Promise(() => {});
+    }
+
     let errorMessage = `Error API (${response.status}): ${response.statusText}`;
     try {
       const errorData = await response.json();

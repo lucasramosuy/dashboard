@@ -5,7 +5,7 @@ Sentry.init({
     "https://f8ee541e1cbbf5ab6d935de9bfd9e6b9@o4510988275482624.ingest.us.sentry.io/4510988282822656",
 
   // Tunnel para evitar bloqueos por ad-blockers
-  tunnel: "/api/sentry-tunnel/tunnel",
+  tunnel: "/api/sentry-tunnel",
 
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/astro/configuration/options/#sendDefaultPii

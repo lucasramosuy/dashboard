@@ -19,6 +19,9 @@ export default defineConfig({
   adapter: node({ mode: "standalone" }),
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ["recharts"],
+    },
     server: {
       proxy: {
         "/api": {
