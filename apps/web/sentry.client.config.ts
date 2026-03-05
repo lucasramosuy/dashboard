@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/astro";
 Sentry.init({
   dsn:
-    import.meta.env.PUBLIC_SENTRY_ASTRO_TOKEN ||
+    import.meta.env.PUBLIC_SENTRY_DSN ||
     "https://f8ee541e1cbbf5ab6d935de9bfd9e6b9@o4510988275482624.ingest.us.sentry.io/4510988282822656",
 
   // Tunnel para evitar bloqueos por ad-blockers
