@@ -1,27 +1,32 @@
-import { describe, it, expect, beforeEach } from "bun:test"; // ← beforeAll eliminado
+import { describe, it, expect, beforeEach } from "bun:test";
 import { app } from "../src/server";
+import { auth } from "../src/lib/auth.better";
 import type { PracticeJournal, Subject } from "@dashboard/shared-types";
+
+async function getTestCookie(): Promise<string> {
+  const email = `journals-${Date.now()}@test.com`;
+  await auth.api.signUpEmail({ body: { email, password: "test12345", name: "Test" } });
+  const res = await app.request("/api/auth/sign-in/email", {
+    method: "POST",
+    body: JSON.stringify({ email, password: "test12345" }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.headers.get("set-cookie") || "";
+}
 
 describe("Practice Journals API Tests", () => {
   let subjectId: string;
-  let token: string;
+  let cookie: string;
 
   beforeEach(async () => {
-    // ← era beforeAll
-    const loginRes = await app.request("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email: "demo@example.com", password: "demo123" }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const auth = (await loginRes.json()) as any;
-    token = auth.token;
+    cookie = await getTestCookie();
 
     const subRes = await app.request("/api/subjects", {
       method: "POST",
       body: JSON.stringify({ name: "Subject for Journals", total_classes: 5 }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
     const sub = (await subRes.json()) as Subject;
@@ -38,7 +43,7 @@ describe("Practice Journals API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
@@ -49,8 +54,7 @@ describe("Practice Journals API Tests", () => {
   });
 
   it("GET /api/practice-journals should return all journals of user", async () => {
-    // Crear entrada primero para que la lista no esté vacía
-    const createRes = await app.request("/api/practice-journals", {
+    await app.request("/api/practice-journals", {
       method: "POST",
       body: JSON.stringify({
         subject_id: subjectId,
@@ -59,12 +63,12 @@ describe("Practice Journals API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
     const res = await app.request("/api/practice-journals", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as PracticeJournal[];
@@ -81,12 +85,12 @@ describe("Practice Journals API Tests", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Cookie: cookie,
       },
     });
 
     const res = await app.request(`/api/practice-journals?subject_id=${subjectId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Cookie: cookie },
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as PracticeJournal[];

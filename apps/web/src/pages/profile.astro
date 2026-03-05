@@ -1,0 +1,12 @@
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { ProfileSettings } from "../components/profile/ProfileSettings";
+---
+
+<DashboardLayout title="Mi Perfil">
+  <div class="dash-container" style="padding: 2rem 1rem; max-width: 600px; margin: 0 auto;">
+    <section>
+      <ProfileSettings client:only="react" />
+    </section>
+  </div>
+</DashboardLayout>

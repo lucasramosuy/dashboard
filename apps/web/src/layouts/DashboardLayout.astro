@@ -1,7 +1,9 @@
 ---
 import Base from "./Base.astro";
-import { LogoutButton } from "../components/LogoutButton";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { SidebarActions } from "../components/layout/SidebarActions";
+import { MobileMenu } from "../components/layout/MobileMenu";
+import { navItems } from "../config/nav";
+import { BookOpen } from "lucide-react";
 
 interface Props {
   title: string;
@@ -9,29 +11,30 @@ interface Props {
 
 const { title } = Astro.props;
 const pathname = Astro.url.pathname;
-
-const navItems = [
-  { href: "/", icon: "🏠", label: "Dashboard" },
-  { href: "/subjects", icon: "📚", label: "Materias" },
-  { href: "/tasks", icon: "✅", label: "Tareas" },
-  { href: "/analytics", icon: "📊", label: "Analíticas" },
-  { href: "/journal", icon: "✍️", label: "Práctica" },
-];
 ---
 
 <Base title={title}>
+  {/* Skip link — accesibilidad: visible al recibir foco por teclado */}
+  <a
+    href="#main-content"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-500 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-elevated focus:text-content focus:ring-2 focus:ring-zinc-900 dark:focus:bg-surface-dark dark:focus:text-content-dark dark:focus:ring-zinc-100"
+  >
+    Saltar al contenido principal
+  </a>
   <div class="app-shell">
     <aside class="app-sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-icon-item">📚</span>
+        <span class="sidebar-icon-item"><BookOpen size={20} /></span>
         <span class="sidebar-label sidebar-brand-text">Mi Panel</span>
       </div>
 
       <nav class="sidebar-nav">
         {
-          navItems.map(({ href, icon, label }) => (
+          navItems.map(({ href, icon: Icon, label }) => (
             <a href={href} class={`app-nav-link${pathname === href ? " active" : ""}`}>
-              <span class="sidebar-icon-item">{icon}</span>
+              <span class="sidebar-icon-item">
+                <Icon size={20} strokeWidth={2.5} />
+              </span>
               <span class="sidebar-label">{label}</span>
             </a>
           ))
@@ -40,20 +43,16 @@ const navItems = [
 
       {/* Desktop Sidebar Bottom */}
       <div class="sidebar-bottom">
-        <ThemeToggle client:only="react" variant="sidebar" />
-        <LogoutButton client:only="react" />
+        <SidebarActions client:only="react" variant="sidebar" />
       </div>
     </aside>
 
-    <main class="app-main">
+    <main id="main-content" class="app-main">
       <slot />
     </main>
 
-    {/* Mobile Floating Actions */}
-    <div class="mobile-actions">
-      <ThemeToggle client:only="react" variant="floating" />
-      <LogoutButton client:only="react" />
-    </div>
+    {/* Menú flotante móvil (fase 8) */}
+    <MobileMenu client:only="react" currentPath={pathname} />
   </div>
 </Base>
 
@@ -62,7 +61,7 @@ const navItems = [
   .app-shell {
     display: flex;
     min-height: 100vh;
-    background: var(--oat-bg);
+    background: var(--theme-bg);
   }
 
   /* ===== SIDEBAR BENTO ===== */
@@ -71,8 +70,8 @@ const navItems = [
     width: 72px;
     margin: 1rem 0 1rem 1rem;
     height: calc(100vh - 2rem);
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-border);
+    background: var(--theme-card-bg);
+    border: 1px solid var(--theme-border);
     border-radius: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: 1.25rem 0.75rem;
@@ -102,7 +101,7 @@ const navItems = [
   .sidebar-brand-text {
     font-weight: 700;
     font-size: 0.95rem;
-    color: var(--oat-text);
+    color: var(--theme-text);
     white-space: nowrap;
   }
 
@@ -121,7 +120,7 @@ const navItems = [
     padding: 0.75rem 0.5rem;
     border-radius: 10px;
     text-decoration: none;
-    color: var(--oat-text-muted);
+    color: var(--theme-text-muted);
     font-weight: 500;
     font-size: 0.875rem;
     white-space: nowrap;
@@ -132,8 +131,8 @@ const navItems = [
 
   .app-nav-link:hover,
   .app-nav-link.active {
-    background: var(--oat-bg);
-    color: var(--oat-text);
+    background: var(--theme-bg);
+    color: var(--theme-text);
   }
 
   .app-nav-link.active {
@@ -171,8 +170,74 @@ const navItems = [
   /* Bottom */
   .sidebar-bottom {
     padding-top: 1rem;
-    border-top: 1px solid var(--oat-border);
-    overflow: hidden;
+    border-top: 1px solid var(--theme-border);
+    margin-top: auto;
+  }
+
+  /* Grid Layout for Expanded Sidebar */
+  .sidebar-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .app-sidebar:hover .sidebar-actions-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Profile button spans 2 columns and is centered */
+  .app-sidebar:hover .profile-btn {
+    grid-column: span 2;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Theme and Logout buttons side by side in expanded state */
+  .app-sidebar:hover .theme-toggle-btn,
+  .app-sidebar:hover .logout-btn {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 0.5rem;
+  }
+
+  /* Hide labels for toggle and logout in expanded state */
+  .app-sidebar:hover .theme-toggle-btn .sidebar-label,
+  .app-sidebar:hover .logout-btn .sidebar-label {
+    display: none !important;
+  }
+
+  /* Sidebar Actions internal button consistency */
+  .profile-btn,
+  .logout-btn,
+  .theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--theme-text-muted);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+  }
+
+  .profile-btn:hover,
+  .logout-btn:hover,
+  .theme-toggle-btn:hover {
+    background: var(--theme-bg);
+    color: var(--theme-text);
+  }
+
+  .logout-btn:hover {
+    color: var(--theme-danger, #ef4444);
   }
 
   /* ===== MAIN ===== */
@@ -180,7 +245,7 @@ const navItems = [
     flex: 1;
     min-width: 0;
     padding: 2.5rem;
-    background: var(--oat-bg);
+    background: var(--theme-bg);
   }
 
   /* ===== MOBILE ACTIONS (theme + logout) ===== */
@@ -195,112 +260,18 @@ const navItems = [
   }
 
   .mobile-theme-btn {
-    width: auto;
-    height: 36px;
-    padding: 0 0.875rem;
-    border-radius: 8px; /* pill rectangular */
-    margin: 0;
-    font-size: 0.8rem;
-    justify-content: center;
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
-    display: flex;
-    align-items: center;
-
-    cursor: pointer;
+    display: none;
   }
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .app-shell {
-      flex-direction: column;
-      padding-bottom: 72px;
-    }
-
     .app-sidebar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      top: auto;
-      width: 100% !important;
-      height: 64px;
-      margin: 0;
-      border-radius: 0;
-      border-top: 1px solid var(--oat-border);
-      border-bottom: none;
-      border-left: none;
-      border-right: none;
-      flex-direction: row;
-      align-items: center;
-      padding: 0 1rem;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.07);
-    }
-
-    .sidebar-brand,
-    .sidebar-bottom {
-      display: none;
-    }
-
-    .sidebar-nav {
-      flex-direction: row;
-      justify-content: space-around;
-      width: 100%;
-      gap: 0;
-    }
-
-    .app-nav-link {
-      flex-direction: column;
-      gap: 0.2rem;
-      padding: 0.4rem 0.75rem;
-      border-radius: 8px;
-      font-size: 0.65rem;
-    }
-
-    .sidebar-label {
-      max-width: 100px !important;
-      opacity: 1 !important;
-      margin-left: 0 !important;
-      font-size: 0.65rem;
-    }
-
-    .sidebar-icon-item {
-      font-size: 1.2rem;
-      width: auto;
+      display: none !important;
     }
 
     .app-main {
-      padding: 1.5rem 1rem;
-    }
-
-    .mobile-actions {
-      display: flex;
-      /*flex-direction: row;       /* en fila, no columna
-      gap: 0.5rem;
-      bottom: calc(64px + 0.75rem);
-      right: 0.75rem;*/
-    }
-
-    /* El logout reutiliza la clase pero en mobile lo hacemos redondo */
-    .mobile-actions .logout-btn {
-      width: auto;
-      height: 36px;
-      padding: 0 0.875rem;
-      border-radius: 8px; /* pill rectangular */
-      margin: 0;
-      font-size: 0.8rem;
-      justify-content: center;
-      background: var(--oat-card-bg);
-      border: 1px solid var(--oat-danger);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    .mobile-actions .logout-btn .sidebar-label {
-      max-width: unset;
-      opacity: 1;
-      margin-left: 0.4rem;
+      padding: 1.5rem 1.25rem;
+      padding-bottom: 6rem; /* Space for the floating button */
     }
   }
 </style>

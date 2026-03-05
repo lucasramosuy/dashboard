@@ -21,7 +21,11 @@ FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-COPY --from=builder /app/apps/web/dist ./dist
+# Copiar con cambio de propietario a node
+COPY --from=builder --chown=node:node /app/apps/web/dist ./dist
+
+# Cambiar a usuario no-root
+USER node
 
 EXPOSE 4321
 

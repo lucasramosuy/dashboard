@@ -1,773 +1,114 @@
+@import "tailwindcss";
+@config "../../tailwind.config.mjs";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
 
 /* ============================================================
-   ZENITH DESIGN SYSTEM — theme.css
+   ZENITH DESIGN SYSTEM — theme.css (Tailwind v4)
    Paleta: Neutral Warm Slate · Sobria · Contemporánea
+   Fase 1: Estandarización de Fundamentos (Design Tokens)
    ============================================================ */
+@theme {
+  /* Mapeo de tokens Zenith a clases Tailwind v4 */
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-card-bg: var(--theme-card-bg);
+  --color-theme-text: var(--theme-text);
+  --color-theme-text-muted: var(--theme-text-muted);
+  --color-theme-border: var(--theme-border);
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-success: var(--theme-success);
+  --color-theme-warning: var(--theme-warning);
 
-:root {
-  /* ── Fondos ──────────────────────────────────────────────── */
-  --oat-bg: #f7f7f6; /* Blanco arena muy sutil, no clínico   */
-  --oat-card-bg: #ffffff;
-  --oat-sidebar-bg: #f0f0ef; /* Un paso más oscuro que el fondo      */
-  --oat-header-bg: rgba(247, 247, 246, 0.85);
-
-  /* ── Tipografía ──────────────────────────────────────────── */
-  --oat-text: #111110; /* Casi negro con mínima calidez        */
-  --oat-text-muted: #78786e; /* Gris arena apagado                   */
-
-  /* ── Jerarquía cromática ─────────────────────────────────── */
-  --oat-primary: #1c1c1a; /* Negro cálido profundo                */
-  --oat-secondary: #2e2e2b;
-  --oat-accent: #5c5c56; /* Gris verdoso muy desaturado          */
-
-  /* ── Bordes ──────────────────────────────────────────────── */
-  --oat-border: #e5e5e2; /* Sutilísimo, casi invisible            */
-
-  /* ── Semánticos — low-saturation ────────────────────────── */
-  --oat-danger: #922b21;
-  --oat-danger-light: #fdf3f2;
-  --oat-warning: #7d5a1e;
-  --oat-warning-light: #fdf8ee;
-  --oat-success: #1a7a52;
-  --oat-success-light: #f2faf6;
-  --oat-info: #1d5fad;
-  --oat-info-light: #eff5fe;
-}
-
-[data-theme="dark"] {
-  /* ── Fondos ──────────────────────────────────────────────── */
-  --oat-bg: #0d0d0c; /* Negro cálido, no puro                */
-  --oat-card-bg: #161614; /* Elevación mínima                     */
-  --oat-sidebar-bg: #0d0d0c;
-  --oat-header-bg: rgba(13, 13, 12, 0.85);
-
-  /* ── Tipografía ──────────────────────────────────────────── */
-  --oat-text: #f5f5f3;
-  --oat-text-muted: #8c8c84;
-
-  /* ── Jerarquía cromática ─────────────────────────────────── */
-  --oat-primary: #f5f5f3;
-  --oat-secondary: #d8d8d2;
-  --oat-accent: #7a7a72;
-
-  /* ── Bordes ──────────────────────────────────────────────── */
-  --oat-border: #252522;
-
-  /* ── Semánticos dark ─────────────────────────────────────── */
-  --oat-danger-light: #2d0f0c;
-  --oat-warning-light: #2a1e06;
-  --oat-success-light: #0a2218;
-  --oat-info-light: #0b1e38;
-}
-
-/* ============================================================
-   BASE
-   ============================================================ */
-body {
-  margin: 0;
-  font-family:
-    "Inter Variable",
-    system-ui,
-    -apple-system,
-    sans-serif;
-  background-color: var(--oat-bg);
-  color: var(--oat-text);
-  line-height: 1.5;
-}
-
-/* ============================================================
-   LAYOUT — Shell
-   ============================================================ */
-.oat-shell {
-  display: grid;
-  grid-template-areas:
-    "header header"
-    "sidebar main";
-  grid-template-columns: 260px 1fr;
-  grid-template-rows: 64px 1fr;
-  min-height: 100vh;
-}
-
-.oat-header {
-  grid-area: header;
-  background: var(--oat-header-bg);
-  border-bottom: 1px solid var(--oat-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.oat-sidebar {
-  grid-area: sidebar;
-  background: var(--oat-sidebar-bg);
-  border-right: 1px solid var(--oat-border);
-  padding: 2rem 1.5rem;
-}
-
-.oat-main {
-  grid-area: main;
-  padding: 2.5rem;
-  background-color: var(--oat-bg);
-}
-
-/* ============================================================
-   CARDS
-   ============================================================ */
-.oat-card {
-  background: var(--oat-card-bg);
-  border: 1px solid var(--oat-border);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.oat-card:hover {
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.07),
-    0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* ============================================================
-   NAVEGACIÓN SIDEBAR
-   ============================================================ */
-.oat-nav-link {
-  color: var(--oat-secondary);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.oat-nav-link:hover,
-.oat-nav-link.active {
-  background: var(--oat-bg);
-  color: var(--oat-primary);
-}
-
-/* ============================================================
-   INPUTS
-   ============================================================ */
-.oat-input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border-radius: 8px;
-  border: 1px solid var(--oat-border);
-  background: var(--oat-card-bg);
-  color: var(--oat-text);
-  font-size: 0.875rem;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.oat-input:hover:not(:focus):not(:disabled) {
-  border-color: var(--oat-accent);
-}
-
-.oat-input:focus {
-  outline: none;
-  border-color: var(--oat-accent);
-  box-shadow: 0 0 0 3px rgba(92, 92, 86, 0.15);
-}
-
-.oat-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Autofill — elimina el fondo amarillo del browser */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 9999px var(--oat-card-bg) inset !important;
-  -webkit-text-fill-color: var(--oat-text) !important;
-  caret-color: var(--oat-text);
-  border-color: var(--oat-border) !important;
-  transition: background-color 99999s ease-in-out 0s;
-}
-
-/* ============================================================
-   BOTONES
-   ============================================================ */
-.oat-btn {
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  border: 1px solid transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.oat-btn-primary {
-  background: var(--oat-primary);
-  color: var(--oat-bg);
-}
-
-.oat-btn-primary:hover:not(:disabled) {
-  background: var(--oat-accent);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
-}
-
-.oat-btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-.oat-btn-outline {
-  background: transparent;
-  color: var(--oat-text);
-  border: 1px solid var(--oat-border);
-}
-
-.oat-btn-outline:hover:not(:disabled) {
-  background: var(--oat-bg);
-  border-color: var(--oat-accent);
-}
-
-.oat-btn-primary:disabled,
-.oat-btn-outline:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* ============================================================
-   TIPOGRAFÍA UTILITARIA
-   ============================================================ */
-.oat-text-primary {
-  color: var(--oat-text);
-}
-.oat-text-secondary {
-  color: var(--oat-text-muted);
-}
-.oat-text-bold {
-  font-weight: 700;
-}
-
-/* ============================================================
-   BADGES
-   ============================================================ */
-.oat-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.oat-badge--success {
-  background: var(--oat-success-light);
-  color: var(--oat-success);
-}
-.oat-badge--warning {
-  background: var(--oat-warning-light);
-  color: var(--oat-warning);
-}
-.oat-badge--danger {
-  background: var(--oat-danger-light);
-  color: var(--oat-danger);
-}
-.oat-badge--info {
-  background: var(--oat-info-light);
-  color: var(--oat-info);
-}
-
-[data-theme="dark"] .oat-badge--success {
-  color: #4ade9a;
-}
-[data-theme="dark"] .oat-badge--warning {
-  color: #f5c36d;
-}
-[data-theme="dark"] .oat-badge--danger {
-  color: #f87171;
-}
-[data-theme="dark"] .oat-badge--info {
-  color: #7db8f7;
-}
-
-/* ============================================================
-   SPINNER
-   ============================================================ */
-.oat-spinner {
-  border: 3px solid var(--oat-border);
-  border-top-color: var(--oat-primary);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-.oat-spinner--sm {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-.oat-spinner-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  padding: 4rem;
-  color: var(--oat-text-muted);
-  font-size: 0.875rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes slide-in {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
   }
 }
 
-/* ============================================================
-   ANIMACIONES
-   ============================================================ */
-@keyframes slideUp {
-  from {
-    transform: translateY(1rem);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+@layer base {
+  :root {
+    /* Transiciones globales */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
-/* ============================================================
-   TABLAS
-   ============================================================ */
-table {
-  border-collapse: collapse;
-}
-th,
-td {
-  color: var(--oat-text);
-}
+    /* Z-index scale */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal: 300;
+    --z-toast: 400;
 
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.subjects-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 400px;
-}
-
-.subjects-table th {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid var(--oat-border);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--oat-text-muted);
-}
-
-.subjects-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--oat-border);
-}
-
-.subjects-row:hover td {
-  background: var(--oat-bg);
-}
-
-.subjects-link {
-  color: var(--oat-primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.subjects-link:hover {
-  text-decoration: underline;
-}
-
-.subjects-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.subjects-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-/* ============================================================
-   LOGIN
-   ============================================================ */
-.login-card {
-  padding: 2.5rem 2rem;
-}
-.login-logo {
-  text-align: center;
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-}
-.login-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  text-align: center;
-  margin: 0 0 2rem;
-  color: var(--oat-text);
-}
-.login-field {
-  margin-bottom: 1.25rem;
-}
-
-.login-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--oat-text-muted);
-  font-weight: 500;
-}
-
-.login-error {
-  padding: 0.75rem 1rem;
-  background-color: var(--oat-danger-light);
-  color: var(--oat-danger);
-  border-radius: 8px;
-  margin-bottom: 1.25rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--oat-danger);
-}
-
-.login-submit {
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 0.5rem;
-  font-size: 1rem;
-}
-
-/* ============================================================
-   DASHBOARD BENTO
-   ============================================================ */
-.dashboard-wrapper {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.dashboard-header {
-  margin-bottom: 2.5rem;
-}
-
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-rows: minmax(160px, auto);
-  gap: 1.25rem;
-}
-
-.bento-link {
-  cursor: pointer;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.bento-link:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.09),
-    0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.bento-link--dark {
-  background-color: var(--oat-primary) !important;
-  border-color: transparent !important;
-  color: var(--oat-bg) !important;
-}
-
-.bento-link--dark * {
-  color: var(--oat-bg) !important;
-}
-
-.bento-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.bento-card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--oat-text);
-}
-
-.bento-link-hint {
-  display: block;
-  margin-top: 1rem;
-  font-size: 0.75rem;
-  color: var(--oat-text-muted);
-  text-align: right;
-}
-
-.task-preview-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--oat-border);
-}
-
-.task-preview-item:last-child {
-  border-bottom: none;
-}
-
-.at-risk-item {
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  margin-bottom: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  border: 1px solid var(--oat-danger);
-}
-
-.progress-bar-track {
-  height: 8px;
-  background: var(--oat-border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.4s ease;
-}
-
-/* ============================================================
-   SUBJECT DETAIL
-   ============================================================ */
-.subject-detail-container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.subject-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--oat-border);
-  padding-bottom: 1rem;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.subject-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.absence-form {
-  background: var(--oat-bg);
-  border: 1px solid var(--oat-border);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.absence-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid var(--oat-border);
-}
-
-.absence-item:last-child {
-  border-bottom: none;
-}
-
-/* ============================================================
-   ANALYTICS
-   ============================================================ */
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-/* ============================================================
-   JOURNAL
-   ============================================================ */
-.journal-history-item {
-  padding: 1rem 1.25rem;
-}
-
-/* ============================================================
-   SIDEBAR — Logout & Theme Toggle
-   ============================================================ */
-/* Patrón base compartido */
-.logout-btn,
-.theme-toggle-btn {
-  width: 100%;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.6rem 0.5rem;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  gap: 0;
-}
-
-.logout-btn {
-  color: var(--oat-danger);
-  margin-top: 0.75rem;
-}
-.theme-toggle-btn {
-  color: var(--oat-text-muted);
-}
-
-.logout-btn:hover {
-  background: var(--oat-danger-light);
-}
-.theme-toggle-btn:hover {
-  background: var(--oat-bg);
-  color: var(--oat-text);
-}
-
-/* Label expandible al hacer hover en el sidebar */
-.logout-btn .sidebar-label,
-.theme-toggle-btn .sidebar-label {
-  max-width: 0;
-  opacity: 0;
-  margin-left: 0;
-  overflow: hidden;
-  transition:
-    max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.15s ease,
-    margin-left 0.2s ease;
-}
-
-.app-sidebar:hover .logout-btn .sidebar-label,
-.app-sidebar:hover .theme-toggle-btn .sidebar-label {
-  max-width: 200px;
-  opacity: 1;
-  margin-left: 0.75rem;
-}
-
-/* ============================================================
-   MOBILE — Botón tema flotante
-   ============================================================ */
-.mobile-theme-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--oat-card-bg);
-  border: 1px solid var(--oat-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.25rem;
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 900px) {
-  .bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar-bottom {
-    display: none;
+    /* Variables CSS para compatibilidad dark mode (v4 bridge) */
+    --theme-bg: var(--color-surface-secondary);
+    --theme-card-bg: var(--color-surface);
+    --theme-text: var(--color-content);
+    --theme-text-muted: var(--color-content-secondary);
+    --theme-border: #e5e5e2;
+    --theme-primary: var(--color-content);
+    --theme-accent: #5c5c56;
+    --theme-danger: #922b21;
+    --theme-danger-light: #fdf3f2;
+    --theme-success: #1a7a52;
+    --theme-success-light: #f2faf6;
+    --theme-warning: #b37400;
+    --theme-warning-light: #fff8e1;
   }
 
-  .mobile-actions .logout-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    padding: 0;
-    justify-content: center;
-    background: var(--oat-card-bg);
-    border: 1px solid var(--oat-danger);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  [data-theme="dark"] {
+    --theme-bg: var(--color-surface-dark);
+    --theme-card-bg: var(--color-surface-dark-secondary);
+    --theme-text: var(--color-content-dark);
+    --theme-text-muted: var(--color-content-dark-secondary);
+    --theme-border: #252522;
+    --theme-primary: var(--color-content-dark);
+    --theme-danger-light: #2d0f0c;
+    --theme-success-light: #0a2218;
+    --theme-warning: #ffb300;
+    --theme-warning-light: #2d2200;
+  }
+
+  body {
+    @apply bg-surface-secondary text-content font-sans antialiased;
     margin: 0;
   }
 
-  .mobile-actions .logout-btn .sidebar-label {
-    display: none;
+  [data-theme="dark"] body {
+    @apply bg-surface-dark text-content-dark;
+  }
+
+  /* Reset foco visible para accesibilidad */
+  :focus-visible {
+    @apply outline-none ring-2 ring-zinc-900 ring-offset-2 dark:ring-zinc-100;
+  }
+
+  table {
+    border-collapse: collapse;
   }
 }
 
-@media (max-width: 640px) {
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .bento-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: auto;
-  }
-  .bento-grid [style*="span 2"],
-  .bento-grid [style*="span 1"] {
-    grid-row: auto !important;
-  }
-  .dashboard-header h1 {
-    font-size: 1.75rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-card {
-    padding: 2rem 1.25rem;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    box-shadow: none;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+/* Fix native date picker icon visibility in dark mode */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

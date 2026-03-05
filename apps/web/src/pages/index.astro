@@ -1,13 +1,7 @@
 ---
 import DashboardLayout from "../layouts/DashboardLayout.astro";
-import { DashboardPage } from "../components/DashboardPage";
+import { DashboardPage } from "../components/dashboard/DashboardPage";
 ---
-
-<script is:inline>
-  (function () {
-    if (!localStorage.getItem("auth_token")) window.location.replace("/login");
-  })();
-</script>
 
 <DashboardLayout title="Dashboard">
   <DashboardPage client:only="react" />

@@ -1,15 +1,21 @@
-# api
+# Dashboard API
 
-To install dependencies:
+Backend del dashboard académico.
 
-```bash
-bun install
-```
+- **Runtime:** Bun
+- **Framework:** Hono
+- **Auth:** Better Auth (sesiones HTTP-only cookies)
+- **DB:** SQLite (dev) / Turso (prod)
 
-To run:
+## Scripts
 
-```bash
-bun run index.ts
-```
+| Comando           | Descripción                          |
+| ----------------- | ------------------------------------ |
+| `bun run dev`     | Servidor de desarrollo (puerto 8787) |
+| `bun test`        | Ejecutar tests                       |
+| `bun run seed`    | Seed de datos demo                   |
+| `bun run invites` | Generar códigos de invitación        |
 
-This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## Variables de entorno
+
+Ver `src/env.d.ts` para la lista completa de variables soportadas.
