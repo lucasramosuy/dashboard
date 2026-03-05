@@ -7,6 +7,9 @@ COPY --chown=bun:bun package.json bun.lockb* ./
 COPY --chown=bun:bun packages/ ./packages/
 COPY --chown=bun:bun apps/api/ ./apps/api/
 
+# Instalar dependencias necesarias para compilar módulos nativos (ej: better-sqlite3)
+RUN apk add --no-cache python3 make g++ build-base
+
 RUN bun install --frozen-lockfile
 
 # Asegurar que el directorio de trabajo tenga los permisos correctos
