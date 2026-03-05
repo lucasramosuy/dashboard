@@ -18,7 +18,7 @@ function toDateInputValue(date?: Date | string): string {
 }
 
 const selectCls =
-  "w-full px-3 py-2.5 rounded-button border border-zinc-200 bg-transparent text-content text-sm transition-colors focus:border-zinc-900 focus:outline-none focus:ring-0 dark:border-zinc-800 dark:text-content-dark dark:focus:border-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed";
+  "w-full px-3 py-2.5 rounded-button border border-zinc-200 bg-transparent text-content text-sm transition-colors focus:border-zinc-900 focus:outline-none focus:ring-0 dark:border-zinc-800 dark:text-content-dark dark:focus:border-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed [&>option]:bg-white [&>option]:text-zinc-900 dark:[&>option]:bg-zinc-900 dark:[&>option]:text-zinc-100";
 
 export const TaskForm: React.FC<Props> = ({
   initialData,

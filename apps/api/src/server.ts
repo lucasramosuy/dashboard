@@ -1,11 +1,13 @@
 import "./instrument";
 import * as Sentry from "@sentry/bun";
+import { logger } from "./lib/logger";
 
 // 2. Hono API Specific Client
 // We create a dedicated client to send Hono-specific errors to a separate project
 const honoClient = new Sentry.NodeClient({
   dsn: Bun.env.SENTRY_HONO_DSN,
-  tracesSampleRate: 1.0,
+  // En producción: 20% de traces; en dev: 100%.
+  tracesSampleRate: Bun.env.NODE_ENV === "production" ? 0.2 : 1.0,
   sendDefaultPii: true,
   integrations: [],
   transport: Sentry.makeFetchTransport,
@@ -38,10 +40,10 @@ export const app = new Hono();
 // ✅ Error handler centralizado — respuestas JSON consistentes
 app.onError(async (err, c) => {
   if (err instanceof z.ZodError) {
-    console.error("[Zod Error]", err.issues);
+    logger.error("[Zod Error]", err.issues);
     return c.json({ error: "Validation error", details: err.format() }, 400);
   }
-  console.error("[API Error]", err.stack || err);
+  logger.error("[API Error]", err.stack || err);
 
   // Intentamos obtener el usuario actual para Sentry Logging
   const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });

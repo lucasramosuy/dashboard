@@ -6,5 +6,6 @@ Sentry.init({
   dsn: Bun.env.SENTRY_BUN_DSN,
   sendDefaultPii: true,
   enableLogs: false, // Set to true only for debugging
-  tracesSampleRate: 1.0,
+  // En producción: 20% de traces; en dev: 100% para depuración completa.
+  tracesSampleRate: Bun.env.NODE_ENV === "production" ? 0.2 : 1.0,
 });

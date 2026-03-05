@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { dbService } from "../lib/db";
 import { auth } from "../lib/auth.better";
 import { registerSchema } from "@dashboard/shared-types";
+import { logger } from "../lib/logger";
 
 const authRouter = new Hono();
 
@@ -40,7 +41,7 @@ authRouter.post("/register", async (c) => {
     return c.json({ user: result.user }, 201);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error al crear el usuario";
-    console.error("Registration error:", err);
+    logger.error("[auth/register] Error al crear el usuario:", err);
     return c.json({ error: message }, 500);
   }
 });

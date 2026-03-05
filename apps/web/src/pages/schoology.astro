@@ -4,5 +4,7 @@ import { SchoologyPage } from "../components/schoology/SchoologyPage";
 ---
 
 <DashboardLayout title="Integración Schoology">
-  <SchoologyPage client:only="react" />
+  <div class="dash-container" style="padding: 2rem 1rem; max-width: 800px; margin: 0 auto;">
+    <SchoologyPage client:only="react" />
+  </div>
 </DashboardLayout>

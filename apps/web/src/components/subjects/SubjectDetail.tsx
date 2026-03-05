@@ -161,7 +161,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                     </label>
                     <select
                       id="absenceType"
-                      className={inputCls}
+                      className={`${inputCls} [&>option]:bg-theme-card-bg [&>option]:text-theme-text`}
                       value={absenceValue}
                       onChange={(e) => setAbsenceValue(Number(e.target.value))}
                     >

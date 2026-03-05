@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { StatusCode } from "hono/utils/http-status";
+import { logger } from "../lib/logger";
 
 /**
  * Sentry Tunneling
@@ -36,7 +37,7 @@ sentryTunnelRouter.post("/", async (c) => {
 
     return c.body(null, sentryResponse.status as StatusCode);
   } catch (error) {
-    console.error("Fallo en el túnel Sentry:", error);
+    logger.error("[sentry_tunnel] Fallo en el túnel Sentry:", error);
     return c.text("Fallo en la ejecución del proxy", 500);
   }
 });

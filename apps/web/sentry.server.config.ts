@@ -12,11 +12,10 @@ Sentry.init({
     // Add our Profiling integration
     nodeProfilingIntegration(),
   ],
-  // Define how likely traces are sampled. Adjust this value in production,
-  // or use tracesSampler for greater control.
-  tracesSampleRate: 1.0,
-  // Define how many user sessions have profiling enabled.
-  profileSessionSampleRate: 1.0,
+  // En producción usar 0.2 (20%); subir temporalmente para depurar.
+  tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
+  // En producción: 20% de sesiones con profiling activo.
+  profileSessionSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
   // Enable logs to be sent to Sentry
   enableLogs: true,
 });

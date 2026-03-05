@@ -1,10 +1,9 @@
-import * as Sentry from "@sentry/astro";
+import * as Sentry from "@sentry/bun";
 
 export const toError = (err: unknown): Error => {
   if (err instanceof Error) return err;
   if (typeof err === "string") return new Error(err);
 
-  // Retiene la estructura de objetos planos y previene la pérdida de datos
   try {
     return new Error(JSON.stringify(err));
   } catch {
@@ -12,14 +11,16 @@ export const toError = (err: unknown): Error => {
   }
 };
 
+const isProd = Bun.env.NODE_ENV === "production";
+
 export const logger = {
   debug: (...args: unknown[]) => {
-    if (import.meta.env?.MODE !== "production") {
+    if (!isProd) {
       console.debug("[DEBUG]", ...args);
     }
   },
   info: (...args: unknown[]) => {
-    if (import.meta.env?.MODE !== "production") {
+    if (!isProd) {
       console.info("[INFO]", ...args);
     }
   },
@@ -29,8 +30,8 @@ export const logger = {
   error: (...args: unknown[]) => {
     console.error("[ERROR]", ...args);
 
-    // Despacho condicional a Sentry exclusivo para producción
-    if (import.meta.env?.MODE === "production") {
+    // En producción delega automáticamente a Sentry
+    if (isProd) {
       const err = args.length > 0 ? toError(args[0]) : new Error("Log de error sin argumentos");
       Sentry.captureException(err, {
         extra: { additionalArgs: args.slice(1) },

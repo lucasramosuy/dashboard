@@ -451,19 +451,13 @@ Factores técnicos concretos considerados:
 
 ## 🟡 Fase 15 — Higiene, tests, calidad y deploy
 
-- [ ] Revisar y refactorizar todos los estilos del theme.css para que tengan consistencia en toda la app.
 - [ ] Verificar que Sentry se ejecuta correctamente.
-- [ ] Crear tests para planner.
 - [ ] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
-- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/api.
-- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/web.
+- [ ] Verificar que se han reemplazado el nombre de los secretos por los de prod y documentarlos aquí.
+  - ## Secretos:
 - [ ] Verificar que los tests de /apps/api se ejecutan correctamente.
-- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo la raíz del monorepo.
-- [ ] Limpiar DB de Turso para prod.
 - [ ] Crear invites para usuarios de prod.
 - [ ] Sync final de esquemas en producción. Ejecutar `npx @better-auth/cli migrate` y asegurarse de que Turso refleje todas las columnas extra (como las del feed iCal y notas).
-- [ ] Verificar consistencia de código estricto en la raíz:
-  - `bun run format`, `bun run lint` y **sobre todo `bun run check`**, afirmando que Typescript valide en frontend, backend y `shared-types`.
 - [ ] Replicacion Final Prod vs Local:
   - Verificar que Render inyecta adecuadamente `TURSO_DATABASE_URL` y variables base (`BETTER_AUTH_URL`).
   - Auditar que endpoints expuestos filtran su contenido estrictamente por `userId`.

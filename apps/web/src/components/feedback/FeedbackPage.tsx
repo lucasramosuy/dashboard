@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import * as Sentry from "@sentry/react";
-import { Bug, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth, AuthProvider } from "../../contexts/AuthContext";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { Skeleton } from "../ui/Skeleton";
+import { FeedbackSkeleton } from "../ui/Skeleton";
+import { logger, toError } from "../../lib/logger";
 
 const FeedbackForm: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -36,45 +37,26 @@ const FeedbackForm: React.FC = () => {
       setStatus("success");
       setMessage("");
     } catch (err) {
-      console.error(err);
+      const error = toError(err);
+      logger.error("[FeedbackPage] Error al enviar feedback a Sentry:", error);
       setStatus("error");
     }
   };
 
   if (authLoading) {
-    return (
-      <div className="max-w-150 mx-auto w-full">
-        <div className="mb-8">
-          <Skeleton variant="text" className="w-64 h-9 mb-3" />
-          <Skeleton variant="text" className="w-full h-4 mb-1" />
-          <Skeleton variant="text" className="w-3/4 h-4" />
-        </div>
-        <div className="bg-theme-card-bg border border-theme-border rounded-2xl p-8 flex flex-col gap-6">
-          <Skeleton variant="rectangular" className="w-full h-10 rounded-lg" />
-          <Skeleton variant="rectangular" className="w-full h-10 rounded-lg" />
-          <Skeleton variant="rectangular" className="w-full h-40 rounded-lg" />
-          <Skeleton variant="rectangular" className="w-full h-12 rounded-lg" />
-        </div>
-      </div>
-    );
+    return <FeedbackSkeleton />;
   }
 
   if (!user) return null;
 
   return (
-    <div className="max-w-150 mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3 text-theme-text">
-          <Bug size={32} className="text-theme-primary" />
-          Reportar un Bug
-        </h1>
-        <p className="text-theme-text-muted mt-2 text-lg">
-          ¿Encontraste algún problema o queres realizar sugerencias para mejorar? Cuéntanos qué pasó
-          para que podamos arreglarlo. En caso de que envíes sugerencias, por favor sé lo más
-          específico posible para que podamos entender mejor tu idea.
+    <div className="flex flex-col gap-6 w-full">
+      <header className="flex flex-col gap-2">
+        <h1 className="m-0 text-3xl font-bold text-theme-text">Reportar un Bug</h1>
+        <p className="text-theme-text-muted m-0 text-lg">
+          Ayúdanos a mejorar reportando problemas o sugiriendo nuevas ideas.
         </p>
-      </div>
-
+      </header>
       {status === "success" ? (
         <div className="bg-theme-success/10 border border-theme-success/20 rounded-xl p-8 flex flex-col items-center gap-4 text-center">
           <CheckCircle2 size={48} className="text-theme-success" />
