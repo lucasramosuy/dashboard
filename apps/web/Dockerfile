@@ -6,6 +6,9 @@ COPY package.json bun.lockb* ./
 COPY packages/ ./packages/
 COPY apps/web/ ./apps/web/
 
+# Instalar dependencias necesarias para compilar módulos nativos
+RUN apk add --no-cache python3 make g++ build-base
+
 RUN bun install --frozen-lockfile
 
 WORKDIR /app/apps/web
