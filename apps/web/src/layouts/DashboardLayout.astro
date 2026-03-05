@@ -1,7 +1,17 @@
 ---
 import Base from "./Base.astro";
-import { SidebarActions } from "../components/SidebarActions";
-import { MobileMenu } from "../components/MobileMenu";
+import { SidebarActions } from "../components/layout/SidebarActions";
+import { MobileMenu } from "../components/layout/MobileMenu";
+import {
+  LayoutDashboard,
+  BookOpen,
+  CheckSquare,
+  Calendar,
+  PenSquare,
+  Link2,
+  BarChart3,
+  Bug,
+} from "lucide-react";
 
 interface Props {
   title: string;
@@ -11,30 +21,39 @@ const { title } = Astro.props;
 const pathname = Astro.url.pathname;
 
 const navItems = [
-  { href: "/", icon: "🏠", label: "Dashboard" },
-  { href: "/subjects", icon: "📚", label: "UC" },
-  { href: "/tasks", icon: "✅", label: "Tareas" },
-  { href: "/planner", icon: "📅", label: "Planner" },
-  { href: "/journal", icon: "✍️", label: "Práctica" },
-  { href: "/schoology", icon: "🔗", label: "Schoology" },
-  { href: "/analytics", icon: "📊", label: "Analíticas" },
-  { href: "/feedback", icon: "🐛", label: "Reportar Bug" },
+  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/subjects", icon: BookOpen, label: "UC" },
+  { href: "/tasks", icon: CheckSquare, label: "Tareas" },
+  { href: "/planner", icon: Calendar, label: "Planner" },
+  { href: "/journal", icon: PenSquare, label: "Práctica" },
+  { href: "/schoology", icon: Link2, label: "Schoology" },
+  { href: "/analytics", icon: BarChart3, label: "Analíticas" },
+  { href: "/feedback", icon: Bug, label: "Reportar Bug" },
 ];
 ---
 
 <Base title={title}>
+  {/* Skip link — accesibilidad: visible al recibir foco por teclado */}
+  <a
+    href="#main-content"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-500 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-elevated focus:text-content focus:ring-2 focus:ring-zinc-900 dark:focus:bg-surface-dark dark:focus:text-content-dark dark:focus:ring-zinc-100"
+  >
+    Saltar al contenido principal
+  </a>
   <div class="app-shell">
     <aside class="app-sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-icon-item">📚</span>
+        <span class="sidebar-icon-item"><BookOpen size={20} /></span>
         <span class="sidebar-label sidebar-brand-text">Mi Panel</span>
       </div>
 
       <nav class="sidebar-nav">
         {
-          navItems.map(({ href, icon, label }) => (
+          navItems.map(({ href, icon: Icon, label }) => (
             <a href={href} class={`app-nav-link${pathname === href ? " active" : ""}`}>
-              <span class="sidebar-icon-item">{icon}</span>
+              <span class="sidebar-icon-item">
+                <Icon size={20} strokeWidth={2.5} />
+              </span>
               <span class="sidebar-label">{label}</span>
             </a>
           ))
@@ -47,7 +66,7 @@ const navItems = [
       </div>
     </aside>
 
-    <main class="app-main">
+    <main id="main-content" class="app-main">
       <slot />
     </main>
 
@@ -171,7 +190,73 @@ const navItems = [
   .sidebar-bottom {
     padding-top: 1rem;
     border-top: 1px solid var(--theme-border);
-    overflow: hidden;
+    margin-top: auto;
+  }
+
+  /* Grid Layout for Expanded Sidebar */
+  .sidebar-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .app-sidebar:hover .sidebar-actions-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Profile button spans 2 columns and is centered */
+  .app-sidebar:hover .profile-btn {
+    grid-column: span 2;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Theme and Logout buttons side by side in expanded state */
+  .app-sidebar:hover .theme-toggle-btn,
+  .app-sidebar:hover .logout-btn {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 0.5rem;
+  }
+
+  /* Hide labels for toggle and logout in expanded state */
+  .app-sidebar:hover .theme-toggle-btn .sidebar-label,
+  .app-sidebar:hover .logout-btn .sidebar-label {
+    display: none !important;
+  }
+
+  /* Sidebar Actions internal button consistency */
+  .profile-btn,
+  .logout-btn,
+  .theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--theme-text-muted);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+  }
+
+  .profile-btn:hover,
+  .logout-btn:hover,
+  .theme-toggle-btn:hover {
+    background: var(--theme-bg);
+    color: var(--theme-text);
+  }
+
+  .logout-btn:hover {
+    color: var(--theme-danger, #ef4444);
   }
 
   /* ===== MAIN ===== */
