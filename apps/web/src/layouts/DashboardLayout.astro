@@ -2,16 +2,8 @@
 import Base from "./Base.astro";
 import { SidebarActions } from "../components/layout/SidebarActions";
 import { MobileMenu } from "../components/layout/MobileMenu";
-import {
-  LayoutDashboard,
-  BookOpen,
-  CheckSquare,
-  Calendar,
-  PenSquare,
-  Link2,
-  BarChart3,
-  Bug,
-} from "lucide-react";
+import { navItems } from "../config/nav";
+import { BookOpen } from "lucide-react";
 
 interface Props {
   title: string;
@@ -19,17 +11,6 @@ interface Props {
 
 const { title } = Astro.props;
 const pathname = Astro.url.pathname;
-
-const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/subjects", icon: BookOpen, label: "UC" },
-  { href: "/tasks", icon: CheckSquare, label: "Tareas" },
-  { href: "/planner", icon: Calendar, label: "Planner" },
-  { href: "/journal", icon: PenSquare, label: "Práctica" },
-  { href: "/schoology", icon: Link2, label: "Schoology" },
-  { href: "/analytics", icon: BarChart3, label: "Analíticas" },
-  { href: "/feedback", icon: Bug, label: "Reportar Bug" },
-];
 ---
 
 <Base title={title}>
@@ -71,7 +52,7 @@ const navItems = [
     </main>
 
     {/* Menú flotante móvil (fase 8) */}
-    <MobileMenu client:only="react" navItems={navItems} currentPath={pathname} />
+    <MobileMenu client:only="react" currentPath={pathname} />
   </div>
 </Base>
 
@@ -289,8 +270,8 @@ const navItems = [
     }
 
     .app-main {
-      padding: 1.5rem 1rem;
-      padding-bottom: 5rem; /* Space for the floating button */
+      padding: 1.5rem 1.25rem;
+      padding-bottom: 6rem; /* Space for the floating button */
     }
   }
 </style>

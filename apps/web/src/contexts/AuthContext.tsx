@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Si hay un error de sesión y no estamos cargando, podríamos loguear
     if (error && !isPending) {
-      console.error("[AuthContext] Error validando sesión:", error);
+      logger.error("[AuthContext] Error validando sesión:", error);
     }
   }, [error, isPending]);
 
@@ -104,7 +104,7 @@ export const useAuth = () => {
   if (context === undefined) {
     if (typeof window !== "undefined") {
       // Solo en cliente, nunca en SSR
-      console.warn("useAuth debe usarse dentro de <AuthProvider>");
+      logger.warn("useAuth debe usarse dentro de <AuthProvider>");
     }
     return {
       user: null,

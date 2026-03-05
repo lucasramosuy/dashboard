@@ -22,6 +22,7 @@ export const JournalView: React.FC = () => {
   const [draftContent, setDraftContent] = useState("");
   const [draftSubjectId, setDraftSubjectId] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<any>(null);
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
 
   const { data: journalOnDate, isLoading: loadingJournal } = useJournalByDate(currentDate);
   const { data: unSortedHistory = [], isLoading: loadingHistory } = useJournals();
@@ -89,9 +90,20 @@ export const JournalView: React.FC = () => {
               <span className="text-xs text-theme-text-muted opacity-70">Cargando...</span>
             )}
             <input
+              ref={dateInputRef}
+              id="journal-date-input"
               type="date"
               value={currentDate}
               onChange={(e) => setCurrentDate(e.target.value)}
+              onClick={() => {
+                if (dateInputRef.current && "showPicker" in HTMLInputElement.prototype) {
+                  try {
+                    dateInputRef.current.showPicker();
+                  } catch {
+                    /* ignore */
+                  }
+                }
+              }}
               className={`${inputCls} w-auto min-w-150px cursor-pointer`}
               aria-label="Seleccionar fecha para la práctica"
             />
@@ -105,7 +117,7 @@ export const JournalView: React.FC = () => {
             </label>
             <select
               id="subject"
-              className={inputCls}
+              className={`${inputCls} [&>option]:bg-theme-card-bg [&>option]:text-theme-text`}
               value={draftSubjectId}
               onChange={(e) => setDraftSubjectId(e.target.value)}
               required

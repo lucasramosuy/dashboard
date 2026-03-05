@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { StatusBadge } from "../ui/StatusBadge";
 import { useTasks, useAtRiskSubjects, useUpdateTask } from "../../hooks/useDashboardQueries";
+import { cn } from "@/lib/utils";
 
 const BentoLink: React.FC<{
   href: string;
@@ -11,7 +12,7 @@ const BentoLink: React.FC<{
 }> = ({ href, children, className = "", dark }) => (
   <a
     href={href}
-    className={`bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
+    className={`bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
       dark ? "bg-theme-primary text-theme-bg **:text-theme-bg" : ""
     } ${className}`}
   >
@@ -58,7 +59,7 @@ export const DashboardSummary: React.FC = () => {
   return (
     <div className="max-w-275 mx-auto">
       <header className="mb-10">
-        <h1 className="text-4xl font-bold m-0">Hola, {user.name.split(" ")[0]} 👋</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold m-0">Hola, {user.name.split(" ")[0]} 👋</h1>
         <p className="text-theme-text-muted">Este es el estado de tu semestre académico.</p>
       </header>
 
@@ -96,7 +97,7 @@ export const DashboardSummary: React.FC = () => {
 
         {/* CARD 2: Próximas Tareas */}
         <div
-          className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
+          className="bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
           onClick={() => (window.location.href = "/tasks")}
         >
           <div className="flex justify-between items-center mb-4">
@@ -168,16 +169,15 @@ export const DashboardSummary: React.FC = () => {
           </div>
           <div className="h-2 bg-theme-border rounded overflow-hidden" aria-hidden="true">
             <div
-              className="h-full rounded transition-[width] duration-400"
-              style={{
-                width: `${progressPercent}%`,
-                backgroundColor:
-                  progressPercent === 100
-                    ? "var(--theme-success)"
-                    : progressPercent >= 50
-                      ? "var(--theme-primary)"
-                      : "var(--theme-warning)",
-              }}
+              className={cn(
+                "h-full rounded transition-[width] duration-400",
+                progressPercent === 100
+                  ? "bg-success"
+                  : progressPercent >= 50
+                    ? "bg-zinc-900 dark:bg-zinc-100"
+                    : "bg-warning",
+              )}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
           <p className="text-theme-text-muted mt-3 text-sm">

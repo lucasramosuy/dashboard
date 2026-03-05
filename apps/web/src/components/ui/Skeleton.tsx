@@ -264,3 +264,57 @@ export function ProfileSkeleton() {
     </div>
   );
 }
+
+/** Simula la página de integración de Schoology */
+export function SchoologySkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
+        <Skeleton variant="text" className="w-full h-4" />
+        <div className="flex gap-2 mt-2">
+          <Skeleton variant="rectangular" className="w-32 h-10 rounded-lg" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 mt-2">
+        <Skeleton variant="text" className="w-48 h-7" />
+        <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-theme-card-bg border border-theme-border rounded-xl p-4 shadow-sm"
+            >
+              <Skeleton variant="text" className="w-3/4 h-6 mb-4" />
+              <Skeleton variant="text" className="w-full h-3 mb-2" />
+              <Skeleton variant="text" className="w-full h-3 mb-4" />
+              <div className="flex flex-col gap-2">
+                <Skeleton variant="text" className="w-32 h-4" />
+                <Skeleton variant="rectangular" className="w-40 h-5 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Simula la página de feedback/bugs */
+export function FeedbackSkeleton() {
+  return (
+    <div className="bg-theme-card-bg border border-theme-border rounded-2xl p-8 flex flex-col gap-6">
+      <div>
+        <Skeleton variant="text" className="w-32 h-4 mb-2" />
+        <Skeleton variant="rectangular" className="w-full h-12 rounded-lg" />
+      </div>
+      <div>
+        <Skeleton variant="text" className="w-40 h-4 mb-2" />
+        <Skeleton variant="rectangular" className="w-full h-12 rounded-lg" />
+      </div>
+      <div>
+        <Skeleton variant="text" className="w-56 h-4 mb-2" />
+        <Skeleton variant="rectangular" className="w-full h-40 rounded-lg" />
+      </div>
+      <Skeleton variant="rectangular" className="w-full h-12 rounded-lg" />
+    </div>
+  );
+}

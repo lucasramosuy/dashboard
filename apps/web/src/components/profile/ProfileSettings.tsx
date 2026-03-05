@@ -35,56 +35,65 @@ const ProfileForm: React.FC = () => {
   }
 
   return (
-    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
-      <h2 className="text-xl font-bold m-0 text-theme-text">Datos Personales</h2>
+    <div className="flex flex-col gap-6 w-full">
+      <header className="flex flex-col gap-2">
+        <h1 className="m-0 text-3xl font-bold text-theme-text">Mi Perfil</h1>
+        <p className="text-theme-text-muted m-0 text-lg">
+          Administra tu cuenta y preferencias personales.
+        </p>
+      </header>
 
-      <form onSubmit={handleUpdate} className="flex flex-col gap-4">
-        <div>
-          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
-            Email (Solo lectura)
-          </label>
-          <input
-            type="email"
-            value={user.email}
-            disabled
-            className={`${inputCls} opacity-70 cursor-not-allowed`}
-          />
-        </div>
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
+        <h2 className="text-xl font-bold m-0 text-theme-text">Datos Personales</h2>
 
-        <div>
-          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
-            Nombre a mostrar
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Lucas Ramos"
-            required
-            className={inputCls}
-          />
-        </div>
-
-        {message && (
-          <div
-            className={`px-4 py-3 rounded-lg text-sm border ${
-              message.type === "error"
-                ? "bg-theme-danger-light text-theme-danger border-theme-danger"
-                : "bg-theme-success-light text-theme-success border-theme-success"
-            }`}
-          >
-            {message.text}
+        <form onSubmit={handleUpdate} className="flex flex-col gap-4">
+          <div>
+            <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+              Email (Solo lectura)
+            </label>
+            <input
+              type="email"
+              value={user.email}
+              disabled
+              className={`${inputCls} opacity-70 cursor-not-allowed`}
+            />
           </div>
-        )}
 
-        <button
-          type="submit"
-          className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
-          disabled={isSaving || !name.trim()}
-        >
-          {isSaving ? "Guardando..." : "Guardar cambios"}
-        </button>
-      </form>
+          <div>
+            <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+              Nombre a mostrar
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej. Lucas Ramos"
+              required
+              className={inputCls}
+            />
+          </div>
+
+          {message && (
+            <div
+              className={`px-4 py-3 rounded-lg text-sm border ${
+                message.type === "error"
+                  ? "bg-theme-danger-light text-theme-danger border-theme-danger"
+                  : "bg-theme-success-light text-theme-success border-theme-success"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
+            disabled={isSaving || !name.trim()}
+          >
+            {isSaving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

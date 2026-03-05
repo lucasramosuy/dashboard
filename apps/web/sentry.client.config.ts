@@ -19,12 +19,10 @@ Sentry.init({
       autoInject: false,
     }),
   ],
-  // Define how likely traces are sampled. Adjust this value in production,
-  // or use tracesSampler for greater control.
-  tracesSampleRate: 1.0,
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 1,
+  // En producción usar 0.2 (20%); subir temporalmente para depurar.
+  tracesSampleRate: import.meta.env.PROD ? 0.2 : 1.0,
+  // En producción: 10% de sesiones. En dev: 100% para ver replays completos.
+  replaysSessionSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
   // If the entire session is not sampled, use the below sample rate to sample
   // sessions when an error occurs.
   replaysOnErrorSampleRate: 1.0,

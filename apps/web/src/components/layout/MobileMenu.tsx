@@ -1,23 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { SidebarActions } from '../layout/SidebarActions';
+import { SidebarActions } from "../layout/SidebarActions";
 import { Menu, X } from "lucide-react";
 
-interface NavItem {
-  href: string;
-  icon: React.ComponentType<{
-    size?: string | number;
-    className?: string;
-    strokeWidth?: string | number;
-  }>;
-  label: string;
-}
+import { navItems } from "../../config/nav";
 
 interface Props {
-  navItems: NavItem[];
   currentPath: string;
 }
 
-export const MobileMenu: React.FC<Props> = ({ navItems, currentPath }) => {
+export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -60,7 +51,7 @@ export const MobileMenu: React.FC<Props> = ({ navItems, currentPath }) => {
       {/* Botón Flotante */}
       <button
         ref={buttonRef}
-        className="flex md:hidden fixed bottom-8 right-8 w-60px h-60px rounded-xl bg-theme-primary text-theme-bg items-center justify-center shadow-lg z-50 transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 cursor-pointer"
+        className="flex md:hidden fixed bottom-8 right-8 w-15 h-15 rounded-xl bg-theme-primary text-theme-bg items-center justify-center shadow-lg z-50 transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 cursor-pointer"
         onClick={() => setIsOpen(true)}
         aria-label="Abrir menú de navegación"
         aria-expanded={isOpen}
@@ -72,14 +63,14 @@ export const MobileMenu: React.FC<Props> = ({ navItems, currentPath }) => {
       {/* Modal / Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex justify-end animate-[fadeIn_0.2s_ease-out]"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex justify-end animate-[fade-in_0.2s_ease-out]"
           onClick={handleBackdropClick}
           role="presentation"
         >
           {/* Diálogo */}
           <div
             id="mobile-menu-dialog"
-            className="w-[80%] max-w-300px h-full bg-theme-bg/95 backdrop-blur-md shadow-[-8px_0_32px_rgba(0,0,0,0.15)] flex flex-col animate-[slideInRight_0.3s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-l border-theme-border/50"
+            className="w-[80%] max-w-75 h-full bg-theme-bg/95 backdrop-blur-md shadow-[-8px_0_32px_rgba(0,0,0,0.15)] flex flex-col animate-[slide-in-right_0.3s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-l border-theme-border/50"
             ref={dialogRef}
             role="dialog"
             aria-modal="true"

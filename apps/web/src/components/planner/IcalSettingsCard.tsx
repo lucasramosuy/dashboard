@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useUpdateIcalConfig, useSyncIcal } from "../../hooks/useDashboardQueries";
 import { useToast } from "../../hooks/useToast";
-import { Toast } from '../ui/Toast';
+import { Toast } from "../ui/Toast";
+import { logger, toError } from "../../lib/logger";
 
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
@@ -36,7 +37,9 @@ export const IcalSettingsCard: React.FC = () => {
       await refreshMe();
       setIsEditing(false);
       showToast("URL de calendario guardada correctamente", "success");
-    } catch (error: any) {
+    } catch (err) {
+      const error = toError(err);
+      logger.error("[IcalSettingsCard] Error al guardar config:", error);
       showToast(error.message || "Error al guardar configuración", "error");
     }
   };
@@ -48,7 +51,9 @@ export const IcalSettingsCard: React.FC = () => {
         `Sincronización exitosa. ${result.syncedCount} eventos nuevos o actualizados.`,
         "success",
       );
-    } catch (error: any) {
+    } catch (err) {
+      const error = toError(err);
+      logger.error("[IcalSettingsCard] Error al sincronizar feed:", error);
       showToast(error.message || "Error al sincronizar feed", "error");
     }
   };

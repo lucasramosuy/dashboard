@@ -1,6 +1,7 @@
 import ical from "node-ical";
 import { db, dbService } from "../lib/db";
 import { IcalEvent } from "@dashboard/shared-types";
+import { logger } from "../lib/logger";
 
 export const icalService = {
   syncUserCalendar: async (userId: string, icalUrl: string) => {
@@ -59,7 +60,7 @@ export const icalService = {
         syncedCount: eventsToInsert.length,
       };
     } catch (error) {
-      console.error("Error al sincronizar iCal:", error);
+      logger.error("[icalService] Error al sincronizar iCal:", error);
       throw new Error("No se pudo procesar el feed de iCal. Verifica que la URL sea válida.", {
         cause: error,
       });

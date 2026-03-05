@@ -29,6 +29,16 @@ export default {
           dark: "#fafafa",
           "dark-hover": "#e4e4e7",
         },
+        success: {
+          DEFAULT: "#1a7a52",
+          light: "#f2faf6",
+          dark: "#0a2218",
+        },
+        warning: {
+          DEFAULT: "#b37400",
+          light: "#fff8e1",
+          dark: "#2d2200",
+        },
       },
       fontFamily: {
         sans: ["Inter Variable", "system-ui", "sans-serif"],

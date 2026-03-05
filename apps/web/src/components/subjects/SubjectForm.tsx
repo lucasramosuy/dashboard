@@ -58,7 +58,7 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
         </label>
         <select
           id="track"
-          className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
+          className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent [&>option]:bg-theme-card-bg [&>option]:text-theme-text"
           value={track}
           onChange={(e) => handleTrackChange(e.target.value)}
           required

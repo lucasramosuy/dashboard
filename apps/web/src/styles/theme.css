@@ -17,6 +17,8 @@
   --color-theme-border: var(--theme-border);
   --color-theme-primary: var(--theme-primary);
   --color-theme-accent: var(--theme-accent);
+  --color-theme-success: var(--theme-success);
+  --color-theme-warning: var(--theme-warning);
 
   @keyframes fade-in {
     0% {
@@ -31,6 +33,14 @@
   @keyframes slide-in {
     0% {
       transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(100%);
     }
     100% {
       transform: translateX(0);
@@ -62,6 +72,8 @@
     --theme-danger-light: #fdf3f2;
     --theme-success: #1a7a52;
     --theme-success-light: #f2faf6;
+    --theme-warning: #b37400;
+    --theme-warning-light: #fff8e1;
   }
 
   [data-theme="dark"] {
@@ -73,6 +85,8 @@
     --theme-primary: var(--color-content-dark);
     --theme-danger-light: #2d0f0c;
     --theme-success-light: #0a2218;
+    --theme-warning: #ffb300;
+    --theme-warning-light: #2d2200;
   }
 
   body {
@@ -94,18 +108,7 @@
   }
 }
 
-/* ============================================================
-   SIDEBAR & LEGACY UTILS
-   ============================================================ */
-.dash-card {
-  @apply rounded-card border border-theme-border bg-theme-card-bg p-6 shadow-card;
-}
-
-.dash-btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-button font-semibold transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
-  padding: 0.625rem 1.25rem;
-}
-
-.dash-input {
-  @apply w-full rounded-button border border-theme-border bg-theme-card-bg px-4 py-2.5 text-sm transition-all focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10;
+/* Fix native date picker icon visibility in dark mode */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }

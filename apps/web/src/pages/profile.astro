@@ -3,13 +3,8 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
 import { ProfileSettings } from "../components/profile/ProfileSettings";
 ---
 
-<DashboardLayout title="Mi Perfil | Oat Dashboard">
+<DashboardLayout title="Mi Perfil">
   <div class="dash-container" style="padding: 2rem 1rem; max-width: 600px; margin: 0 auto;">
-    <header style="margin-bottom: 2rem;">
-      <h1 class="dash-text-bold" style="font-size: 2rem; margin: 0 0 0.5rem;">Mi Perfil</h1>
-      <p class="dash-text-secondary">Administra tu cuenta y preferencias personales.</p>
-    </header>
-
     <section>
       <ProfileSettings client:only="react" />
     </section>
