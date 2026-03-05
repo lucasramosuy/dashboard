@@ -12,10 +12,11 @@ import {
   useDeleteSubject,
 } from "../hooks/useDashboardQueries";
 
+const btnOutline =
+  "px-3 py-1.5 rounded-lg text-xs font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150";
+
 export const SubjectList: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-
-  // React Query Hooks (Container-Presenter)
   const { data: subjects = [], isLoading } = useSubjects();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
@@ -68,20 +69,26 @@ export const SubjectList: React.FC = () => {
   };
 
   if (authLoading || isLoading) {
-    return <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando UC"></div>;
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-4 p-16 text-theme-text-muted text-sm"
+        aria-busy="true"
+        aria-label="Cargando UC"
+      ></div>
+    );
   }
 
   return (
     <>
-      <div className="oat-card">
-        <header className="subjects-header">
-          <h1 style={{ margin: 0 }}>Unidades Curriculares</h1>
+      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+        <header className="flex justify-between items-center mb-6 flex-wrap gap-3">
+          <h1 className="m-0 text-theme-text">Unidades Curriculares</h1>
           <button
             onClick={() => {
               setEditingSubject(undefined);
               setModalOpen(true);
             }}
-            className="oat-btn oat-btn-primary"
+            className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent hover:-translate-y-px hover:shadow-md cursor-pointer transition-all duration-150"
             aria-label="Nueva UC"
           >
             + Nueva
@@ -89,56 +96,62 @@ export const SubjectList: React.FC = () => {
         </header>
 
         {subjects.length === 0 ? (
-          <p className="oat-text-secondary">No hay UC registradas aún.</p>
+          <p className="text-theme-text-muted">No hay UC registradas aún.</p>
         ) : (
-          <div className="table-responsive">
-            <table className="subjects-table" aria-label="Lista de UC">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[400px]" aria-label="Lista de UC">
               <thead>
                 <tr>
-                  <th>Nombre</th>
-                  <th>Clases Totales</th>
-                  <th style={{ textAlign: "right" }}>Acciones</th>
+                  <th className="text-left px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
+                    Nombre
+                  </th>
+                  <th className="text-left px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
+                    Clases Totales
+                  </th>
+                  <th className="text-right px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
+                    Acciones
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {subjects.map((s) => (
-                  <tr key={s.id} className="subjects-row">
-                    <td>
-                      <a href={`/subjects/${s.slug || s.id}`} className="subjects-link">
+                  <tr key={s.id} className="hover:bg-theme-bg transition-colors">
+                    <td className="px-3 py-3 border-b border-theme-border">
+                      <a
+                        href={`/subjects/${s.slug || s.id}`}
+                        className="text-theme-primary font-semibold no-underline hover:underline"
+                      >
                         {s.name}
                       </a>
                     </td>
-                    <td>{s.total_classes}</td>
-                    <td>
-                      <div className="subjects-actions">
+                    <td className="px-3 py-3 border-b border-theme-border text-theme-text">
+                      {s.total_classes}
+                    </td>
+                    <td className="px-3 py-3 border-b border-theme-border">
+                      <div className="flex justify-end items-center gap-1.5 flex-wrap">
                         <button
                           onClick={() => {
                             setEditingSubject(s);
                             setModalOpen(true);
                           }}
-                          className="oat-btn oat-btn-outline"
-                          style={{ fontSize: "0.75rem" }}
+                          className={btnOutline}
                           aria-label={`Editar UC ${s.name}`}
                         >
                           Editar
                         </button>
                         {deletingId === s.id ? (
                           <>
-                            <span style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}>
-                              ¿Confirmar?
-                            </span>
+                            <span className="text-xs text-theme-danger">¿Confirmar?</span>
                             <button
                               onClick={() => handleDelete(s.id)}
-                              className="oat-btn oat-btn-outline"
-                              style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                              className={`${btnOutline} text-theme-danger`}
                               aria-label="Confirmar eliminación"
                             >
                               Sí
                             </button>
                             <button
                               onClick={() => setDeletingId(null)}
-                              className="oat-btn oat-btn-outline"
-                              style={{ fontSize: "0.75rem" }}
+                              className={btnOutline}
                               aria-label="Cancelar eliminación"
                             >
                               No
@@ -147,8 +160,7 @@ export const SubjectList: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => setDeletingId(s.id)}
-                            className="oat-btn oat-btn-outline"
-                            style={{ fontSize: "0.75rem", color: "var(--oat-danger)" }}
+                            className={`${btnOutline} text-theme-danger`}
                             aria-label={`Eliminar UC ${s.name}`}
                           >
                             Eliminar

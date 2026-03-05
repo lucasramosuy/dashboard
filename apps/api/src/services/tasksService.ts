@@ -3,8 +3,8 @@ import type { Task } from "@dashboard/shared-types";
 
 export const tasksService = {
   getWeeklyTasks: async (userId: string, startIso: string, endIso: string) => {
-    // Obtenemos todas las tareas del usuario
-    const allTasks = await dbService.tasks.getByUser(userId);
+    // Obtenemos todas las tareas del usuario (incluyendo las del planner)
+    const allTasks = await dbService.tasks.getByUser(userId, true);
     const startDate = new Date(startIso);
     const endDate = new Date(endIso);
 

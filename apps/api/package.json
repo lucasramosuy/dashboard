@@ -23,6 +23,7 @@
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.17.0",
     "@libsql/kysely-libsql": "^0.4.1",
+    "@sentry/bun": "^10.42.0",
     "better-auth": "^1.5.2",
     "hono": "^4.12.2",
     "kysely": "^0.28.11",

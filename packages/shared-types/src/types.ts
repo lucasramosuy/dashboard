@@ -43,6 +43,7 @@ export interface Task {
   grade?: number | null;
   file_url?: string | null;
   comments?: string | null;
+  is_planner?: boolean | number;
 }
 
 export interface PracticeJournal {

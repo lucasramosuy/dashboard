@@ -114,6 +114,7 @@ export async function initDB() {
       grade REAL,
       file_url TEXT,
       comments TEXT,
+      is_planner INTEGER DEFAULT 0,
       FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
       FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
     )`,
@@ -182,6 +183,12 @@ export async function initDB() {
     } catch {
       /* ya existe */
     }
+  }
+
+  try {
+    await db.execute("ALTER TABLE tasks ADD COLUMN is_planner INTEGER DEFAULT 0");
+  } catch {
+    /* ya existe */
   }
 
   // Añadir user_id a practice_journals si no existe
@@ -449,16 +456,26 @@ export const dbService = {
   tasks: {
     getBySubject: async (subjectId: string): Promise<Task[]> => {
       const r = await db.execute({
-        sql: "SELECT * FROM tasks WHERE subject_id = ?",
+        sql: "SELECT * FROM tasks WHERE subject_id = ? AND is_planner = 0",
         args: [subjectId],
       });
       return r.rows.map(toDate<Task>);
     },
 
-    getByUser: async (userId: string): Promise<Task[]> => {
+    getByUser: async (userId: string, includePlanner = false): Promise<Task[]> => {
+      // Usamos un LEFT JOIN con subjects para encontrar tareas que no tengan user_id directo
+      // pero que pertenezcan a una materia del usuario.
+      const sql = includePlanner
+        ? `SELECT DISTINCT t.* FROM tasks t
+           LEFT JOIN subjects s ON t.subject_id = s.id
+           WHERE (t.user_id = ? OR s.user_id = ?)`
+        : `SELECT DISTINCT t.* FROM tasks t
+           LEFT JOIN subjects s ON t.subject_id = s.id
+           WHERE (t.user_id = ? OR s.user_id = ?) AND t.is_planner = 0`;
+
       const r = await db.execute({
-        sql: `SELECT * FROM tasks WHERE user_id = ?`,
-        args: [userId],
+        sql,
+        args: includePlanner ? [userId, userId] : [userId, userId],
       });
       return r.rows.map(toDate<Task>);
     },
@@ -473,7 +490,7 @@ export const dbService = {
 
     create: async (task: Task) => {
       return db.execute({
-        sql: "INSERT INTO tasks (id, subject_id, user_id, title, description, status, due_date, slug, type, grade, file_url, comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        sql: "INSERT INTO tasks (id, subject_id, user_id, title, description, status, due_date, slug, type, grade, file_url, comments, is_planner) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         args: sanitizeValues([
           task.id,
           task.subject_id,
@@ -487,6 +504,7 @@ export const dbService = {
           task.grade ?? null,
           task.file_url || null,
           task.comments || null,
+          task.is_planner ? 1 : 0,
         ]),
       });
     },

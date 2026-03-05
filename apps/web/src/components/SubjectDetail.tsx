@@ -15,18 +15,24 @@ interface Props {
   id: string;
 }
 
+const inputCls =
+  "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent";
+
+const btnOutline =
+  "px-3 py-1.5 rounded-lg text-sm font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150";
+
+const btnPrimary =
+  "px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 whitespace-nowrap disabled:opacity-45 disabled:cursor-not-allowed";
+
 export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const { user, loading: authLoading } = useAuth();
-
-  // React Query Hooks
   const { data: subject, isLoading: loadingSubject, error: subjectError } = useSubject(id);
-  const { data: tasks = [], isLoading: loadingTasks } = useTasks(id);
+  const { data: tasks = [], isLoading: loadingTasks } = useTasks({ subjectId: id });
   const { data: absences = [], isLoading: loadingAbsences } = useAbsencesBySubject(id);
   const createAbsence = useCreateAbsence();
   const deleteAbsence = useDeleteAbsence();
 
   const dateInputRef = React.useRef<globalThis.HTMLInputElement>(null);
-
   const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split("T")[0]);
   const [absenceValue, setAbsenceValue] = useState<number>(1);
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
@@ -35,9 +41,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const loading = loadingSubject || loadingTasks || loadingAbsences;
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !authLoading && !user) {
-      window.location.replace("/login");
-    }
+    if (typeof window !== "undefined" && !authLoading && !user) window.location.replace("/login");
   }, [user, authLoading]);
 
   const handleCreateAbsence = () => {
@@ -71,15 +75,15 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   if (authLoading || loading) {
     return (
       <div
-        className="oat-spinner-wrapper"
+        className="flex flex-col items-center justify-center gap-4 p-16 text-theme-text-muted text-sm"
         aria-busy="true"
         aria-label="Cargando detalles de UC"
       ></div>
     );
   }
 
-  if (subjectError) return <p style={{ color: "var(--oat-danger)" }}>Error al cargar la UC</p>;
-  if (!subject) return <p className="oat-text-secondary">UC no encontrada.</p>;
+  if (subjectError) return <p className="text-theme-danger">Error al cargar la UC</p>;
+  if (!subject) return <p className="text-theme-text-muted">UC no encontrada.</p>;
 
   const totalAbsenceValue = absences.reduce((sum, a) => sum + (a.calculated_value || 0), 0);
   const attendancePercentage =
@@ -94,18 +98,17 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
 
   return (
     <>
-      <div className="subject-detail-container">
-        <header className="subject-detail-header">
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      <div className="max-w-[900px] mx-auto">
+        <header className="flex justify-between items-center mb-8 border-b border-theme-border pb-4 flex-wrap gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => (window.location.href = "/subjects")}
-              className="oat-btn oat-btn-outline"
+              className={`${btnOutline} text-sm`}
               aria-label="Volver a lista de UC"
-              style={{ padding: "0.4rem 0.8rem", fontSize: "0.9rem" }}
             >
               ← Volver
             </button>
-            <h1 style={{ margin: 0 }}>{subject.name}</h1>
+            <h1 className="m-0 text-theme-text">{subject.name}</h1>
           </div>
           <StatusBadge variant={riskVariant}>
             {riskVariant === "success"
@@ -116,22 +119,14 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
           </StatusBadge>
         </header>
 
-        <div className="subject-detail-grid">
+        <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
           {/* Métricas */}
-          <section className="oat-card">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "1rem",
-              }}
-            >
-              <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Asistencia</h2>
+          <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl m-0 text-theme-text">Asistencia</h2>
               <button
                 onClick={() => setShowAbsenceForm(!showAbsenceForm)}
-                className="oat-btn oat-btn-outline"
-                style={{ fontSize: "0.8rem" }}
+                className={`${btnOutline} text-xs`}
                 aria-expanded={showAbsenceForm}
                 aria-controls="absence-form"
               >
@@ -140,24 +135,15 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
             </div>
 
             {showAbsenceForm && (
-              <div id="absence-form" className="absence-form">
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.75rem",
-                    flexWrap: "wrap",
-                    alignItems: "flex-end",
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: "140px" }}>
+              <div
+                id="absence-form"
+                className="bg-theme-bg border border-theme-border rounded-lg p-4 mb-4"
+              >
+                <div className="flex gap-3 flex-wrap items-end">
+                  <div className="flex-1 min-w-[140px]">
                     <label
                       htmlFor="absenceDate"
-                      style={{
-                        display: "block",
-                        fontSize: "0.8rem",
-                        marginBottom: "0.25rem",
-                        color: "var(--oat-text-muted)",
-                      }}
+                      className="block text-xs mb-1 text-theme-text-muted"
                     >
                       Fecha
                     </label>
@@ -165,7 +151,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       ref={dateInputRef}
                       id="absenceDate"
                       type="date"
-                      className="oat-input"
+                      className={inputCls}
                       value={absenceDate}
                       onChange={(e) => setAbsenceDate(e.target.value)}
                       onClick={() => {
@@ -176,27 +162,22 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                           try {
                             dateInputRef.current.showPicker();
                           } catch {
-                            // ignore
+                            /* ignore */
                           }
                         }
                       }}
                     />
                   </div>
-                  <div style={{ flex: 1, minWidth: "140px" }}>
+                  <div className="flex-1 min-w-[140px]">
                     <label
                       htmlFor="absenceType"
-                      style={{
-                        display: "block",
-                        fontSize: "0.8rem",
-                        marginBottom: "0.25rem",
-                        color: "var(--oat-text-muted)",
-                      }}
+                      className="block text-xs mb-1 text-theme-text-muted"
                     >
                       Tipo
                     </label>
                     <select
                       id="absenceType"
-                      className="oat-input"
+                      className={inputCls}
                       value={absenceValue}
                       onChange={(e) => setAbsenceValue(Number(e.target.value))}
                     >
@@ -206,9 +187,8 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                   </div>
                   <button
                     onClick={handleCreateAbsence}
-                    className="oat-btn oat-btn-primary"
+                    className={btnPrimary}
                     disabled={createAbsence.isPending}
-                    style={{ whiteSpace: "nowrap" }}
                     aria-label="Guardar inasistencia"
                   >
                     {createAbsence.isPending ? "Guardando..." : "Guardar"}
@@ -217,46 +197,35 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
               </div>
             )}
 
-            <div style={{ textAlign: "center", padding: "1rem 0" }}>
+            <div className="text-center py-4">
               <span
-                style={{ fontSize: "3rem", fontWeight: "bold", color: "var(--oat-primary)" }}
+                className="text-5xl font-bold text-theme-primary"
                 aria-label={`Porcentaje de asistencia: ${attendancePercentage}%`}
               >
                 {attendancePercentage}%
               </span>
-              <p className="oat-text-secondary" style={{ margin: "0.25rem 0 0" }}>
-                Asistencia actual
-              </p>
+              <p className="text-theme-text-muted mt-1 mb-0">Asistencia actual</p>
             </div>
 
-            <div style={{ borderTop: "1px solid var(--oat-border)", paddingTop: "1rem" }}>
-              <p style={{ margin: "0.5rem 0" }}>
+            <div className="border-t border-theme-border pt-4">
+              <p className="my-2">
                 Clases totales: <strong>{subject.total_classes}</strong>
               </p>
-              <p style={{ margin: "0.5rem 0" }}>
-                Inasistencias:{" "}
-                <strong style={{ color: "var(--oat-danger)" }}>{totalAbsenceValue}</strong>
+              <p className="my-2">
+                Inasistencias: <strong className="text-theme-danger">{totalAbsenceValue}</strong>
               </p>
             </div>
 
             {absences.length > 0 && (
-              <div style={{ marginTop: "1rem" }}>
-                <p
-                  style={{
-                    fontSize: "0.8rem",
-                    color: "var(--oat-text-muted)",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Historial de inasistencias
-                </p>
-                <ul
-                  style={{ listStyle: "none", padding: 0, margin: 0 }}
-                  aria-label="Historial de inasistencias"
-                >
+              <div className="mt-4">
+                <p className="text-xs text-theme-text-muted mb-2">Historial de inasistencias</p>
+                <ul className="list-none p-0 m-0" aria-label="Historial de inasistencias">
                   {absences.map((a) => (
-                    <li key={a.id} className="absence-item">
-                      <span style={{ fontSize: "0.875rem" }}>
+                    <li
+                      key={a.id}
+                      className="flex justify-between items-center py-1.5 border-b border-theme-border last:border-b-0"
+                    >
+                      <span className="text-sm">
                         {new Date(a.date).toLocaleDateString("es-UY")} —{" "}
                         <strong>
                           {a.calculated_value === 0.5 ? "Media falta" : "Falta completa"}
@@ -264,13 +233,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       </span>
                       <button
                         onClick={() => handleDeleteAbsence(a.id)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "var(--oat-danger)",
-                          fontSize: "0.75rem",
-                        }}
+                        className="bg-transparent border-none cursor-pointer text-theme-danger text-xs hover:underline"
                         aria-label={`Eliminar inasistencia del ${new Date(a.date).toLocaleDateString("es-UY")}`}
                       >
                         ✕
@@ -283,25 +246,20 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
           </section>
 
           {/* Tareas */}
-          <section className="oat-card">
-            <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Historial de Tareas</h2>
+          <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+            <h2 className="text-xl mb-4 text-theme-text">Historial de Tareas</h2>
             {tasks.length === 0 ? (
-              <p className="oat-text-secondary">No hay tareas asociadas.</p>
+              <p className="text-theme-text-muted">No hay tareas asociadas.</p>
             ) : (
-              <ul style={{ listStyle: "none", padding: 0 }} aria-label="Historial de Tareas">
+              <ul className="list-none p-0" aria-label="Historial de Tareas">
                 {tasks.map((t) => (
                   <li
                     key={t.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "0.75rem 0",
-                      borderBottom: "1px solid var(--oat-border)",
-                    }}
+                    className="flex justify-between py-3 border-b border-theme-border last:border-b-0"
                   >
                     <a
                       href={`/tasks/${t.slug || t.id}`}
-                      style={{ textDecoration: "none", color: "inherit" }}
+                      className="no-underline text-theme-text hover:text-theme-primary transition-colors"
                     >
                       {t.title}
                     </a>

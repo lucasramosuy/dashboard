@@ -6,20 +6,14 @@ import { IcalEventList } from "./IcalEventList";
 export const SchoologyPage: React.FC = () => {
   return (
     <AuthProvider>
-      <div
-        className="oat-container"
-        style={{ padding: "2rem 1rem", maxWidth: "800px", margin: "0 auto" }}
-      >
-        <header style={{ marginBottom: "2rem" }}>
-          <h1 className="oat-text-bold" style={{ fontSize: "2rem", margin: "0 0 0.5rem" }}>
-            Integración Schoology
-          </h1>
-          <p className="oat-text-secondary">
+      <div className="max-w-[800px] mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold m-0 mb-2 text-theme-text">Integración Schoology</h1>
+          <p className="text-theme-text-muted">
             Administra la sincronización automática de tus tareas y eventos desde tu calendario de
             Schoology.
           </p>
         </header>
-
         <section>
           <IcalSettingsCard />
           <IcalEventList />

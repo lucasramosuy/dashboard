@@ -363,7 +363,7 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 10 — Planner semanal tipo WeekToDo
+## ✅ Fase 10 — Planner semanal tipo WeekToDo
 
 **Objetivo:** tener una vista semanal estilo WeekToDo que complemente `/tasks`.
 
@@ -380,12 +380,85 @@ Factores técnicos concretos considerados:
 
 ---
 
-## 🟡 Fase 11 — Higiene, tests, calidad y deploy
+## ✅ Fase 11 — Sentry en Frontend (Astro/React)
 
-- [ ] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
+**Objetivo:** Integrar Sentry en la aplicación web para captura de errores y monitoreo en el cliente.
+
+- [x] Crear proyecto Sentry (Frontend o unificado).
+- [x] Instalar dependencias correspondientes (ej. `@sentry/astro` y `@sentry/react`).
+- [x] Configurar inicialización de Sentry en Astro (`astro.config.mjs` y cliente).
+- [x] Documentar en `SENTRY.md` el uso de Sentry para trazabilidad de errores en el frontend.
+- [x] AEGURARSE DE QUE ESTE IMPLEMENTADO EN TODOS LOS ARCHIVOS QUE EFECTIVAMENTE LO NECESITEN.
+
+---
+
+## ✅ Fase 12 — Sentry en Backend (Bun)
+
+**Objetivo:** Integrar Sentry a nivel de runtime de Bun para el backend (`apps/api`). Captura errores a bajo nivel y unhandled rejections que escapan del framework.
+
+- [x] Instalar la dependencia `@sentry/bun`.
+- [x] Inicializar Sentry (ej. `Sentry.init(...)`) lo más temprano posible en el entry point de la API (`index.ts`).
+- [x] Documentar configuración de Sentry para Bun en `SENTRY.md`.
+- [x] AEGURARSE DE QUE ESTE IMPLEMENTADO EN TODOS LOS ARCHIVOS QUE EFECTIVAMENTE LO NECESITEN.
+
+---
+
+## ✅ Fase 13 — Sentry en Middleware (Hono)
+
+**Objetivo:** Integrar Sentry en el framework Hono para capturar errores derivados de peticiones HTTP, y enriquecerlos con información del request y del usuario.
+
+- [x] Instalar middleware compatible, o adaptar `@sentry/bun` / un middleware custom de Hono.
+- [x] Agregar el middleware global en la instancia de Hono (`app.use('*', ...)` o vía `app.onError`).
+- [x] Agregar información de contexto en Sentry (ej. inyectar el `userId` desde la sesión de Better Auth a Sentry para saber quién experimentó el error).
+- [x] AEGURARSE DE QUE ESTE IMPLEMENTADO EN TODOS LOS ARCHIVOS QUE EFECTIVAMENTE LO NECESITEN.
+- [x] Documentar configuración de Sentry para Hono en `SENTRY.md`.
+
+---
+
+## ✅ Fase 14 - Migrar desde Oat hacia Tailwind CSS
+
+**Objetivo:** Reemplazar el styling automático de Oat UI por Tailwind CSS para ganar más control, personalización y un ecosistema más robusto de utilidades, adoptando una estrategia clara de reutilización de componentes en React/Astro. Dado que la inclusión de Oat UI se realiza mediante etiquetas `<link>` y `<script>` en `Base.astro`, procederemos a removerlas en lugar de desinstalar un paquete.
+
+### 14.1. Instalación y Configuración
+
+- [x] Eliminar referencias a Oat UI (`<link>` y `<script>`) en `apps/web/src/layouts/Base.astro`.
+- [x] Instalar Tailwind CSS y `@tailwindcss/vite` en el frontend.
+- [x] Configurar plugin de Vite de Tailwind en `astro.config.mjs`.
+- [x] Configurar el modo oscuro (`darkMode: ['class', '[data-theme="dark"]']`) vía `@theme` en `theme.css`.
+- [x] Reemplazar el contenido de `apps/web/src/styles/theme.css` con `@import "tailwindcss"`, tokens `@theme` y migrar las variables CSS (`--oat-*` → `--theme-*`).
+
+### 14.2. Refactor de Layout base y Astro
+
+- [x] Migrar el `DashboardLayout.astro` y la navegación del sidebar renombrando variables `--oat-*` → `--theme-*`.
+- [x] Refactorizar el Mobile Menu (panel flotante ☰ de la Fase 8) actualizando todas las referencias de variables.
+
+### 14.3. Renombre de Clases del Design System
+
+- [x] Renombrar clases `.oat-*` → `.dash-*` en `theme.css` y en todos los ~21 componentes React.
+- [x] Renombrar clases `.oat-*` → `.dash-*` en 3 páginas Astro (`login.astro`, `profile.astro`, `404.astro`).
+
+### 14.4. Verificación
+
+- [x] `bun run build` pasa sin errores.
+- [x] `bun run check` pasa con 0 errores, 0 warnings, 0 hints.
+
+### 14.5. Actualización de Documentación
+
+- [x] Actualizar `SPECS.md` para reflejar el stack oficial de Astro + React + Tailwind CSS.
+- [x] Actualizar `RULES.md` para remover la prohibición de uso de Tailwind.
+
+---
+
+## 🟡 Fase 15 — Higiene, tests, calidad y deploy
+
 - [ ] Revisar y refactorizar todos los estilos del theme.css para que tengan consistencia en toda la app.
+- [ ] Verificar que Sentry se ejecuta correctamente.
+- [ ] Crear tests para planner.
+- [ ] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
 - [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/api.
 - [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo en /apps/web.
+- [ ] Verificar que los tests de /apps/api se ejecutan correctamente.
+- [ ] Verificar que BUENAS_PRACTICAS.md se cumple archivo por archivo la raíz del monorepo.
 - [ ] Limpiar DB de Turso para prod.
 - [ ] Crear invites para usuarios de prod.
 - [ ] Sync final de esquemas en producción. Ejecutar `npx @better-auth/cli migrate` y asegurarse de que Turso refleje todas las columnas extra (como las del feed iCal y notas).

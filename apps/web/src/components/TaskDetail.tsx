@@ -13,11 +13,7 @@ function formatDate(date?: Date | string): string {
   const d = date instanceof Date ? date : new Date(date);
   return isNaN(d.getTime())
     ? "Sin fecha"
-    : d.toLocaleDateString("es-UY", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+    : d.toLocaleDateString("es-UY", { year: "numeric", month: "long", day: "numeric" });
 }
 
 const STATUS_LABELS: Record<Task["status"], string> = {
@@ -25,32 +21,27 @@ const STATUS_LABELS: Record<Task["status"], string> = {
   "in-progress": "En proceso",
   done: "Completada",
 };
-
 const STATUS_VARIANTS: Record<Task["status"], "warning" | "info" | "success"> = {
   todo: "warning",
   "in-progress": "info",
   done: "success",
 };
-
 const NEXT_STATUS: Record<Task["status"], Task["status"]> = {
   todo: "in-progress",
   "in-progress": "done",
   done: "todo",
 };
 
+const labelCls = "text-sm uppercase tracking-wider mb-2 text-theme-text-muted";
+
 export const TaskDetail: React.FC<Props> = ({ id }) => {
   const { user, loading: authLoading } = useAuth();
-
-  // React Query Hooks
   const { data: task, isLoading, error } = useTask(id);
   const updateTaskStatus = useUpdateTaskStatus();
-
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !authLoading && !user) {
-      window.location.replace("/login");
-    }
+    if (typeof window !== "undefined" && !authLoading && !user) window.location.replace("/login");
   }, [user, authLoading]);
 
   const advanceStatus = () => {
@@ -58,93 +49,42 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
     setActionError(null);
     updateTaskStatus.mutate(
       { id: task.id, status: NEXT_STATUS[task.status] },
-      {
-        onError: (e: any) => setActionError(e.message),
-      },
+      { onError: (e: any) => setActionError(e.message) },
     );
   };
 
   if (authLoading || isLoading) {
     return (
-      <div
-        style={{ display: "flex", justifyContent: "center", padding: "4rem" }}
-        aria-busy="true"
-        aria-label="Cargando tarea"
-      >
-        <div className="oat-spinner" />
+      <div className="flex justify-center p-16" aria-busy="true" aria-label="Cargando tarea">
+        <div className="w-8 h-8 border-3 border-theme-border border-t-theme-primary rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (error) {
-    return <p style={{ color: "var(--oat-danger)" }}>Error al cargar la tarea</p>;
-  }
-
-  if (!task) {
-    return <p style={{ color: "var(--oat-text-muted)" }}>Tarea no encontrada.</p>;
-  }
+  if (error) return <p className="text-theme-danger">Error al cargar la tarea</p>;
+  if (!task) return <p className="text-theme-text-muted">Tarea no encontrada.</p>;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2.5rem",
-          borderBottom: "1px solid var(--oat-border)",
-          paddingBottom: "1rem",
-        }}
-      >
-        <h1 style={{ margin: 0 }}>{task.title}</h1>
+    <div className="max-w-[800px] mx-auto">
+      <header className="flex justify-between items-center mb-10 border-b border-theme-border pb-4">
+        <h1 className="m-0 text-theme-text">{task.title}</h1>
         <StatusBadge variant={STATUS_VARIANTS[task.status]}>
           {STATUS_LABELS[task.status]}
         </StatusBadge>
       </header>
 
-      <section className="oat-card" style={{ marginBottom: "2.5rem" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "2rem",
-            marginBottom: "2rem",
-            borderBottom: "1px solid var(--oat-border)",
-            paddingBottom: "1.5rem",
-          }}
-        >
+      <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm mb-10">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-8 mb-8 border-b border-theme-border pb-6">
           <div>
-            <h4
-              style={{
-                fontSize: "0.875rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "0.5rem",
-                color: "var(--oat-text-muted)",
-              }}
-            >
-              Fecha de Vencimiento
-            </h4>
-            <p style={{ fontSize: "1.125rem", fontWeight: "bold", margin: 0 }}>
-              {formatDate(task.due_date)}
-            </p>
+            <h4 className={labelCls}>Fecha de Vencimiento</h4>
+            <p className="text-lg font-bold m-0">{formatDate(task.due_date)}</p>
           </div>
           <div>
-            <h4
-              style={{
-                fontSize: "0.875rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "0.5rem",
-                color: "var(--oat-text-muted)",
-              }}
-            >
-              UC
-            </h4>
-            <p style={{ fontSize: "1.125rem", fontWeight: "bold", margin: 0 }}>
+            <h4 className={labelCls}>UC</h4>
+            <p className="text-lg font-bold m-0">
               <a
                 href={`/subjects/${task.subject_id}`}
-                style={{ color: "var(--oat-primary)", textDecoration: "none" }}
+                className="text-theme-primary no-underline hover:underline"
                 aria-label="Ir a los detalles de la UC cursada"
               >
                 Ver UC
@@ -154,51 +94,19 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
         </div>
 
         <div>
-          <h4
-            style={{
-              fontSize: "0.875rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              marginBottom: "0.75rem",
-              color: "var(--oat-text-muted)",
-            }}
-          >
-            Descripcion
-          </h4>
-          <p
-            style={{
-              fontSize: "1rem",
-              lineHeight: "1.6",
-              color: "var(--oat-text-muted)",
-              background: "var(--oat-bg)",
-              padding: "1.5rem",
-              borderRadius: "8px",
-              margin: 0,
-            }}
-          >
+          <h4 className={labelCls}>Descripcion</h4>
+          <p className="text-base leading-relaxed text-theme-text-muted bg-theme-bg p-6 rounded-lg m-0">
             {task.description || "Esta tarea no tiene descripcion."}
           </p>
         </div>
       </section>
 
-      <footer
-        style={{
-          display: "flex",
-          gap: "1rem",
-          flexDirection: "column",
-          borderTop: "1px solid var(--oat-border)",
-          paddingTop: "2rem",
-        }}
-      >
-        {actionError && (
-          <p style={{ color: "var(--oat-danger)", fontSize: "0.875rem", margin: 0 }}>
-            {actionError}
-          </p>
-        )}
-        <div style={{ display: "flex", gap: "1rem" }}>
+      <footer className="flex flex-col gap-4 border-t border-theme-border pt-8">
+        {actionError && <p className="text-theme-danger text-sm m-0">{actionError}</p>}
+        <div className="flex gap-4">
           <button
             onClick={advanceStatus}
-            className="oat-btn oat-btn-primary"
+            className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
             disabled={updateTaskStatus.isPending}
             aria-label={`Avanzar tarea al estado: ${STATUS_LABELS[NEXT_STATUS[task.status]]}`}
           >
@@ -208,7 +116,7 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
           </button>
           <button
             onClick={() => (window.location.href = "/tasks")}
-            className="oat-btn oat-btn-outline"
+            className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
             aria-label="Volver a lista de tareas"
           >
             Volver a Tareas

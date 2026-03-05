@@ -6,7 +6,7 @@ Migrar el proyecto Dashboard desde Zo.space a una arquitectura basada en:
 
 - Repositorio en GitHub (monorepo).
 - Backend con Bun + Hono (APIs REST).
-- Frontend con Astro + React + Oat (UI ultra‑liviana, build vía Vite).
+- Frontend con Astro + React + Tailwind CSS (UI personalizable mediante utilidades, build vía Vite).
 - Hosting con una capa free generosa (preferencia Render; alternativa Cloudflare Pages + otro backend).
 - Uso de un AI coding assistant en CLI (Gemini Code Assist / Gemini CLI) para apoyar el desarrollo con una capa gratuita generosa.
 
@@ -35,43 +35,35 @@ Estructura propuesta (monorepo):
 
 ---
 
-## 2.1. apps/web (Astro + React + Oat)
+## 2.1. apps/web (Astro + React + Tailwind CSS)
 
 - Framework: Astro con integración de React para las partes interactivas.
-- UI library: Oat (ultra-lightweight UI en HTML+CSS+JS vanilla).
+- UI library: Tailwind CSS (sistema de utilidades utilitarias).
 - Build tool: Vite (default de Astro).
 - Lenguaje: TypeScript.
 
-### UI con Oat
+### UI con Tailwind CSS
 
-Inclusión en layout raíz de Astro (`src/layouts/Base.astro` o equivalente):
-
-<head>
-  <!-- ... meta, title ... -->
-  <link rel="stylesheet" href="https://unpkg.com/@oat/ui/dist/oat.css">
-  <script type="module" src="https://unpkg.com/@oat/ui/dist/oat.js"></script>
-</head>
-
-(Opcional: copiar esos assets al proyecto y servirlos localmente en producción).
+El proyecto hace uso de Tailwind CSS como core de diseño.
+Componentes UI se construirán desde la base usando React y utilidades de Tailwind en `apps/web/src/components/ui`.
 
 Estilos
 
-- Usar mayormente elementos HTML nativos (<button>, <input>, <nav>, <section>, <dialog>, etc.), ya que Oat los estiliza automáticamente sin clases adicionales.
-- Para ajustes finos, sobrescribir variables CSS de Oat en un archivo global (`src/styles/theme.css`) cargado después del CSS de Oat.
+- Aprovechar `className` en lugar de estilos `.css` globales en la mayor cantidad de situaciones posibles.
+- Utilizar el set de directivas estándar (`@tailwind base; @tailwind components; @tailwind utilities`) en `src/styles/theme.css`.
 
 Componentes dinámicos
 
-- Utilizar los Web Components y JS mínimo que ofrece Oat para elementos como diálogos, menús, etc.
+- Construir componentes propios para modales, formularios y navegación con React y abstracciones como `@radix-ui/react-dialog` si amerita complejidad de A11y.
 - Mantener React solo donde se necesite estado complejo, utilizando `@tanstack/react-query` y hooks para aislar responsabilidades (Container-Presenter pattern).
 
-### Theming (light/dark) con Oat
+### Theming (light/dark) con Tailwind CSS
 
-Tema oscuro: implementar un ThemeContext similar al actual, pero donde la acción principal sea cambiar un atributo:
+Tema oscuro: implementar un ThemeContext y hacer uso de las clases `dark:` propias de Tailwind.
 
 document.body.dataset.theme = 'dark' | 'light';
 
-Oat soporta theming mediante `data-theme="dark"` en el <body> y variables CSS.
-Personalización: ajustar paleta y contrastes redefiniendo variables como `--oat-color-bg`, `--oat-color-fg`, etc., para acercar el diseño al dashboard original, sin recrear todo el sistema de diseño.
+La config de Tailwind en `tailwind.config.mjs` usa: `darkMode: ['class', '[data-theme="dark"]']` de esta forma el `ThemeToggle` actúa automáticamente sin modificar la app entera.
 
 ### Rutas y páginas
 
@@ -397,10 +389,10 @@ Backend Bun + Hono
 - Portar endpoints /api/\* desde Zo.
 - Implementar auth + usuario demo.
 
-Frontend Astro + React + Oat
+Frontend Astro + React + Tailwind CSS
 
 - Scaffold proyecto Astro.
-- Integrar Oat (CSS + JS) en layout base.
+- Integrar Tailwind CSS y configurar modo oscuro por selector `data-theme`.
 - Implementar ThemeContext y AuthContext.
 - Portar páginas: Dashboard, Subjects, SubjectDetail, Tasks, Practice, Login.
 

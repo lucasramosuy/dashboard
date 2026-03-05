@@ -64,10 +64,11 @@ export const useDeleteSubject = () => {
 
 // --- TASKS ---
 
-export const useTasks = (subjectId?: string) => {
+export const useTasks = (options: { subjectId?: string; includePlanner?: boolean } = {}) => {
+  const { subjectId, includePlanner = false } = options;
   return useQuery({
-    queryKey: subjectId ? ["tasks", { subjectId }] : ["tasks"],
-    queryFn: () => api.getTasks(subjectId),
+    queryKey: ["tasks", { subjectId, includePlanner }],
+    queryFn: () => api.getTasks(subjectId, includePlanner),
   });
 };
 

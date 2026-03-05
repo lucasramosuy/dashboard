@@ -1,3 +1,18 @@
+import "./instrument";
+import * as Sentry from "@sentry/bun";
+
+// 2. Hono API Specific Client
+// We create a dedicated client to send Hono-specific errors to a separate project
+const honoClient = new Sentry.NodeClient({
+  dsn: Bun.env.SENTRY_HONO_DSN,
+  tracesSampleRate: 1.0,
+  sendDefaultPii: true,
+  integrations: [],
+  transport: Sentry.makeFetchTransport,
+  stackParser: Sentry.defaultStackParser,
+});
+honoClient.init();
+
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRouter } from "./routes/auth";
@@ -6,7 +21,9 @@ import { tasksRouter } from "./routes/tasks";
 import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
 import { icalRouter } from "./routes/ical";
+import { sentryTunnelRouter } from "./routes/sentry_tunnel";
 import { initDB } from "./lib/db";
+import { auth } from "./lib/auth.better";
 import { z } from "zod/v4";
 import { initCronJobs } from "./cron";
 
@@ -19,12 +36,37 @@ initCronJobs();
 export const app = new Hono();
 
 // ✅ Error handler centralizado — respuestas JSON consistentes
-app.onError((err, c) => {
+app.onError(async (err, c) => {
   if (err instanceof z.ZodError) {
     console.error("[Zod Error]", err.issues);
     return c.json({ error: "Validation error", details: err.format() }, 400);
   }
   console.error("[API Error]", err.stack || err);
+
+  // Intentamos obtener el usuario actual para Sentry Logging
+  const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  // Aislamos el scope para que este error se mande específicamente con el cliente Hono
+  Sentry.withIsolationScope(() => {
+    Sentry.setCurrentClient(honoClient);
+
+    Sentry.captureException(err, {
+      captureContext: {
+        user: sessionData?.user
+          ? {
+              id: sessionData.user.id,
+              email: sessionData.user.email,
+              username: sessionData.user.name,
+            }
+          : undefined,
+        extra: {
+          path: c.req.path,
+          method: c.req.method,
+        },
+      },
+    });
+  });
+
   return c.json({ error: err.message || "Internal server error" }, 500);
 });
 
@@ -46,8 +88,6 @@ app.use(
   }),
 );
 
-import { auth } from "./lib/auth.better";
-
 app.route("/api/auth", authRouter);
 app.on(["GET", "POST"], "/api/auth/*", async (c) => {
   return auth.handler(c.req.raw);
@@ -58,10 +98,15 @@ app.route("/api/tasks", tasksRouter);
 app.route("/api/practice-journals", practiceJournalsRouter);
 app.route("/api/absences", absencesRouter);
 app.route("/api/ical", icalRouter);
+app.route("/api/sentry-tunnel", sentryTunnelRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-const port = process.env.PORT || 8787;
+app.get("/api/test-error", () => {
+  throw new Error("Sentry Example API Error");
+});
+
+const port = Bun.env.PORT || 8787;
 
 const server = Bun.serve({
   port,

@@ -33,6 +33,7 @@ tasksRouter.use("/*", authMiddleware);
 tasksRouter.get("/", async (c) => {
   const user = c.get("user");
   const subjectId = c.req.query("subject_id");
+  const includePlanner = c.req.query("include_planner") === "true";
 
   if (subjectId) {
     if (!(await dbService.ownership.subjectBelongsToUser(subjectId, user.id))) {
@@ -41,7 +42,7 @@ tasksRouter.get("/", async (c) => {
     return c.json(await dbService.tasks.getBySubject(subjectId));
   }
 
-  return c.json(await dbService.tasks.getByUser(user.id));
+  return c.json(await dbService.tasks.getByUser(user.id, includePlanner));
 });
 
 // GET weekly tasks
@@ -94,6 +95,7 @@ tasksRouter.post("/", async (c) => {
     grade: body.grade ?? null,
     file_url: body.file_url ?? null,
     comments: body.comments ?? null,
+    is_planner: body.is_planner ? 1 : 0,
   };
 
   await dbService.tasks.create(newTask);

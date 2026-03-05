@@ -6,16 +6,13 @@ export const HeaderBar: React.FC = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-      {user && (
-        <span style={{ fontSize: "0.875rem", color: "var(--oat-text-muted)" }}>{user.name}</span>
-      )}
+    <div className="flex items-center gap-4">
+      {user && <span className="text-sm text-theme-text-muted">{user.name}</span>}
       <ThemeToggle />
       {user && (
         <button
           onClick={logout}
-          className="oat-btn oat-btn-outline"
-          style={{ fontSize: "0.8rem", padding: "0.4rem 0.75rem" }}
+          className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
         >
           Salir
         </button>

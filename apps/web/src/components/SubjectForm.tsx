@@ -39,22 +39,26 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="name">Nombre</label>
+      <div className="mb-4">
+        <label htmlFor="name" className="block mb-1 text-sm font-medium text-theme-text-muted">
+          Nombre
+        </label>
         <input
           id="name"
           type="text"
-          className="oat-input"
+          className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
       </div>
-      <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="track">Trayecto</label>
+      <div className="mb-4">
+        <label htmlFor="track" className="block mb-1 text-sm font-medium text-theme-text-muted">
+          Trayecto
+        </label>
         <select
           id="track"
-          className="oat-input"
+          className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
           value={track}
           onChange={(e) => handleTrackChange(e.target.value)}
           required
@@ -66,17 +70,19 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
           <option value="anual">Anual (30 semanas)</option>
         </select>
         {track && (
-          <small style={{ color: "var(--oat-text-muted)", marginTop: "0.25rem", display: "block" }}>
+          <small className="text-theme-text-muted mt-1 block text-xs">
             Sugerencia CFE: {CFE_RULES[track]} clases
           </small>
         )}
       </div>
-      <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="total">Clases Totales</label>
+      <div className="mb-4">
+        <label htmlFor="total" className="block mb-1 text-sm font-medium text-theme-text-muted">
+          Clases Totales
+        </label>
         <input
           id="total"
           type="number"
-          className="oat-input"
+          className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
           value={totalClassesStr}
           onChange={(e) => setTotalClassesStr(e.target.value)}
           onBlur={() => {
@@ -87,18 +93,20 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
           required
         />
       </div>
-      <div
-        style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "1.5rem" }}
-      >
+      <div className="flex gap-2 justify-end mt-6">
         <button
           type="button"
           onClick={onCancel}
-          className="oat-btn oat-btn-outline"
+          className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
           disabled={loading}
         >
           Cancelar
         </button>
-        <button type="submit" className="oat-btn oat-btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent hover:-translate-y-px hover:shadow-md active:translate-y-0 active:shadow-none cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
+          disabled={loading}
+        >
           {loading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
         </button>
       </div>

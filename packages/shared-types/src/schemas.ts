@@ -38,6 +38,7 @@ export const createTaskSchema = z.object({
   grade: z.coerce.number().min(0).max(12).optional(),
   file_url: z.string().url().optional(),
   comments: z.string().optional(),
+  is_planner: z.boolean().optional(),
 });
 
 export const updateTaskSchema = z
@@ -50,6 +51,7 @@ export const updateTaskSchema = z
     grade: z.coerce.number().min(0).max(12).nullish(),
     file_url: z.string().url().nullish(),
     comments: z.string().nullish(),
+    is_planner: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "Se debe enviar al menos un campo para actualizar",

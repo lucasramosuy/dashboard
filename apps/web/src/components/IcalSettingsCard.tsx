@@ -4,6 +4,15 @@ import { useUpdateIcalConfig, useSyncIcal } from "../hooks/useDashboardQueries";
 import { useToast } from "../hooks/useToast";
 import { Toast } from "./Toast";
 
+const inputCls =
+  "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
+
+const btnPrimary =
+  "px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed";
+
+const btnOutline =
+  "px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed";
+
 export const IcalSettingsCard: React.FC = () => {
   const { user, refreshMe } = useAuth();
   const { toast, showToast, hideToast } = useToast();
@@ -24,7 +33,7 @@ export const IcalSettingsCard: React.FC = () => {
   const handleSave = async () => {
     try {
       await saveConfig(urlInput);
-      await refreshMe(); // Para que el provider refleje user.ical_url
+      await refreshMe();
       setIsEditing(false);
       showToast("URL de calendario guardada correctamente", "success");
     } catch (error: any) {
@@ -47,24 +56,24 @@ export const IcalSettingsCard: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="oat-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <p className="oat-text-secondary" style={{ fontSize: "0.875rem" }}>
+    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
+      <p className="text-theme-text-muted text-sm">
         Ingresa tu enlace privado Webcal de Schoology para sincronizar automáticamente tus tareas.
       </p>
 
       {isEditing ? (
-        <div style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}>
+        <div className="flex flex-col gap-2">
           <input
-            className="oat-input"
+            className={inputCls}
             type="url"
             placeholder="webcal://cfe.schoology.com/calendar/feed/ical/..."
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             disabled={isSaving}
           />
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+          <div className="flex gap-2 mt-2">
             <button
-              className="oat-btn"
+              className={btnPrimary}
               onClick={handleSave}
               disabled={isSaving || !urlInput.trim()}
             >
@@ -72,7 +81,7 @@ export const IcalSettingsCard: React.FC = () => {
             </button>
             {user.ical_url && (
               <button
-                className="oat-btn oat-btn-outline"
+                className={btnOutline}
                 onClick={() => {
                   setUrlInput(user.ical_url!);
                   setIsEditing(false);
@@ -85,17 +94,17 @@ export const IcalSettingsCard: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <button className="oat-btn" onClick={handleSync} disabled={isSyncing}>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2 items-center">
+            <button className={btnPrimary} onClick={handleSync} disabled={isSyncing}>
               {isSyncing ? "Sincronizando..." : "Sincronizar ahora"}
             </button>
-            <button className="oat-btn oat-btn-outline" onClick={() => setIsEditing(true)}>
+            <button className={btnOutline} onClick={() => setIsEditing(true)}>
               Editar URL
             </button>
           </div>
           {user.last_ical_sync && (
-            <small className="oat-text-secondary">
+            <small className="text-theme-text-muted">
               Última sincronización: {new Date(user.last_ical_sync).toLocaleString("es-UY")}
             </small>
           )}

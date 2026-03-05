@@ -13,24 +13,22 @@ function formatDateDisplay(date: Date | string): string {
     : d.toLocaleDateString("es-UY", { year: "numeric", month: "long", day: "numeric" });
 }
 
+const inputCls =
+  "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent";
+
 export const JournalView: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
   const [draftContent, setDraftContent] = useState("");
   const [draftSubjectId, setDraftSubjectId] = useState("");
-  const [selectedEntry, setSelectedEntry] = useState<any>(null); // Entrada seleccionada para ver en Modal
+  const [selectedEntry, setSelectedEntry] = useState<any>(null);
 
   const { data: journalOnDate, isLoading: loadingJournal } = useJournalByDate(currentDate);
   const { data: unSortedHistory = [], isLoading: loadingHistory } = useJournals();
   const upsertJournal = useUpsertJournal();
-
   const { toast, showToast, hideToast } = useToast();
-
-  // Solo mostrar spinner completo en la carga inicial, no al cambiar de fecha
   const isInitialLoad = loadingHistory && !unSortedHistory.length;
 
-  // Sincronizar estado local con datos del Backend cuando se carga
   useEffect(() => {
     if (journalOnDate) {
       setDraftContent(journalOnDate.content);
@@ -42,9 +40,7 @@ export const JournalView: React.FC = () => {
   }, [journalOnDate, currentDate]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !authLoading && !user) {
-      window.location.replace("/login");
-    }
+    if (typeof window !== "undefined" && !authLoading && !user) window.location.replace("/login");
   }, [user, authLoading]);
 
   const handleSave = () => {
@@ -54,15 +50,13 @@ export const JournalView: React.FC = () => {
     }
     upsertJournal.mutate(
       {
-        id: journalOnDate?.id, // Se envia ID para hacer PUT si ya existe, sin ID para POST
+        id: journalOnDate?.id,
         subject_id: draftSubjectId,
         content: draftContent,
         date: new Date(currentDate),
       },
       {
-        onSuccess: () => {
-          showToast("Práctica guardada correctamente");
-        },
+        onSuccess: () => showToast("Práctica guardada correctamente"),
         onError: (e: any) => showToast(e.message, "error"),
       },
     );
@@ -70,14 +64,15 @@ export const JournalView: React.FC = () => {
 
   if (authLoading || isInitialLoad) {
     return (
-      <div className="oat-spinner-wrapper" aria-busy="true" aria-label="Cargando prácticas"></div>
+      <div
+        className="flex flex-col items-center justify-center gap-4 p-16 text-theme-text-muted text-sm"
+        aria-busy="true"
+        aria-label="Cargando prácticas"
+      ></div>
     );
   }
 
-  // Establecer el "hoy" real para ocultarlo del historial de "pasadas" sin que varíe al cambiar currentDate
   const actualToday = new Date().toISOString().split("T")[0];
-
-  // Ordenar historial cronológicamente y excluir SOLO la entrada de "hoy" de forma estática
   const sortedHistory = [...unSortedHistory]
     .filter((entry) => {
       const entryDate =
@@ -90,69 +85,31 @@ export const JournalView: React.FC = () => {
 
   return (
     <>
-      <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-        <header
-          style={{
-            marginBottom: "2rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "1rem",
-          }}
-        >
-          <h1 style={{ margin: 0 }}>Prácticas</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <div className="max-w-[800px] mx-auto">
+        <header className="mb-8 flex justify-between items-center flex-wrap gap-4">
+          <h1 className="m-0 text-theme-text">Prácticas</h1>
+          <div className="flex items-center gap-2">
             {loadingJournal && (
-              <span style={{ fontSize: "0.75rem", color: "var(--oat-text-muted)", opacity: 0.7 }}>
-                Cargando...
-              </span>
+              <span className="text-xs text-theme-text-muted opacity-70">Cargando...</span>
             )}
             <input
               type="date"
               value={currentDate}
               onChange={(e) => setCurrentDate(e.target.value)}
-              className="oat-input journal-date-input"
-              style={{ width: "auto", minWidth: "150px" }}
+              className={`${inputCls} w-auto min-w-[150px] cursor-pointer`}
               aria-label="Seleccionar fecha para la práctica"
             />
           </div>
         </header>
 
-        <style>{`
-          .journal-date-input {
-            position: relative;
-            cursor: pointer;
-          }
-          .journal-date-input::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-          }
-        `}</style>
-
-        <section className="oat-card" style={{ marginBottom: "2rem" }}>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label
-              htmlFor="subject"
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "0.875rem",
-                color: "var(--oat-text-muted)",
-              }}
-            >
+        <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm mb-8">
+          <div className="mb-6">
+            <label htmlFor="subject" className="block mb-2 text-sm text-theme-text-muted">
               UC Asociada
             </label>
             <select
               id="subject"
-              className="oat-input"
+              className={inputCls}
               value={draftSubjectId}
               onChange={(e) => setDraftSubjectId(e.target.value)}
               required
@@ -168,32 +125,23 @@ export const JournalView: React.FC = () => {
             </select>
           </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label
-              htmlFor="content"
-              style={{
-                display: "block",
-                marginBottom: "0.5rem",
-                fontSize: "0.875rem",
-                color: "var(--oat-text-muted)",
-              }}
-            >
+          <div className="mb-6">
+            <label htmlFor="content" className="block mb-2 text-sm text-theme-text-muted">
               Reflexión del Día
             </label>
             <textarea
               id="content"
-              className="oat-input"
+              className={`${inputCls} min-h-[260px] font-[inherit] leading-relaxed`}
               value={draftContent}
               onChange={(e) => setDraftContent(e.target.value)}
-              style={{ minHeight: "260px", fontFamily: "inherit", lineHeight: "1.6" }}
               placeholder="Hoy en la práctica aprendí que..."
             />
           </div>
 
-          <footer style={{ display: "flex", justifyContent: "flex-end" }}>
+          <footer className="flex justify-end">
             <button
               onClick={handleSave}
-              className="oat-btn oat-btn-primary"
+              className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
               disabled={upsertJournal.isPending}
               aria-label="Guardar reflexión"
             >
@@ -205,59 +153,21 @@ export const JournalView: React.FC = () => {
         {/* Historial */}
         {sortedHistory.length > 0 && (
           <section>
-            <h2
-              style={{ fontSize: "1.1rem", marginBottom: "1rem", color: "var(--oat-text-muted)" }}
-            >
-              Historial de prácticas
-            </h2>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-              aria-label="Historial de prácticas pasadas"
-            >
+            <h2 className="text-lg mb-4 text-theme-text-muted">Historial de prácticas</h2>
+            <div className="flex flex-col gap-4" aria-label="Historial de prácticas pasadas">
               {sortedHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className="oat-card journal-history-item"
-                  style={{ cursor: "pointer", transition: "transform 0.2s" }}
+                  className="bg-theme-card-bg border border-theme-border rounded-xl p-5 shadow-sm cursor-pointer transition-transform duration-200 hover:-translate-y-0.5"
                   onClick={() => setSelectedEntry(entry)}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.5rem",
-                      flexWrap: "wrap",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>
-                      {formatDateDisplay(entry.date)}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.8rem",
-                        color: "var(--oat-text-muted)",
-                        background: "var(--oat-bg)",
-                        padding: "0.15rem 0.6rem",
-                        borderRadius: "999px",
-                      }}
-                    >
+                  <div className="flex justify-between mb-2 flex-wrap gap-2">
+                    <span className="font-semibold text-sm">{formatDateDisplay(entry.date)}</span>
+                    <span className="text-xs text-theme-text-muted bg-theme-bg px-2.5 py-0.5 rounded-full">
                       {entry.subject_id}
                     </span>
                   </div>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: "0.875rem",
-                      color: "var(--oat-text-muted)",
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 4,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
+                  <p className="m-0 text-sm text-theme-text-muted whitespace-pre-wrap leading-relaxed line-clamp-4">
                     {entry.content || <em>Sin contenido</em>}
                   </p>
                 </div>
@@ -272,78 +182,29 @@ export const JournalView: React.FC = () => {
       {/* Modal / Popup de Historial */}
       {selectedEntry && (
         <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: "1rem",
-          }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-1000 p-4"
           onClick={() => setSelectedEntry(null)}
         >
           <div
-            className="oat-card"
-            style={{
-              width: "100%",
-              maxWidth: "800px",
-              maxHeight: "85vh",
-              overflowY: "auto",
-              position: "relative",
-              backgroundColor: "var(--oat-bg)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.5rem",
-              padding: "2rem",
-            }}
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+            className="bg-theme-bg border border-theme-border rounded-xl w-full max-w-[800px] max-h-[85vh] overflow-y-auto relative flex flex-col gap-6 p-8 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                borderBottom: "1px solid var(--oat-border)",
-                paddingBottom: "1rem",
-              }}
-            >
+            <div className="flex justify-between items-start border-b border-theme-border pb-4">
               <div>
-                <h3 style={{ margin: "0 0 0.5rem 0" }}>Práctica: {selectedEntry.subject_id}</h3>
-                <span style={{ fontSize: "0.875rem", color: "var(--oat-text-muted)" }}>
+                <h3 className="m-0 mb-2">Práctica: {selectedEntry.subject_id}</h3>
+                <span className="text-sm text-theme-text-muted">
                   {formatDateDisplay(selectedEntry.date)}
                 </span>
               </div>
               <button
                 onClick={() => setSelectedEntry(null)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  fontSize: "1.5rem",
-                  cursor: "pointer",
-                  color: "var(--oat-text-muted)",
-                  lineHeight: 1,
-                  padding: "0.25rem",
-                }}
+                className="bg-transparent border-none text-2xl cursor-pointer text-theme-text-muted leading-none p-1 hover:text-theme-text"
                 aria-label="Cerrar modal"
               >
                 &times;
               </button>
             </div>
-
-            <div
-              style={{
-                whiteSpace: "pre-wrap",
-                lineHeight: "1.8",
-                color: "var(--oat-text)",
-                fontSize: "1rem",
-              }}
-            >
+            <div className="whitespace-pre-wrap leading-[1.8] text-theme-text text-base">
               {selectedEntry.content || <em>Sin contenido</em>}
             </div>
           </div>
