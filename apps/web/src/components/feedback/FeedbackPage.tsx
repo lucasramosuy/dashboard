@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import * as Sentry from "@sentry/react";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import { useAuth, AuthProvider } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { AppShell } from "../layout/AppShell";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { FeedbackSkeleton } from "../ui/Skeleton";
@@ -137,8 +138,8 @@ const FeedbackForm: React.FC = () => {
 
 export const FeedbackPage: React.FC = () => {
   return (
-    <AuthProvider>
+    <AppShell>
       <FeedbackForm />
-    </AuthProvider>
+    </AppShell>
   );
 };

@@ -1,9 +1,9 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { LoginForm } from '../auth/LoginForm';
+import { AppShell } from "../layout/AppShell";
+import { LoginForm } from "../auth/LoginForm";
 
 export const LoginPage: React.FC = () => (
-  <AuthProvider>
+  <AppShell>
     <LoginForm />
-  </AuthProvider>
+  </AppShell>
 );

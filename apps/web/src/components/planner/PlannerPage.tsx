@@ -1,9 +1,9 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
+import { AppShell } from "../layout/AppShell";
 import { PlannerBoard } from "./PlannerBoard";
 
 export const PlannerPage: React.FC = () => (
-  <AuthProvider>
+  <AppShell>
     <PlannerBoard />
-  </AuthProvider>
+  </AppShell>
 );

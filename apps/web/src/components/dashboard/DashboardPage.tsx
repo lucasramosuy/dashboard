@@ -1,11 +1,11 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { DashboardSummary } from '../dashboard/DashboardSummary';
+import { AppShell } from "../layout/AppShell";
+import { DashboardSummary } from "../dashboard/DashboardSummary";
 
 export const DashboardPage: React.FC = () => {
   return (
-    <AuthProvider>
+    <AppShell>
       <DashboardSummary />
-    </AuthProvider>
+    </AppShell>
   );
 };
