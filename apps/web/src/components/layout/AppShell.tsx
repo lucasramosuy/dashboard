@@ -2,6 +2,7 @@ import React from "react";
 import * as Sentry from "@sentry/react";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import { AuthProvider } from "../../contexts/AuthContext";
+import { Agentation } from "agentation";
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -13,7 +14,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       }
     >
       <ThemeProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Agentation />
+        </AuthProvider>
       </ThemeProvider>
     </Sentry.ErrorBoundary>
   );
