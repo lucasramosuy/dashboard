@@ -5,7 +5,7 @@ import { Kysely } from "kysely";
 // Misma lógica de resolución de config que db.ts — incluyendo soporte para test
 const getDbConfig = () => {
   if (Bun.env.NODE_ENV === "test") {
-    return { url: "file:./data/test.sqlite" };
+    return { url: "file:test.sqlite" };
   }
   if (Bun.env.TURSO_DATABASE_URL) {
     return {
@@ -13,7 +13,7 @@ const getDbConfig = () => {
       authToken: Bun.env.TURSO_AUTH_TOKEN ?? "",
     };
   }
-  const dbPath = Bun.env.DATABASE_PATH ?? "./data/database.sqlite";
+  const dbPath = Bun.env.DATABASE_PATH ?? "database.sqlite";
   return { url: `file:${dbPath}` };
 };
 
@@ -23,11 +23,9 @@ const kyselyDb = new Kysely({
 });
 
 export const auth = betterAuth({
-  baseURL: Bun.env.BETTER_AUTH_URL || "http://localhost:8787",
-  database: {
-    db: kyselyDb,
-    type: "sqlite",
-  },
+  secret: Bun.env.BETTER_AUTH_SECRET,
+  baseURL: Bun.env.BETTER_AUTH_URL,
+  database: kyselyDb,
   emailAndPassword: {
     enabled: true,
   },
