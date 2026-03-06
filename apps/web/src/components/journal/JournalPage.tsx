@@ -1,9 +1,9 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { JournalView } from '../journal/JournalView';
+import { AppShell } from "../layout/AppShell";
+import { JournalView } from "../journal/JournalView";
 
 export const JournalPage: React.FC = () => (
-  <AuthProvider>
+  <AppShell>
     <JournalView />
-  </AuthProvider>
+  </AppShell>
 );

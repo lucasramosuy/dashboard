@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useAuth, AuthProvider } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { AppShell } from "../layout/AppShell";
 import { authClient } from "../../lib/auth-client";
 import { ProfileSkeleton } from "../ui/Skeleton";
 
@@ -100,8 +101,8 @@ const ProfileForm: React.FC = () => {
 
 export const ProfileSettings: React.FC = () => {
   return (
-    <AuthProvider>
+    <AppShell>
       <ProfileForm />
-    </AuthProvider>
+    </AppShell>
   );
 };

@@ -1,8 +1,9 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { TaskList } from '../tasks/TaskList';
+import { AppShell } from "../layout/AppShell";
+import { TaskList } from "../tasks/TaskList";
+
 export const TasksPage: React.FC = () => (
-  <AuthProvider>
+  <AppShell>
     <TaskList />
-  </AuthProvider>
+  </AppShell>
 );

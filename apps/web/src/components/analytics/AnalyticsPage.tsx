@@ -1,8 +1,9 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { AnalyticsDashboard } from '../analytics/AnalyticsDashboard';
+import { AppShell } from "../layout/AppShell";
+import { AnalyticsDashboard } from "../analytics/AnalyticsDashboard";
+
 export const AnalyticsPage: React.FC = () => (
-  <AuthProvider>
+  <AppShell>
     <AnalyticsDashboard />
-  </AuthProvider>
+  </AppShell>
 );

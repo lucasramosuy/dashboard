@@ -1,5 +1,6 @@
 import React from "react";
-import { useAuth, AuthProvider } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { AppShell } from "../layout/AppShell";
 import { IcalSettingsCard } from "../planner/IcalSettingsCard";
 import { IcalEventList } from "../planner/IcalEventList";
 import { SchoologySkeleton } from "../ui/Skeleton";
@@ -29,8 +30,8 @@ const SchoologyContent: React.FC = () => {
 
 export const SchoologyPage: React.FC = () => {
   return (
-    <AuthProvider>
+    <AppShell>
       <SchoologyContent />
-    </AuthProvider>
+    </AppShell>
   );
 };
