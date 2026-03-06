@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: monorepo_api
+    ports:
+      - "8787:8787"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - monorepo_network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - PUBLIC_API_BASE=https://api.dashboard.lucasramos.uy/api
+    container_name: monorepo_web
+    ports:
+      - "4321:4321"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+    networks:
+      - monorepo_network
+    depends_on:
+      - api
+    restart: unless-stopped
+
+networks:
+  monorepo_network:
+    driver: bridge

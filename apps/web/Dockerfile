@@ -1,4 +1,6 @@
-FROM oven/bun:1.3.9 AS builder
+FROM oven/bun:1.3.9-alpine AS builder
+
+RUN apk add --no-cache python3 make g++ build-base
 
 WORKDIR /app
 
@@ -6,33 +8,30 @@ COPY package.json bun.lockb* ./
 COPY packages/ ./packages/
 COPY apps/web/ ./apps/web/
 
-# Instalar dependencias necesarias para compilar módulos nativos
-RUN apk add --no-cache python3 make g++ build-base
-
 RUN bun install --frozen-lockfile
 
 WORKDIR /app/apps/web
 
-# PUBLIC_API_BASE se inyecta en build time (queda bakeado en el JS)
 ARG PUBLIC_API_BASE=https://api.dashboard.lucasramos.uy/api
 ENV PUBLIC_API_BASE=$PUBLIC_API_BASE
 
 RUN bun run build
 
-# Runtime — Node para Astro SSR
 FROM node:20-alpine AS runtime
 
+ENV NODE_ENV=production
 WORKDIR /app
 
-# Copiar con cambio de propietario a node
-COPY --from=builder --chown=node:node /app/apps/web/dist ./dist
+# Replicación estricta de la estructura del monorepo para SSR
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=builder --chown=node:node /app/apps/web/dist ./apps/web/dist
+COPY --from=builder --chown=node:node /app/apps/web/package.json ./apps/web/
 
-# Cambiar a usuario no-root
 USER node
 
 EXPOSE 4321
-
 ENV HOST=0.0.0.0
 ENV PORT=4321
 
-CMD ["node", "./dist/server/entry.mjs"]
+CMD ["node", "./apps/web/dist/server/entry.mjs"]

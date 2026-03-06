@@ -1,25 +1,25 @@
-FROM oven/bun:1.3.9 AS base
+FROM oven/bun:1.3.9-alpine AS base
+
+RUN apk add --no-cache python3 make g++ build-base
 
 WORKDIR /app
 
-# Copiar archivos con el propietario correcto
+# Transferencia de propiedad previa a operaciones para evitar EACCES
+RUN chown -R bun:bun /app
+
+# Transición a usuario sin privilegios
+USER bun
+
 COPY --chown=bun:bun package.json bun.lockb* ./
 COPY --chown=bun:bun packages/ ./packages/
 COPY --chown=bun:bun apps/api/ ./apps/api/
 
-# Instalar dependencias necesarias para compilar módulos nativos (ej: better-sqlite3)
-RUN apk add --no-cache python3 make g++ build-base
-
+# Instalación con usuario y grupo correctos
 RUN bun install --frozen-lockfile
 
-# Asegurar que el directorio de trabajo tenga los permisos correctos
 WORKDIR /app/apps/api
 
-# Cambiar a usuario no-root
-USER bun
-
 EXPOSE 8787
-
 ENV NODE_ENV=production
 
 CMD ["bun", "run", "src/server.ts"]
