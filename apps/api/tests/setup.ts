@@ -1,32 +1,31 @@
 import { beforeAll, beforeEach } from "bun:test";
-import { existsSync, mkdirSync, unlinkSync } from "fs";
+import { existsSync, unlinkSync } from "node:fs";
 
-// Force test environment BEFORE any module imports
+// 1. Configurar entorno y limpiar variables de producción
 Bun.env.NODE_ENV = "test";
-// Clear Turso credentials so tests use local SQLite, not production DB
 delete Bun.env.TURSO_DATABASE_URL;
 delete Bun.env.TURSO_AUTH_TOKEN;
 
-// Ensure data directory exists and clean up old test DB
-const testDbPath = "./data/test.sqlite";
-mkdirSync("./data", { recursive: true });
+const testDbPath = "test.sqlite";
+
+// 2. Eliminar la base de datos de prueba anterior si existe
 if (existsSync(testDbPath)) {
   try {
     unlinkSync(testDbPath);
   } catch {
-    /* file may not exist */
+    console.warn("No se pudo eliminar la base de datos de prueba anterior.");
   }
 }
 
-// Now import DB module — it will see NODE_ENV=test and no TURSO_DATABASE_URL
 const { initDB, db } = await import("../src/lib/db");
 
 beforeAll(async () => {
+  // 3. Como initDB() ya crea las tablas user, session, account y verification,
+  // ¡ya no necesitamos ejecutar el comando lento de better-auth migrate!
   await initDB();
 });
 
 beforeEach(async () => {
-  // Clean up data between tests
   const tables = [
     "absences",
     "tasks",
@@ -39,11 +38,18 @@ beforeEach(async () => {
     "user",
   ];
 
-  for (const table of tables) {
-    try {
-      await db.execute(`DELETE FROM ${table}`);
-    } catch {
-      /* table might not exist yet */
+  // 4. Limpiar las tablas de forma segura
+  try {
+    await db.execute("PRAGMA foreign_keys = OFF;");
+
+    for (const table of tables) {
+      try {
+        await db.execute(`DELETE FROM ${table}`);
+      } catch {
+        // Ignorar si la tabla no existe
+      }
     }
+  } finally {
+    await db.execute("PRAGMA foreign_keys = ON;");
   }
 });
