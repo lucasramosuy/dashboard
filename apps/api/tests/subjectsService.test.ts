@@ -58,6 +58,10 @@ describe("subjectsService", () => {
     it("should return 0 if absences exceed totalClasses", () => {
       expect(subjectsService.calculateAttendancePercentage(10, 15)).toBe(0);
     });
+
+    it("should cap at 100% even if absences are negative", () => {
+      expect(subjectsService.calculateAttendancePercentage(10, -5)).toBe(100);
+    });
   });
 
   describe("isAtRisk", () => {
@@ -69,6 +73,12 @@ describe("subjectsService", () => {
     it("should return false if attendance is exactly 75%", () => {
       // 20 classes, 5 absences -> 15/20 -> 75%
       expect(subjectsService.isAtRisk(20, 5)).toBe(false);
+    });
+
+    it("should return false if attendance rounds up to 75%", () => {
+      // Attendance is (200-51)/200 = 74.5%, which rounds to 75%.
+      // isAtRisk checks for < 75, so this should be false.
+      expect(subjectsService.isAtRisk(200, 51)).toBe(false);
     });
 
     it("should return false if attendance is above 75%", () => {
