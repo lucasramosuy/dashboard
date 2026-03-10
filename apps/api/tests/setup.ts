@@ -1,32 +1,39 @@
 import { beforeAll, beforeEach } from "bun:test";
-import { existsSync, mkdirSync, unlinkSync } from "fs";
+import { existsSync, unlinkSync } from "node:fs";
+import { execSync } from "node:child_process";
 
-// Force test environment BEFORE any module imports
 Bun.env.NODE_ENV = "test";
-// Clear Turso credentials so tests use local SQLite, not production DB
 delete Bun.env.TURSO_DATABASE_URL;
 delete Bun.env.TURSO_AUTH_TOKEN;
 
-// Ensure data directory exists and clean up old test DB
-const testDbPath = "./data/test.sqlite";
-mkdirSync("./data", { recursive: true });
+const testDbPath = "test.sqlite";
+
 if (existsSync(testDbPath)) {
   try {
     unlinkSync(testDbPath);
   } catch {
-    /* file may not exist */
+    /* ignorar */
   }
 }
 
-// Now import DB module — it will see NODE_ENV=test and no TURSO_DATABASE_URL
 const { initDB, db } = await import("../src/lib/db");
 
 beforeAll(async () => {
   await initDB();
+
+  try {
+    // Corrección: Proveer la ruta exacta mediante el flag --config
+    execSync("bunx @better-auth/cli migrate --config src/lib/auth.better.ts", {
+      env: { ...process.env, NODE_ENV: "test" },
+      stdio: "inherit",
+    });
+  } catch (error) {
+    console.error("Fallo crítico al inicializar el esquema de Better Auth:", error);
+    process.exit(1);
+  }
 });
 
 beforeEach(async () => {
-  // Clean up data between tests
   const tables = [
     "absences",
     "tasks",
@@ -43,7 +50,7 @@ beforeEach(async () => {
     try {
       await db.execute(`DELETE FROM ${table}`);
     } catch {
-      /* table might not exist yet */
+      /* tabla puede no existir aún */
     }
   }
 });
