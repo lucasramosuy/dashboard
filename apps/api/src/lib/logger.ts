@@ -11,7 +11,7 @@ export const toError = (err: unknown): Error => {
   }
 };
 
-const isProd = Bun.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === "production";
 
 export const logger = {
   debug: (...args: unknown[]) => {

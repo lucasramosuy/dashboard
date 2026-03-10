@@ -200,7 +200,7 @@ Esquema de Tablas:
 
 Config vía env:
 
-- `DATABASE_PATH` con default `./data/database.sqlite` (dev local).
+- `DATABASE_PATH` con default `./data/test.sqlite` (dev local).
 - `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` para producción con Turso.
 - `BETTER_AUTH_URL` con default `http://localhost:8787`.
 
