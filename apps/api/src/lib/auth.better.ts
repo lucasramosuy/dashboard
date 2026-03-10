@@ -2,9 +2,6 @@ import { betterAuth } from "better-auth";
 import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
 
-// Misma lógica de resolución de config que db.ts — incluyendo soporte para test
-import { createClient } from "@libsql/client";
-
 const getDbConfig = () => {
   if (Bun.env.NODE_ENV === "test") {
     return { url: "file:./data/test.sqlite" };
