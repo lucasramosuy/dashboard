@@ -5,9 +5,9 @@ import { logger } from "./lib/logger";
 // 2. Hono API Specific Client
 // We create a dedicated client to send Hono-specific errors to a separate project
 const honoClient = new Sentry.NodeClient({
-  dsn: Bun.env.SENTRY_HONO_DSN,
+  dsn: process.env.SENTRY_HONO_DSN,
   // En producción: 20% de traces; en dev: 100%.
-  tracesSampleRate: Bun.env.NODE_ENV === "production" ? 0.2 : 1.0,
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 1.0,
   sendDefaultPii: true,
   integrations: [],
   transport: Sentry.makeFetchTransport,
@@ -76,7 +76,7 @@ app.onError(async (err, c) => {
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 // ✅ CORS dinámico — soporta múltiples orígenes desde variable de entorno
-const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(",");
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:4321").split(",");
 
 app.use(
   "/api/*",
@@ -108,7 +108,7 @@ app.get("/api/test-error", () => {
   throw new Error("Sentry Example API Error");
 });
 
-const port = Bun.env.PORT || 8787;
+const port = process.env.PORT || 8787;
 
 const server = Bun.serve({
   port,
