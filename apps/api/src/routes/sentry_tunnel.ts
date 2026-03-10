@@ -33,11 +33,11 @@ sentryTunnelRouter.post("/", async (c) => {
 
     const header = JSON.parse(headerLine);
 
-    if (!(Boolean(header.dsn))) {
+    if (header.dsn === undefined || header.dsn === null) {
       return c.text("Missing DSN in envelope header", 400);
     }
 
-    const dsn = new URL(header.dsn);
+    const dsn = new globalThis.URL(header.dsn);
     const projectId = dsn.pathname.replace("/", "");
 
     // Validación de host
