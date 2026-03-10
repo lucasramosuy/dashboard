@@ -1,4 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
+import { logger } from "./lib/logger";
 
 /**
  * Rutas públicas que NO requieren autenticación.
@@ -52,7 +53,7 @@ async function validateSession(
 
     return { valid: false };
   } catch (error) {
-    console.error("[Middleware] Error validando sesión:", error);
+    logger.error("[Middleware] Error validando sesión:", error);
     return { valid: false };
   }
 }
