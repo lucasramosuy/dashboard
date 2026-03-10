@@ -91,8 +91,18 @@ app.use(
 );
 
 app.route("/api/auth", authRouter);
-app.on(["GET", "POST"], "/api/auth/*", async (c) => {
-  return auth.handler(c.req.raw);
+app.on(["GET", "POST"], "/api/auth/**", async (c) => {
+  const response = await auth.handler(c.req.raw);
+
+  // Better Auth devuelve un Response crudo que no pasa por el middleware de Hono,
+  // así que los headers de CORS no se aplican. Los copiamos manualmente.
+  const origin = c.req.header("Origin");
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
+  return response;
 });
 
 app.route("/api/subjects", subjectsRouter);
