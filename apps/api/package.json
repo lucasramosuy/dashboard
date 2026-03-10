@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@better-auth/cli": "^1.4.21",
-    "@better-auth/kysely-adapter": "^1.5.4",
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.17.0",
     "@libsql/kysely-libsql": "^0.4.1",
@@ -32,6 +31,7 @@
     "kysely": "^0.28.11",
     "node-cron": "^4.2.1",
     "node-ical": "^0.25.4",
+    "p-limit": "^7.3.0",
     "sqlite3": "^5.1.7",
     "zod": "^4.3.6"
   }
