@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { ThemeToggle } from '../layout/ThemeToggle';
+import { ThemeToggle } from "../layout/ThemeToggle";
 
 export const HeaderBar: React.FC = () => {
   const { user, logout } = useAuth();
