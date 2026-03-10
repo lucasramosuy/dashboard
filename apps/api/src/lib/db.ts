@@ -12,22 +12,25 @@ import {
 
 // --- DB CONFIG ---
 const getDbConfig = () => {
-  if (Bun.env.NODE_ENV === "test") {
-    return { url: "file:./data/test.sqlite" };
+  // CORRECCIÓN 1: En pruebas, usamos la base temporal en la raíz de api/
+  if (process.env.NODE_ENV === "test") {
+    return { url: "file:test.sqlite" };
   }
-  if (Bun.env.TURSO_DATABASE_URL) {
+
+  if (process.env.TURSO_DATABASE_URL) {
     return {
-      url: Bun.env.TURSO_DATABASE_URL,
-      authToken: Bun.env.TURSO_AUTH_TOKEN ?? "",
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN ?? "",
     };
   }
-  // dev fallback — archivo local, igual que antes
-  const dbPath = Bun.env.DATABASE_PATH ?? "./data/database.sqlite";
+
+  // CORRECCIÓN 2: En desarrollo local, usamos dev.sqlite
+  const dbPath = process.env.DATABASE_PATH ?? "data/dev.sqlite";
   return { url: `file:${dbPath}` };
 };
 
 // Ensure data directory exists before creating client
-mkdirSync("./data", { recursive: true });
+mkdirSync("data", { recursive: true });
 export const db = createClient(getDbConfig());
 
 // --- INIT ---
@@ -297,8 +300,6 @@ export async function initDB() {
       "UPDATE practice_journals SET user_id = (SELECT id FROM user LIMIT 1) WHERE user_id IS NULL",
     );
 
-    // Opcional: Borrar si hay muchísimos duplicados por bugs previos.
-    // Usamos la primary key (id) dado que ROWID puede ser problemático en algunas apps de bun:sqlite con tablas string.
     await db.execute(`
       DELETE FROM practice_journals
       WHERE id NOT IN (
@@ -315,14 +316,12 @@ export async function initDB() {
   const config = getDbConfig();
   const location = config.url.startsWith("file::memory:")
     ? "in-memory (test)"
-    : (Bun.env.TURSO_DATABASE_URL ?? "local file");
+    : (process.env.TURSO_DATABASE_URL ?? "local file");
   console.log(`[DB] Database initialized: ${location}`);
 }
 
 // --- HELPERS ---
 
-// Extrae solo las propiedades nombradas de una Row de libsql
-// (evita las claves numéricas del array subyacente)
 function toObj<T>(row: Record<string, unknown>): T {
   if (!row) return row as T;
   const obj: Record<string, unknown> = {};
@@ -463,8 +462,6 @@ export const dbService = {
     },
 
     getByUser: async (userId: string, includePlanner = false): Promise<Task[]> => {
-      // Usamos un LEFT JOIN con subjects para encontrar tareas que no tengan user_id directo
-      // pero que pertenezcan a una materia del usuario.
       const sql = includePlanner
         ? `SELECT DISTINCT t.* FROM tasks t
            LEFT JOIN subjects s ON t.subject_id = s.id
