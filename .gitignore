@@ -50,5 +50,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
 
+#Ignore Gemini
+.gemini
+
 # Ignore Antigravity AI rules
 .github/instructions/
+
+# Ignore Astro
+.astro
