@@ -42,36 +42,54 @@ export const AnalyticsDashboard: React.FC = () => {
     return <AnalyticsSkeleton />;
   }
 
-  const taskStatusData = [
-    {
-      name: "Completadas",
-      value: tasks.filter((t) => t.status === "done").length,
-      fill: theme.data.success,
-    },
-    {
-      name: "En Proceso",
-      value: tasks.filter((t) => t.status === "in-progress").length,
-      fill: theme.data.info,
-    },
-    {
-      name: "Pendientes",
-      value: tasks.filter((t) => t.status === "todo").length,
-      fill: theme.data.warning,
-    },
-  ].filter((d) => d.value > 0);
+  const taskStatusData = React.useMemo(() => {
+    let doneCount = 0;
+    let inProgressCount = 0;
+    let todoCount = 0;
 
-  const attendanceData = subjects.map((s) => {
-    const subjectAbsences = absences.filter((a) => a.subject_id === s.id);
-    const totalAbsenceValue = subjectAbsences.reduce(
-      (sum, a) => sum + (a.calculated_value || 0),
-      0,
-    );
-    const percentage =
-      s.total_classes > 0
-        ? Math.max(0, Math.round(((s.total_classes - totalAbsenceValue) / s.total_classes) * 100))
-        : 100;
-    return { name: s.name, asistencia: percentage };
-  });
+    for (const t of tasks) {
+      if (t.status === "done") doneCount++;
+      else if (t.status === "in-progress") inProgressCount++;
+      else if (t.status === "todo") todoCount++;
+    }
+
+    return [
+      {
+        name: "Completadas",
+        value: doneCount,
+        fill: theme.data.success,
+      },
+      {
+        name: "En Proceso",
+        value: inProgressCount,
+        fill: theme.data.info,
+      },
+      {
+        name: "Pendientes",
+        value: todoCount,
+        fill: theme.data.warning,
+      },
+    ].filter((d) => d.value > 0);
+  }, [tasks, theme]);
+
+  const attendanceData = React.useMemo(() => {
+    const absencesBySubject: Record<string, number> = {};
+    for (const a of absences) {
+      if (a.subject_id) {
+        absencesBySubject[a.subject_id] =
+          (absencesBySubject[a.subject_id] || 0) + (a.calculated_value || 0);
+      }
+    }
+
+    return subjects.map((s) => {
+      const totalAbsenceValue = absencesBySubject[s.id] || 0;
+      const percentage =
+        s.total_classes > 0
+          ? Math.max(0, Math.round(((s.total_classes - totalAbsenceValue) / s.total_classes) * 100))
+          : 100;
+      return { name: s.name, asistencia: percentage };
+    });
+  }, [subjects, absences]);
 
   return (
     <div>
