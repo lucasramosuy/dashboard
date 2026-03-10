@@ -5,10 +5,9 @@ Sentry.init({
     import.meta.env.PUBLIC_SENTRY_DSN ||
     "https://f8ee541e1cbbf5ab6d935de9bfd9e6b9@o4510988275482624.ingest.us.sentry.io/4510988282822656",
 
-  // Tunnel para evitar bloqueos por ad-blockers. Aquí también apuntamos a la API.
-  tunnel: import.meta.env.PUBLIC_API_BASE
-    ? `${import.meta.env.PUBLIC_API_BASE}/sentry-tunnel`
-    : "/api/sentry-tunnel",
+  // ⚠️ NO usar tunnel en server-side — solo aplica al cliente (browser).
+  // El server-side envía directo a Sentry sin pasar por ad-blockers.
+
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/astro/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
