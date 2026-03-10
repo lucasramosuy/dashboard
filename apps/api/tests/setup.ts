@@ -1,36 +1,28 @@
 import { beforeAll, beforeEach } from "bun:test";
 import { existsSync, unlinkSync } from "node:fs";
-import { execSync } from "node:child_process";
 
+// 1. Configurar entorno y limpiar variables de producción
 Bun.env.NODE_ENV = "test";
 delete Bun.env.TURSO_DATABASE_URL;
 delete Bun.env.TURSO_AUTH_TOKEN;
 
 const testDbPath = "test.sqlite";
 
+// 2. Eliminar la base de datos de prueba anterior si existe
 if (existsSync(testDbPath)) {
   try {
     unlinkSync(testDbPath);
   } catch {
-    /* ignorar */
+    console.warn("No se pudo eliminar la base de datos de prueba anterior.");
   }
 }
 
 const { initDB, db } = await import("../src/lib/db");
 
 beforeAll(async () => {
+  // 3. Como initDB() ya crea las tablas user, session, account y verification,
+  // ¡ya no necesitamos ejecutar el comando lento de better-auth migrate!
   await initDB();
-
-  try {
-    // Corrección: Proveer la ruta exacta mediante el flag --config
-    execSync("bunx @better-auth/cli migrate --config src/lib/auth.better.ts", {
-      env: { ...process.env, NODE_ENV: "test" },
-      stdio: "inherit",
-    });
-  } catch (error) {
-    console.error("Fallo crítico al inicializar el esquema de Better Auth:", error);
-    process.exit(1);
-  }
 });
 
 beforeEach(async () => {
@@ -46,11 +38,18 @@ beforeEach(async () => {
     "user",
   ];
 
-  for (const table of tables) {
-    try {
-      await db.execute(`DELETE FROM ${table}`);
-    } catch {
-      /* tabla puede no existir aún */
+  // 4. Limpiar las tablas de forma segura
+  try {
+    await db.execute("PRAGMA foreign_keys = OFF;");
+
+    for (const table of tables) {
+      try {
+        await db.execute(`DELETE FROM ${table}`);
+      } catch {
+        // Ignorar si la tabla no existe
+      }
     }
+  } finally {
+    await db.execute("PRAGMA foreign_keys = ON;");
   }
 });
