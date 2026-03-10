@@ -91,7 +91,7 @@ app.use(
 );
 
 app.route("/api/auth", authRouter);
-app.on(["GET", "POST", "OPTIONS"], "/api/auth/**", async (c) => {
+app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c) => {
   const origin = c.req.header("Origin");
   const validOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
 
