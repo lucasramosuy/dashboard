@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { app } from "../src/server";
 import { auth } from "../src/lib/auth.better";
 import type { IcalEvent } from "@dashboard/shared-types";
+import { icalService } from "../src/services/icalService";
 
 // Mockear node-ical para devolver un VEVENT falso sin hacer requests HTTP
 mock.module("node-ical", () => {
@@ -129,5 +130,13 @@ describe("iCal Integration API Tests", () => {
     );
     expect(body[1].title).toBe("Clase de prueba");
     expect(body[1].url).toBe("https://zoom.us/mock"); // Parseó el link
+  });
+});
+
+describe("iCal Service Tests", () => {
+  it("syncUserCalendar should throw if no url is provided", async () => {
+    await expect(icalService.syncUserCalendar("user-id", "")).rejects.toThrow(
+      "El usuario no tiene una URL de iCal configurada.",
+    );
   });
 });
