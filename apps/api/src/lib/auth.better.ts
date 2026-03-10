@@ -3,30 +3,33 @@ import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
 
 const getDbConfig = () => {
-  if (Bun.env.NODE_ENV === "test") {
+  // Para los tests automatizados: usa un archivo temporal en la raíz de api/
+  if (process.env.NODE_ENV === "test") {
     return { url: "file:test.sqlite" };
   }
-  if (Bun.env.TURSO_DATABASE_URL) {
+
+  if (process.env.TURSO_DATABASE_URL) {
     return {
-      url: Bun.env.TURSO_DATABASE_URL,
-      authToken: Bun.env.TURSO_AUTH_TOKEN ?? "",
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN ?? "",
     };
   }
-  const dbPath = Bun.env.DATABASE_PATH ?? "database.sqlite";
+
+  // CORRECCIÓN: Para desarrollo local, usa dev.sqlite
+  const dbPath = process.env.DATABASE_PATH ?? "data/dev.sqlite";
   return { url: `file:${dbPath}` };
 };
 
-// Restaurar la instancia de Kysely
 const kyselyDb = new Kysely({
   dialect: new LibsqlDialect(getDbConfig()),
 });
 
 export const auth = betterAuth({
-  secret: Bun.env.BETTER_AUTH_SECRET,
-  baseURL: Bun.env.BETTER_AUTH_URL,
+  secret: process.env.BETTER_AUTH_SECRET || "test-secret-key",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4321",
   database: {
-    db: kyselyDb, // Inyección estricta de la instancia
-    type: "sqlite", // Declaración explícita del motor
+    db: kyselyDb,
+    type: "sqlite",
   },
   emailAndPassword: {
     enabled: true,
@@ -37,7 +40,7 @@ export const auth = betterAuth({
       last_ical_sync: { type: "date", required: false },
     },
   },
-  trustedOrigins: Bun.env.CORS_ORIGINS
-    ? Bun.env.CORS_ORIGINS.split(",")
+  trustedOrigins: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",")
     : ["http://localhost:4321"],
 });

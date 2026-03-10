@@ -5,3 +5,5 @@ preload = ["./tests/setup.ts"]
 NODE_ENV = "test"
 TURSO_DATABASE_URL = ""
 TURSO_AUTH_TOKEN = ""
+BETTER_AUTH_URL = "http://localhost:3000"
+BETTER_AUTH_SECRET = "test-secret-for-local-testing-only"
