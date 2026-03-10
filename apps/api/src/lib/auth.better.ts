@@ -2,9 +2,10 @@ import { betterAuth } from "better-auth";
 import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
 
+// Misma lógica de resolución de config que db.ts — incluyendo soporte para test
 const getDbConfig = () => {
   if (Bun.env.NODE_ENV === "test") {
-    return { url: "file:./data/test.sqlite" };
+    return { url: "file:test.sqlite" };
   }
   if (Bun.env.TURSO_DATABASE_URL) {
     return {
@@ -16,12 +17,15 @@ const getDbConfig = () => {
   return { url: `file:${dbPath}` };
 };
 
+// Kysely con dialecto libsql — funciona con Turso, SQLite local e in-memory (tests)
+const kyselyDb = new Kysely({
+  dialect: new LibsqlDialect(getDbConfig()),
+});
+
 export const auth = betterAuth({
   secret: Bun.env.BETTER_AUTH_SECRET,
   baseURL: Bun.env.BETTER_AUTH_URL,
-  database: new Kysely({
-    dialect: new LibsqlDialect(getDbConfig()),
-  }),
+  database: kyselyDb,
   emailAndPassword: {
     enabled: true,
   },

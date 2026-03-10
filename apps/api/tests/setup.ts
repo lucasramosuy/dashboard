@@ -6,6 +6,9 @@ Bun.env.NODE_ENV = "test";
 // Clear Turso credentials so tests use local SQLite, not production DB
 delete Bun.env.TURSO_DATABASE_URL;
 delete Bun.env.TURSO_AUTH_TOKEN;
+// Provide dummy auth credentials for better-auth
+Bun.env.BETTER_AUTH_SECRET = "test-secret-key-that-is-at-least-32-chars-long";
+Bun.env.BETTER_AUTH_URL = "http://localhost:8787";
 
 // Ensure data directory exists and clean up old test DB
 const testDbPath = "./data/test.sqlite";
