@@ -91,14 +91,29 @@ app.use(
 );
 
 app.route("/api/auth", authRouter);
-app.on(["GET", "POST"], "/api/auth/**", async (c) => {
+app.on(["GET", "POST", "OPTIONS"], "/api/auth/**", async (c) => {
+  const origin = c.req.header("Origin");
+  const validOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
+
+  // Responder directamente a preflight OPTIONS sin pasar por Better Auth
+  if (c.req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...(validOrigin && { "Access-Control-Allow-Origin": validOrigin }),
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, Cookie",
+      },
+    });
+  }
+
   const response = await auth.handler(c.req.raw);
 
   // Better Auth devuelve un Response crudo que no pasa por el middleware de Hono,
   // así que los headers de CORS no se aplican. Los copiamos manualmente.
-  const origin = c.req.header("Origin");
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    response.headers.set("Access-Control-Allow-Origin", origin);
+  if (validOrigin) {
+    response.headers.set("Access-Control-Allow-Origin", validOrigin);
     response.headers.set("Access-Control-Allow-Credentials", "true");
   }
 
