@@ -36,11 +36,7 @@ export const AnalyticsDashboard: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const theme = getChartTheme(isDark);
-
-  if (authLoading || loading) {
-    return <AnalyticsSkeleton />;
-  }
+  const theme = React.useMemo(() => getChartTheme(isDark), [isDark]);
 
   const taskStatusData = React.useMemo(() => {
     let doneCount = 0;
@@ -90,6 +86,10 @@ export const AnalyticsDashboard: React.FC = () => {
       return { name: s.name, asistencia: percentage };
     });
   }, [subjects, absences]);
+
+  if (authLoading || loading) {
+    return <AnalyticsSkeleton />;
+  }
 
   return (
     <div>
