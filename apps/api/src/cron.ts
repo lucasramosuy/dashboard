@@ -18,7 +18,7 @@ export const initCronJobs = () => {
           let successCount = 0;
           let errorCount = 0;
 
-          for (const row of rs.rows) {
+          const syncPromises = rs.rows.map(async (row) => {
             try {
               await icalService.syncUserCalendar(row.id as string, row.ical_url as string);
               successCount++;
@@ -28,7 +28,10 @@ export const initCronJobs = () => {
               Sentry.captureException(err);
               errorCount++;
             }
-          }
+          });
+
+          await Promise.allSettled(syncPromises);
+
           console.log(
             `[Cron] Sincronización completada. Éxitos: ${successCount}, Errores: ${errorCount}`,
           );
