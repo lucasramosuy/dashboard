@@ -1,4 +1,5 @@
 import cron from "node-cron";
+import pLimit from "p-limit";
 import * as Sentry from "@sentry/bun";
 import { db } from "./lib/db";
 import { icalService } from "./services/icalService";
@@ -18,17 +19,21 @@ export const initCronJobs = () => {
           let successCount = 0;
           let errorCount = 0;
 
-          const syncPromises = rs.rows.map(async (row) => {
-            try {
-              await icalService.syncUserCalendar(row.id as string, row.ical_url as string);
-              successCount++;
-            } catch (err) {
-              console.error(`[Cron] Falló sincronización para usuario ${row.id}`, err);
-              // Reportamos el error individual a Sentry
-              Sentry.captureException(err);
-              errorCount++;
-            }
-          });
+          const limit = pLimit(10); // Batch in chunks of 10
+
+          const syncPromises = rs.rows.map((row) =>
+            limit(async () => {
+              try {
+                await icalService.syncUserCalendar(row.id as string, row.ical_url as string);
+                successCount++;
+              } catch (err) {
+                console.error(`[Cron] Falló sincronización para usuario ${row.id}`, err);
+                // Reportamos el error individual a Sentry
+                Sentry.captureException(err);
+                errorCount++;
+              }
+            }),
+          );
 
           await Promise.allSettled(syncPromises);
 
