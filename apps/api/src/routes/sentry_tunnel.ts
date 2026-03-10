@@ -33,7 +33,7 @@ sentryTunnelRouter.post("/", async (c) => {
 
     const header = JSON.parse(headerLine);
 
-    if (!header.dsn) {
+    if (!(Boolean(header.dsn))) {
       return c.text("Missing DSN in envelope header", 400);
     }
 
