@@ -43,12 +43,9 @@ export const auth = betterAuth({
     : ["http://localhost:4321"],
 
   advanced: {
-    defaultCookieAttributes: {
-      // Usa una variable de entorno o pon tu dominio base directamente.
-      // Ej: ".lucasramos.uy" (¡El punto al inicio es muy importante!)
-      domain: process.env.NODE_ENV === "production" ? ".lucasramos.uy" : undefined,
-      secure: process.env.NODE_ENV === "production", // true en prod (HTTPS)
-      sameSite: "lax", // Funciona bien cuando se comparte el dominio base
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: ".lucasramos.uy",
     },
   },
 });
