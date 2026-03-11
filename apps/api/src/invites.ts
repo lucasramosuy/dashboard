@@ -28,7 +28,7 @@ async function main() {
 
     try {
       await dbService.invites.create(invite);
-      logger.info(`✅ Creado: ${code}`);
+      logger.info("✅ Creado: "+code);
       created++;
     } catch (err: any) {
       // Si el error es por el UNIQUE constraint (SQLITE_CONSTRAINT_UNIQUE o similar en LibSQL)
