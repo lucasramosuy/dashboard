@@ -33,7 +33,7 @@ async function main() {
     } catch (err: any) {
       // Si el error es por el UNIQUE constraint (SQLITE_CONSTRAINT_UNIQUE o similar en LibSQL)
       if (err.message?.includes("UNIQUE constraint failed")) {
-        logger.warn(`[Colisión] El código ${code} ya existe. Reintentando...`);
+        logger.warn("[Colisión] El código "+code+" ya existe. Reintentando...");
         continue; // No incrementamos 'created', el bucle vuelve a intentar
       }
       throw err; // Si es otro error (ej. conexión), abortamos
