@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-
+import { Book } from "lucide-react";
 export const LoginForm: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -41,7 +41,7 @@ export const LoginForm: React.FC = () => {
     "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
 
   return (
-    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-10 shadow-sm">
+    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-10 shadow-sm transition-all duration-300 ease-in-out">
       {sessionExpired && (
         <div
           role="alert"
@@ -50,31 +50,34 @@ export const LoginForm: React.FC = () => {
           Tu sesión expiró. Por favor, iniciá sesión nuevamente.
         </div>
       )}
-      <div className="text-center text-3xl mb-3">
-        <span>📚</span>
+      <div className="flex justify-center text-theme-text mb-4">
+        <Book size={40} strokeWidth={1.5} />
       </div>
       <h1 className="text-2xl font-bold text-center m-0 mb-8 text-theme-text">
         {isRegister ? "Crear Cuenta" : "Iniciar Sesión"}
       </h1>
 
       <form onSubmit={handleSubmit} noValidate>
-        {isRegister && (
-          <div className="mb-5">
-            <label htmlFor="name" className="block mb-2 text-sm text-theme-text-muted font-medium">
-              Nombre Completo
-            </label>
-            <input
-              id="name"
-              type="text"
-              className={inputCls}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Juan Pérez"
-              disabled={loading}
-            />
-          </div>
-        )}
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isRegister ? "max-h-120px opacity-100 mb-5" : "max-h-0 opacity-0 mb-0"
+          }`}
+        >
+          <label htmlFor="name" className="block mb-2 text-sm text-theme-text-muted font-medium">
+            Nombre Completo
+          </label>
+          <input
+            id="name"
+            type="text"
+            className={inputCls}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={isRegister}
+            placeholder="Juan Pérez"
+            disabled={loading}
+            tabIndex={isRegister ? 0 : -1}
+          />
+        </div>
 
         <div className="mb-5">
           <label htmlFor="email" className="block mb-2 text-sm text-theme-text-muted font-medium">
@@ -114,26 +117,29 @@ export const LoginForm: React.FC = () => {
           />
         </div>
 
-        {isRegister && (
-          <div className="mb-5">
-            <label
-              htmlFor="inviteCode"
-              className="block mb-2 text-sm text-theme-text-muted font-medium"
-            >
-              Código de Invitación
-            </label>
-            <input
-              id="inviteCode"
-              type="text"
-              className={inputCls}
-              value={inviteCode}
-              onChange={(e) => setInviteCode(e.target.value)}
-              required
-              placeholder="99EE00AA"
-              disabled={loading}
-            />
-          </div>
-        )}
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${
+            isRegister ? "max-h-30 opacity-100 mb-5" : "max-h-0 opacity-0 mb-0"
+          }`}
+        >
+          <label
+            htmlFor="inviteCode"
+            className="block mb-2 text-sm text-theme-text-muted font-medium"
+          >
+            Código de Invitación
+          </label>
+          <input
+            id="inviteCode"
+            type="text"
+            className={inputCls}
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            required={isRegister}
+            placeholder="99EE00AA"
+            disabled={loading}
+            tabIndex={isRegister ? 0 : -1}
+          />
+        </div>
 
         {error && (
           <div

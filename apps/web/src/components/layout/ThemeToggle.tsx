@@ -31,7 +31,7 @@ export const ThemeToggle = ({ variant = "floating" }: { variant?: "sidebar" | "f
     <button
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      className="w-11 h-11 rounded-[10px] bg-theme-card-bg border border-theme-border shadow-[0_4px_12px_rgba(0,0,0,0.12)] flex items-center justify-center cursor-pointer hover:bg-theme-bg transition-colors"
+      className="w-11 h-11 rounded-[10px] bg-theme-card-bg border border-theme-border shadow-[0_4px_12px_rgba(0,0,0,0.12)] flex items-center justify-center cursor-pointer hover:bg-theme-border hover:scale-110 active:scale-95 transition-all duration-200"
     >
       {theme === "light" ? <Moon size={20} strokeWidth={2} /> : <Sun size={20} strokeWidth={2} />}
     </button>
