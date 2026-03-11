@@ -17,9 +17,16 @@ const getDbConfig = () => {
   return { url: `file:${dbPath}` };
 };
 
+import { createClient } from "@libsql/client";
+
+// En el entorno de tests necesitamos pasar explícitamente la config para SQLite local
+const libsqlClient = createClient(getDbConfig());
+
 // Kysely con dialecto libsql — funciona con Turso, SQLite local e in-memory (tests)
 const kyselyDb = new Kysely({
-  dialect: new LibsqlDialect(getDbConfig()),
+  dialect: new LibsqlDialect({
+    client: libsqlClient as any, // Bypass TS2322 version mismatch error
+  }),
 });
 
 export const auth = betterAuth({
