@@ -1,4 +1,5 @@
 import { defineMiddleware } from "astro:middleware";
+import * as Sentry from "@sentry/astro"; // ✅ Importación de Sentry
 
 /**
  * Rutas públicas que NO requieren autenticación.
@@ -86,14 +87,36 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 4. Ruta protegida — verificar autenticación
   if (!hasSessionCookie) {
+    // ✅ Reportamos a Sentry que Astro no recibió la cookie del navegador
+    Sentry.captureMessage("Falta cookie de sesión en ruta protegida", {
+      level: "warning",
+      extra: {
+        pathname,
+        headers: cookieHeader || "Ninguna cookie recibida",
+      },
+    });
     return redirect("/login", 302);
   }
 
-  const { valid } = await validateSession(cookieHeader);
+  // Modificamos aquí para extraer también el 'user' de la validación
+  const { valid, user } = await validateSession(cookieHeader);
   if (!valid) {
+    // ✅ Reportamos a Sentry que la cookie existe, pero Hono la rechazó
+    Sentry.captureMessage("Sesión rechazada por el backend en middleware", {
+      level: "error",
+      extra: {
+        pathname,
+        cookieHeader: "Cookie presente pero no validada por el backend",
+      },
+    });
     return redirect("/login", 302);
   }
 
   // 5. Sesión válida — continuar
+  // ✅ Configuramos el usuario en Sentry para que cualquier error futuro en esta página esté asociado a él
+  if (user && typeof user.email === "string") {
+    Sentry.setUser({ email: user.email, id: String(user.id || "") });
+  }
+
   return next();
 });
