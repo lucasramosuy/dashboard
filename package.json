@@ -6,7 +6,7 @@
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "agentation": "^2.2.1",
-    "concurrently": "8.2.2",
+    "concurrently": "^8.2.2",
     "eslint": "^10.0.2",
     "eslint-plugin-astro": "^1.6.0",
     "prettier": "^3.8.1",
