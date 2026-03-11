@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import * as Sentry from "@sentry/astro";
+import { logger } from "./lib/logger";
 
 const PUBLIC_ROUTES = ["/login"];
 const IGNORED_PREFIXES = ["/api", "/_", "/_image"];
@@ -57,11 +58,11 @@ async function validateSession(
 
     return { valid: false, reason: "La respuesta de la API no contiene datos de sesión." };
   } catch (error) {
-    console.error("[Middleware] Error validando sesión:", error);
+    logger.error("[Middleware] Error validando sesión:", error);
     // ✅ Si es un error de DNS o de red (fetch failed), lo capturamos
     return {
       valid: false,
-      reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`
+      reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

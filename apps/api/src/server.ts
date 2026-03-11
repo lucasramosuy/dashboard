@@ -142,7 +142,7 @@ const server = Bun.serve({
 
 // ✅ Graceful shutdown para evitar puertos ocupados (EADDRINUSE) en Windows
 const shutdown = (signal: string) => {
-  console.log(`\n[${signal}] Cerrando servidor Bun y liberando el puerto ${server.port}...`);
+  logger.info(`\n[${signal}] Cerrando servidor Bun y liberando el puerto ${server.port}...`);
   server.stop(true); // Detiene conexiones activas y libera el puerto
   process.exit(0);
 };

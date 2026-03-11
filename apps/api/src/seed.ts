@@ -2,12 +2,13 @@ import { initDB, dbService, db } from "./lib/db";
 import { auth } from "./lib/auth.better";
 import { randomUUID } from "crypto";
 import type { Absence, Task } from "@dashboard/shared-types";
+import { logger } from "./lib/logger";
 
 async function seed() {
-  console.log("🌱 Iniciando seed técnico de la base de datos...");
+  logger.info("🌱 Iniciando seed técnico de la base de datos...");
   await initDB();
 
-  console.log("🧹 Limpiando usuarios de test antiguos y forzando recreación de demos...");
+  logger.info("🧹 Limpiando usuarios de test antiguos y forzando recreación de demos...");
   await db.execute(`DELETE FROM user WHERE email LIKE 'auth-test-%'`);
   await db.execute(`DELETE FROM user WHERE email = 'demo@example.com'`);
   await db.execute(`DELETE FROM user WHERE email = 'jose@example.com'`);
@@ -34,9 +35,9 @@ async function seed() {
     });
     user = await dbService.users.getByEmail(demoEmail);
     if (!user) throw new Error("No se pudo crear el usuario demo");
-    console.log("✅ Usuario demo creado.");
+    logger.info("✅ Usuario demo creado.");
   } else {
-    console.log("ℹ️ El usuario demo ya existe.");
+    logger.info("ℹ️ El usuario demo ya existe.");
   }
 
   // 2. Usuario dev — José
@@ -49,9 +50,9 @@ async function seed() {
         name: "José",
       },
     });
-    console.log(`✅ Usuario dev creado: ${joseEmail} / ${josePassword}`);
+    logger.info(`✅ Usuario dev creado: ${joseEmail} / ${josePassword}`);
   } else {
-    console.log("ℹ️ El usuario José ya existe.");
+    logger.info("ℹ️ El usuario José ya existe.");
   }
 
   // 3. UC
@@ -61,11 +62,11 @@ async function seed() {
   ];
   for (const s of subjects) {
     await dbService.subjects.create(s);
-    console.log(`✅ UC creada: ${s.name}`);
+    logger.info(`✅ UC creada: ${s.name}`);
   }
 
   // 4. Inasistencias (riesgo en Sistemas Operativos)
-  console.log("⚠️ Generando datos de riesgo de asistencia...");
+  logger.info("⚠️ Generando datos de riesgo de asistencia...");
   for (let i = 0; i < 6; i++) {
     const absence: Absence = {
       id: randomUUID(),
@@ -98,14 +99,14 @@ async function seed() {
   ];
   for (const t of tasks) {
     await dbService.tasks.create(t);
-    console.log(`✅ Tarea creada: ${t.title}`);
+    logger.info(`✅ Tarea creada: ${t.title}`);
   }
 
-  console.log("✨ Seed completado.");
+  logger.info("✨ Seed completado.");
   process.exit(0);
 }
 
 seed().catch((err) => {
-  console.error("❌ Error durante el seed:", err);
+  logger.error("❌ Error durante el seed:", err);
   process.exit(1);
 });

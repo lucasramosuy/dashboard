@@ -37,7 +37,10 @@ export const subjectsService = {
    */
   calculateAttendancePercentage(totalClasses: number, absenceValue: number): number {
     if (totalClasses <= 0) return 100;
-    return Math.min(100, Math.max(0, Math.round(((totalClasses - absenceValue) / totalClasses) * 100)));
+    return Math.min(
+      100,
+      Math.max(0, Math.round(((totalClasses - absenceValue) / totalClasses) * 100)),
+    );
   },
 
   /**

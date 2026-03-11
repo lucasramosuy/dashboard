@@ -9,6 +9,7 @@ import {
   PracticeJournal,
   Invite,
 } from "@dashboard/shared-types";
+import { logger } from "./logger";
 
 // --- DB CONFIG ---
 const getDbConfig = () => {
@@ -216,7 +217,7 @@ export async function initDB() {
           sql: "UPDATE subjects SET slug = ? WHERE id = ?",
           args: [slug, String(row.id)],
         });
-        console.log(`[DB] Slug generado: "${slug}" para subject "${name}"`);
+        logger.info(`[DB] Slug generado: "${slug}" para subject "${name}"`);
       }
     }
   } catch {
@@ -260,7 +261,7 @@ export async function initDB() {
   try {
     const tableInfo = await db.execute("PRAGMA foreign_key_list(practice_journals)");
     if (tableInfo.rows.some((row) => row.table === "subjects")) {
-      console.log("[DB] Removiendo FOREIGN KEY de practice_journals...");
+      logger.info("[DB] Removiendo FOREIGN KEY de practice_journals...");
       await db.execute("PRAGMA foreign_keys = OFF");
       await db.execute("BEGIN TRANSACTION");
       await db.execute("ALTER TABLE practice_journals RENAME TO practice_journals_old");
@@ -279,10 +280,10 @@ export async function initDB() {
       await db.execute("DROP TABLE practice_journals_old");
       await db.execute("COMMIT");
       await db.execute("PRAGMA foreign_keys = ON");
-      console.log("[DB] Migración de practice_journals (sin FK) completada.");
+      logger.info("[DB] Migración de practice_journals (sin FK) completada.");
     }
   } catch (error) {
-    console.error("[DB] Error migrando practice_journals:", error);
+    logger.error("[DB] Error migrando practice_journals:", error);
     try {
       await db.execute("ROLLBACK");
       await db.execute("PRAGMA foreign_keys = ON");
@@ -309,14 +310,14 @@ export async function initDB() {
       )
     `);
   } catch (err) {
-    console.error("[DB] Error arreglando datos en practice_journals:", err);
+    logger.error("[DB] Error arreglando datos en practice_journals:", err);
   }
 
   const config = getDbConfig();
   const location = config.url.startsWith("file::memory:")
     ? "in-memory (test)"
     : (Bun.env.TURSO_DATABASE_URL ?? "local file");
-  console.log(`[DB] Database initialized: ${location}`);
+  logger.info(`[DB] Database initialized: ${location}`);
 }
 
 // --- HELPERS ---
