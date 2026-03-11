@@ -22,9 +22,10 @@ function isIgnoredRoute(pathname: string): boolean {
 
 /**
  * Valida la sesión de Better Auth contra el backend.
- * Reenvía la cookie original para que el backend la reconozca.
+ * Reenvía la cookie original y los headers del cliente para que el backend la reconozca.
  */
 async function validateSession(
+  request: Request, // ✅ Ahora recibimos el objeto Request completo
   cookieHeader: string,
 ): Promise<{ valid: boolean; user?: Record<string, unknown> }> {
   const API_BASE =
@@ -33,11 +34,25 @@ async function validateSession(
       : "http://localhost:8787/api";
 
   try {
+    // ✅ Preparamos los headers para el backend incluyendo la cookie y la identidad del cliente
+    const fetchHeaders = new Headers();
+    fetchHeaders.set("Cookie", cookieHeader);
+
+    // Reenviamos el User-Agent para pasar la validación anti-robo de sesión de Better Auth
+    const userAgent = request.headers.get("User-Agent");
+    if (userAgent) fetchHeaders.set("User-Agent", userAgent);
+
+    // Reenviamos el Origin para pasar la protección CSRF
+    const origin = request.headers.get("Origin") || new URL(request.url).origin;
+    fetchHeaders.set("Origin", origin);
+
+    // Reenviamos la IP original si existe (buena práctica para logs de auth)
+    const forwardedFor = request.headers.get("X-Forwarded-For");
+    if (forwardedFor) fetchHeaders.set("X-Forwarded-For", forwardedFor);
+
     const response = await fetch(`${API_BASE}/auth/get-session`, {
       method: "GET",
-      headers: {
-        Cookie: cookieHeader,
-      },
+      headers: fetchHeaders, // Enviamos los headers enriquecidos
     });
 
     if (!response.ok) {
@@ -77,7 +92,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (isPublicRoute(pathname)) {
     // Si el usuario ya tiene sesión válida, redirigir al dashboard
     if (hasSessionCookie) {
-      const { valid } = await validateSession(cookieHeader);
+      // ✅ Pasamos 'request' como primer argumento
+      const { valid } = await validateSession(request, cookieHeader);
       if (valid) {
         return redirect("/", 302);
       }
@@ -98,8 +114,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect("/login", 302);
   }
 
-  // Modificamos aquí para extraer también el 'user' de la validación
-  const { valid, user } = await validateSession(cookieHeader);
+  // ✅ Pasamos 'request' como primer argumento para extraer el user-agent y origin
+  const { valid, user } = await validateSession(request, cookieHeader);
   if (!valid) {
     // ✅ Reportamos a Sentry que la cookie existe, pero Hono la rechazó
     Sentry.captureMessage("Sesión rechazada por el backend en middleware", {

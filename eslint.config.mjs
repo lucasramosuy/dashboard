@@ -24,7 +24,13 @@ export default [
         alert: "readonly",
         confirm: "readonly",
         fetch: "readonly",
+        Request: "readonly",
         Response: "readonly",
+        Headers: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        AbortController: "readonly",
+        FormData: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
         // Browser DOM Types
