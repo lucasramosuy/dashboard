@@ -244,8 +244,13 @@ const pathname = Astro.url.pathname;
   .app-main {
     flex: 1;
     min-width: 0;
+    max-width: 80%; /* Reduce un 20% el contenedor */
+    margin: 0 auto; /* Centrar horizontalmente */
     padding: 2.5rem;
     background: var(--theme-bg);
+    display: flex; /* Para centrado vertical si todo el contenido lo necesita */
+    flex-direction: column;
+    justify-content: center; /* Centrado vertical ("al medio", no "muy arriba") */
   }
 
   /* ===== MOBILE ACTIONS (theme + logout) ===== */

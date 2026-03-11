@@ -68,7 +68,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 2. Extraer cookies del request
   const cookieHeader = request.headers.get("Cookie") || "";
-  const hasSessionCookie = cookieHeader.includes("better-auth.session_token");
+  const hasSessionCookie =
+    cookieHeader.includes("better-auth.session_token") ||
+    cookieHeader.includes("__Secure-better-auth.session_token");
 
   // 3. Ruta pública (login)
   if (isPublicRoute(pathname)) {
