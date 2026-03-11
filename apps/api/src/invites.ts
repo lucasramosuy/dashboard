@@ -9,7 +9,7 @@ async function main() {
   const activeCount = await dbService.invites.countActive();
 
   if (activeCount >= LIMIT) {
-    logger.info(`⚠️ Ya hay ${activeCount} activos. Límite: ${LIMIT}.`);
+    logger.info("⚠️ Ya hay "+activeCount+" activos. Límite: "+LIMIT+".");
     process.exit(0);
   }
 
