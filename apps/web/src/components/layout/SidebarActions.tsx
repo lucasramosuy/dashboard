@@ -1,9 +1,9 @@
 import React from "react";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
-import { ThemeToggle } from '../layout/ThemeToggle';
-import { LogoutButton } from '../auth/LogoutButton';
-import { ProfileButton } from '../profile/ProfileButton';
+import { ThemeToggle } from "../layout/ThemeToggle";
+import { LogoutButton } from "../auth/LogoutButton";
+import { ProfileButton } from "../profile/ProfileButton";
 
 interface SidebarActionsProps {
   variant?: "sidebar" | "floating";
