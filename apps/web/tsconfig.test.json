@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["astro/client", "bun-types"]
+  },
+  "include": ["src/**/*", "tests/**/*", "sentry.client.config.ts", "sentry.server.config.ts"]
+}
