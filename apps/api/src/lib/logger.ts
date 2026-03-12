@@ -11,18 +11,14 @@ export const toError = (err: unknown): Error => {
   }
 };
 
-const isProd = Bun.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === "production";
 
 export const logger = {
   debug: (...args: unknown[]) => {
-    if (!isProd) {
-      console.debug("[DEBUG]", ...args);
-    }
+    if (!isProd) console.debug("[DEBUG]", ...args);
   },
   info: (...args: unknown[]) => {
-    if (!isProd) {
-      console.info("[INFO]", ...args);
-    }
+    if (!isProd) console.info("[INFO]", ...args);
   },
   warn: (...args: unknown[]) => {
     console.warn("[WARN]", ...args);
@@ -30,11 +26,18 @@ export const logger = {
   error: (...args: unknown[]) => {
     console.error("[ERROR]", ...args);
 
-    // En producción delega automáticamente a Sentry
     if (isProd) {
-      const err = args.length > 0 ? toError(args[0]) : new Error("Log de error sin argumentos");
-      Sentry.captureException(err, {
-        extra: { additionalArgs: args.slice(1) },
+      if (args.length === 0) {
+        Sentry.captureException(new Error("Log de error sin argumentos"));
+        return;
+      }
+
+      // Busca el primer Error real en los argumentos para preservar el stack trace
+      const errorInstance = args.find((arg) => arg instanceof Error) as Error | undefined;
+      const primaryError = errorInstance || toError(args[0]);
+
+      Sentry.captureException(primaryError, {
+        extra: { additionalArgs: args.filter((arg) => arg !== primaryError) },
       });
     }
   },
