@@ -1,4 +1,4 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, fontProviders } from "astro/config";
 import react from "@astrojs/react";
 import node from "@astrojs/node";
 import sentry from "@sentry/astro";
@@ -17,6 +17,18 @@ export default defineConfig({
   ],
   output: "server",
   adapter: node({ mode: "standalone" }),
+  fonts: [
+    {
+      name: "Inter",
+      cssVariable: "--font-inter",
+      provider: fontProviders.fontsource(),
+    },
+    {
+      name: "JetBrains Mono",
+      cssVariable: "--font-jetbrains-mono",
+      provider: fontProviders.fontsource(),
+    },
+  ],
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
