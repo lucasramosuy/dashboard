@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import * as Sentry from "@sentry/astro";
+import { logger } from "./lib/logger";
 
 const PUBLIC_ROUTES = ["/login"];
 const IGNORED_PREFIXES = ["/api", "/_", "/_image"];
@@ -12,7 +13,7 @@ function isIgnoredRoute(pathname: string): boolean {
   return IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-// ✅ Actualizamos para que devuelva la razón (reason) del fallo
+// ✅ Función de validación con el bypass del proxy implementado
 async function validateSession(
   request: Request,
   cookieHeader: string,
@@ -25,15 +26,23 @@ async function validateSession(
   try {
     const fetchHeaders = new Headers();
     fetchHeaders.set("Cookie", cookieHeader);
-
-    // Agregamos Accept explícito para prevenir bloqueos del backend
     fetchHeaders.set("Accept", "application/json");
 
     const userAgent = request.headers.get("User-Agent");
     if (userAgent) fetchHeaders.set("User-Agent", userAgent);
 
-    const origin = request.headers.get("Origin") || new URL(request.url).origin;
-    fetchHeaders.set("Origin", origin);
+    // ✅ SOLUCIÓN AL PROBLEMA DE LOCALHOST (PROXY BYPASS)
+    // Forzamos la identidad del dominio real para que Better Auth no lo bloquee por CSRF
+    const REAL_ORIGIN = "https://dashboard.dominio.uy"; // <- Pon tu dominio de producción aquí
+
+    // Si estamos en dev (localhost), usamos el origen normal. Si no, forzamos REAL_ORIGIN
+    const isDev = request.url.includes("localhost");
+    const finalOrigin = isDev ? (request.headers.get("Origin") || new URL(request.url).origin) : REAL_ORIGIN;
+
+    fetchHeaders.set("Origin", finalOrigin);
+    fetchHeaders.set("Host", finalOrigin.replace("https://", "").replace("http://", ""));
+    fetchHeaders.set("X-Forwarded-Host", finalOrigin.replace("https://", "").replace("http://", ""));
+    fetchHeaders.set("X-Forwarded-Proto", isDev ? "http" : "https");
 
     const forwardedFor = request.headers.get("X-Forwarded-For");
     if (forwardedFor) fetchHeaders.set("X-Forwarded-For", forwardedFor);
@@ -44,7 +53,6 @@ async function validateSession(
     });
 
     if (!response.ok) {
-      // ✅ Si Hono rechaza, leemos exactamente qué nos contestó (Ej: HTTP 403 Forbidden)
       const errorText = await response.text();
       return { valid: false, reason: `HTTP ${response.status}: ${errorText}` };
     }
@@ -57,8 +65,7 @@ async function validateSession(
 
     return { valid: false, reason: "La respuesta de la API no contiene datos de sesión." };
   } catch (error) {
-    console.error("[Middleware] Error validando sesión:", error);
-    // ✅ Si es un error de DNS o de red (fetch failed), lo capturamos
+    logger.error("[Middleware] Error validando sesión:", error);
     return {
       valid: false,
       reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`
@@ -100,14 +107,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect("/login", 302);
   }
 
-  // ✅ Ahora capturamos el reason y lo inyectamos en Sentry
   const { valid, user, reason } = await validateSession(request, cookieHeader);
   if (!valid) {
     Sentry.captureMessage("Sesión rechazada por el backend en middleware", {
       level: "error",
       extra: {
         pathname,
-        motivo_del_rechazo: reason || "Motivo desconocido", // <- ¡AQUÍ ESTÁ LA MAGIA!
+        motivo_del_rechazo: reason || "Motivo desconocido",
       },
     });
     return redirect("/login", 302);

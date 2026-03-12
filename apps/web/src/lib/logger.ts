@@ -4,7 +4,6 @@ export const toError = (err: unknown): Error => {
   if (err instanceof Error) return err;
   if (typeof err === "string") return new Error(err);
 
-  // Retiene la estructura de objetos planos y previene la pérdida de datos
   try {
     return new Error(JSON.stringify(err));
   } catch {
@@ -12,16 +11,14 @@ export const toError = (err: unknown): Error => {
   }
 };
 
+const isProd = import.meta.env.PROD;
+
 export const logger = {
   debug: (...args: unknown[]) => {
-    if (import.meta.env?.MODE !== "production") {
-      console.debug("[DEBUG]", ...args);
-    }
+    if (!isProd) console.debug("[DEBUG]", ...args);
   },
   info: (...args: unknown[]) => {
-    if (import.meta.env?.MODE !== "production") {
-      console.info("[INFO]", ...args);
-    }
+    if (!isProd) console.info("[INFO]", ...args);
   },
   warn: (...args: unknown[]) => {
     console.warn("[WARN]", ...args);
@@ -29,11 +26,18 @@ export const logger = {
   error: (...args: unknown[]) => {
     console.error("[ERROR]", ...args);
 
-    // Despacho condicional a Sentry exclusivo para producción
-    if (import.meta.env?.MODE === "production") {
-      const err = args.length > 0 ? toError(args[0]) : new Error("Log de error sin argumentos");
-      Sentry.captureException(err, {
-        extra: { additionalArgs: args.slice(1) },
+    if (isProd) {
+      if (args.length === 0) {
+        Sentry.captureException(new Error("Log de error sin argumentos"));
+        return;
+      }
+
+      // Prioriza la captura de instancias de Error reales para mantener la integridad de la traza
+      const errorInstance = args.find((arg) => arg instanceof Error) as Error | undefined;
+      const primaryError = errorInstance || toError(args[0]);
+
+      Sentry.captureException(primaryError, {
+        extra: { additionalArgs: args.filter((arg) => arg !== primaryError) },
       });
     }
   },
