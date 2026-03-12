@@ -1,7 +1,5 @@
 @import "tailwindcss";
 @config "../../tailwind.config.mjs";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/jetbrains-mono";
 
 /* ============================================================
    ZENITH DESIGN SYSTEM — theme.css (Tailwind v4)
