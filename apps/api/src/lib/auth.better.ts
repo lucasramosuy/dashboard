@@ -29,6 +29,8 @@ const kyselyDb = new Kysely({
   }),
 });
 
+const isProd = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
@@ -51,8 +53,8 @@ export const auth = betterAuth({
 
   advanced: {
     crossSubDomainCookies: {
-      enabled: true,
-      domain: ".lucasramos.uy",
+      enabled: isProd,
+      domain: isProd ? ".lucasramos.uy" : undefined,
     },
   },
 });
