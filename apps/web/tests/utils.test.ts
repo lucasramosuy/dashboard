@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { cn } from "../src/lib/utils";
+import { cn, formatDate } from "../src/lib/utils";
 
 describe("utils", () => {
   describe("cn", () => {
@@ -35,6 +35,19 @@ describe("utils", () => {
       expect(
         cn("px-2 py-1", ["bg-red-500", { "text-white": true, "font-bold": false }]),
       ).toBe("px-2 py-1 bg-red-500 text-white");
+    });
+  });
+
+  describe("formatDate", () => {
+    test.each([
+      { description: "from a string", input: "2024-03-12T12:00:00Z" },
+      { description: "from a Date object", input: new Date("2024-03-12T12:00:00Z") },
+    ])("formats date correctly $description", ({ input }) => {
+      // This will use local timezone, so output depends on the timezone.
+      // We will match regex instead of hardcoding text to prevent flakiness.
+      // Output format for es-UY is like "12 mar. 2024" (dd mmm yyyy).
+      const formatted = formatDate(input);
+      expect(formatted).toMatch(/\d{2} [a-z]{3}\.? \d{4}/i);
     });
   });
 });
