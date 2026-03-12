@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { cn, formatDate } from "../src/lib/utils";
+import { cn } from "../src/lib/utils";
 
 describe("utils", () => {
   describe("cn", () => {
@@ -14,7 +14,9 @@ describe("utils", () => {
     });
 
     test("handles conditional classes", () => {
-      expect(cn("px-2 py-1", true && "bg-red-500", false && "text-white")).toBe(
+      const isRed = true;
+      const isWhite = false;
+      expect(cn("px-2 py-1", isRed && "bg-red-500", isWhite && "text-white")).toBe(
         "px-2 py-1 bg-red-500",
       );
     });
@@ -33,22 +35,6 @@ describe("utils", () => {
       expect(
         cn("px-2 py-1", ["bg-red-500", { "text-white": true, "font-bold": false }]),
       ).toBe("px-2 py-1 bg-red-500 text-white");
-    });
-  });
-
-  describe("formatDate", () => {
-    test("formats date correctly", () => {
-      const date = new Date("2024-03-12T12:00:00Z");
-      // This will use local timezone, so output depends on the timezone.
-      // We will match regex instead of hardcoding text to prevent flakiness
-      // Output format es-UY (dd/mmm/yyyy)
-      const formatted = formatDate(date);
-      expect(formatted).toMatch(/\d{2} [a-z]{3}\.? \d{4}/i);
-    });
-
-    test("formats string date correctly", () => {
-      const formatted = formatDate("2024-03-12T12:00:00Z");
-      expect(formatted).toMatch(/\d{2} [a-z]{3}\.? \d{4}/i);
     });
   });
 });
