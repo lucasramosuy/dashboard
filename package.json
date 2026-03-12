@@ -1,6 +1,11 @@
 {
   "name": "dashboard",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
@@ -12,7 +17,6 @@
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1"
   },
-  "private": true,
   "scripts": {
     "dev:web": "cd apps/web && bun run dev",
     "dev:api": "cd apps/api && bun run dev",
@@ -29,9 +33,5 @@
     "check": "bun run lint && bun run check:api && bun run check:web",
     "check:api": "cd apps/api && bun run check",
     "check:web": "cd apps/web && bun run check"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  }
 }

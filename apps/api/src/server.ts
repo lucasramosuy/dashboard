@@ -26,7 +26,7 @@ import { icalRouter } from "./routes/ical";
 import { sentryTunnelRouter } from "./routes/sentry_tunnel";
 import { initDB } from "./lib/db";
 import { auth } from "./lib/auth.better";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { initCronJobs } from "./cron";
 
 // Initialize SQLite tables
