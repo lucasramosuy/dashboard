@@ -14,7 +14,7 @@ export const LoginForm: React.FC = () => {
 
   const [sessionExpired] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    return window.location.search.includes("reason=session_expired");
+    return new URLSearchParams(window.location.search).get("reason") === "session_expired";
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
