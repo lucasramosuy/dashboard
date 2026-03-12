@@ -9,7 +9,7 @@ import {
   PracticeJournal,
   Invite,
 } from "@dashboard/shared-types";
-import {logger} from "./logger";
+import { logger } from "./logger";
 
 // --- DB CONFIG ---
 const getDbConfig = () => {

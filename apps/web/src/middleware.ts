@@ -37,11 +37,16 @@ async function validateSession(
 
     // Si estamos en dev (localhost), usamos el origen normal. Si no, forzamos REAL_ORIGIN
     const isDev = request.url.includes("localhost");
-    const finalOrigin = isDev ? (request.headers.get("Origin") || new URL(request.url).origin) : REAL_ORIGIN;
+    const finalOrigin = isDev
+      ? request.headers.get("Origin") || new URL(request.url).origin
+      : REAL_ORIGIN;
 
     fetchHeaders.set("Origin", finalOrigin);
     fetchHeaders.set("Host", finalOrigin.replace("https://", "").replace("http://", ""));
-    fetchHeaders.set("X-Forwarded-Host", finalOrigin.replace("https://", "").replace("http://", ""));
+    fetchHeaders.set(
+      "X-Forwarded-Host",
+      finalOrigin.replace("https://", "").replace("http://", ""),
+    );
     fetchHeaders.set("X-Forwarded-Proto", isDev ? "http" : "https");
 
     const forwardedFor = request.headers.get("X-Forwarded-For");
@@ -68,7 +73,7 @@ async function validateSession(
     logger.error("[Middleware] Error validando sesión:", error);
     return {
       valid: false,
-      reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`
+      reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
