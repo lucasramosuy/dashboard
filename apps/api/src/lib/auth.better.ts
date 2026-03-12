@@ -51,8 +51,8 @@ export const auth = betterAuth({
 
   advanced: {
     crossSubDomainCookies: {
-      enabled: true,
-      domain: ".lucasramos.uy",
+      enabled: process.env.NODE_ENV === "production",
+      domain: process.env.NODE_ENV === "production" ? ".lucasramos.uy" : undefined,
     },
   },
 });
