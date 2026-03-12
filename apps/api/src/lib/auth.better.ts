@@ -13,7 +13,7 @@ const getDbConfig = () => {
       authToken: process.env.TURSO_AUTH_TOKEN ?? "",
     };
   }
-  const dbPath = process.env.DATABASE_PATH ?? "database.sqlite";
+  const dbPath = process.env.DATABASE_PATH ?? "./data/database.sqlite";
   return { url: `file:${dbPath}` };
 };
 
