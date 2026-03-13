@@ -5,6 +5,10 @@ import { logger } from "./lib/logger";
 const PUBLIC_ROUTES = ["/login"];
 const IGNORED_PREFIXES = ["/api", "/_", "/_image"];
 
+// UAs de bots, health checkers e infra que nunca tienen cookie de sesión.
+// No tienen sentido en Sentry y generan falsos positivos.
+const BOT_UA_PATTERNS = ["Go-http-client", "Render", "kube-probe", "GoogleHC", "curl"];
+
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.includes(pathname);
 }
@@ -107,6 +111,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (!hasSessionCookie) {
+    const ua = request.headers.get("User-Agent") || "";
+    const isBot = BOT_UA_PATTERNS.some((p) => ua.includes(p));
+
+    // Health checkers y bots nunca tienen cookie — no son errores reales.
+    // Responder 200 vacío para que Render no marque el servicio como caído.
+    if (isBot) {
+      return new Response(null, { status: 200 });
+    }
+
     Sentry.captureMessage("Falta cookie de sesión en ruta protegida", {
       level: "warning",
       extra: {
