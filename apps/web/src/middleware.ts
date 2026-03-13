@@ -13,44 +13,36 @@ function isIgnoredRoute(pathname: string): boolean {
   return IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-// ✅ Función de validación con el bypass del proxy implementado
+// La URL de la API: en dev apunta directamente al backend (bypaseando el proxy de Vite
+// que no existe en SSR). En prod usa PUBLIC_API_BASE del build.
+const API_BASE =
+  import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
+    ? import.meta.env.PUBLIC_API_BASE
+    : "http://localhost:8787/api";
+
+// El origen del frontend: en dev es localhost:4321 (en trustedOrigins de Better Auth),
+// en prod es la variable de entorno PUBLIC_FRONTEND_ORIGIN.
+const FRONTEND_ORIGIN =
+  import.meta.env.PUBLIC_FRONTEND_ORIGIN && import.meta.env.PUBLIC_FRONTEND_ORIGIN.trim() !== ""
+    ? import.meta.env.PUBLIC_FRONTEND_ORIGIN
+    : "http://localhost:4321";
+
 async function validateSession(
   request: Request,
   cookieHeader: string,
 ): Promise<{ valid: boolean; user?: Record<string, unknown>; reason?: string }> {
-  const API_BASE =
-    import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
-      ? import.meta.env.PUBLIC_API_BASE
-      : "http://localhost:8787/api";
-
   try {
     const fetchHeaders = new Headers();
     fetchHeaders.set("Cookie", cookieHeader);
     fetchHeaders.set("Accept", "application/json");
 
+    // Better Auth valida Origin contra trustedOrigins. Enviamos el origen del frontend
+    // (que está en trustedOrigins) en lugar del origen del request entrante, que puede
+    // no tener header Origin (navegaciones directas del browser no lo envían).
+    fetchHeaders.set("Origin", FRONTEND_ORIGIN);
+
     const userAgent = request.headers.get("User-Agent");
     if (userAgent) fetchHeaders.set("User-Agent", userAgent);
-
-    // ✅ SOLUCIÓN AL PROBLEMA DE LOCALHOST (PROXY BYPASS)
-    // Forzamos la identidad del dominio real para que Better Auth no lo bloquee por CSRF
-    const REAL_ORIGIN = "https://dashboard.dominio.uy"; // <- Pon tu dominio de producción aquí
-
-    // Si estamos en dev (localhost), usamos el origen normal. Si no, forzamos REAL_ORIGIN
-    const isDev = request.url.includes("localhost");
-    const finalOrigin = isDev
-      ? request.headers.get("Origin") || new URL(request.url).origin
-      : REAL_ORIGIN;
-
-    fetchHeaders.set("Origin", finalOrigin);
-    fetchHeaders.set("Host", finalOrigin.replace("https://", "").replace("http://", ""));
-    fetchHeaders.set(
-      "X-Forwarded-Host",
-      finalOrigin.replace("https://", "").replace("http://", ""),
-    );
-    fetchHeaders.set("X-Forwarded-Proto", isDev ? "http" : "https");
-
-    const forwardedFor = request.headers.get("X-Forwarded-For");
-    if (forwardedFor) fetchHeaders.set("X-Forwarded-For", forwardedFor);
 
     const response = await fetch(`${API_BASE}/auth/get-session`, {
       method: "GET",
