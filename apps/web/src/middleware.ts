@@ -13,19 +13,25 @@ function isIgnoredRoute(pathname: string): boolean {
   return IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-// La URL de la API: en dev apunta directamente al backend (bypaseando el proxy de Vite
-// que no existe en SSR). En prod usa PUBLIC_API_BASE del build.
+// URL de la API para el middleware SSR (server-to-server).
+// INTERNAL_API_BASE es una variable de entorno RUNTIME (no build-time) que permite
+// apuntar al origen interno de Render (http://dashboard-api:8787/api) para evitar
+// pasar por Cloudflare en los requests server-to-server de validación de sesión.
+// Si no está definida, cae a PUBLIC_API_BASE (build-time) y luego al default.
 const API_BASE =
-  import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
+  (typeof process !== "undefined" && process.env.INTERNAL_API_BASE?.trim()) ||
+  (import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
     ? import.meta.env.PUBLIC_API_BASE
-    : "http://localhost:8787/api";
+    : "http://localhost:8787/api");
 
-// El origen del frontend: en dev es localhost:4321 (en trustedOrigins de Better Auth),
-// en prod es la variable de entorno PUBLIC_FRONTEND_ORIGIN.
+// El origen del frontend: Better Auth valida este valor contra trustedOrigins.
+// Usamos process.env como fuente primaria (runtime, siempre disponible en Node SSR),
+// con import.meta.env como fallback (build-time, bakeado por Vite/Astro).
+// NUNCA debe ser localhost en prod — si lo es, Better Auth rechazará todas las sesiones.
 const FRONTEND_ORIGIN =
-  import.meta.env.PUBLIC_FRONTEND_ORIGIN && import.meta.env.PUBLIC_FRONTEND_ORIGIN.trim() !== ""
-    ? import.meta.env.PUBLIC_FRONTEND_ORIGIN
-    : "http://localhost:4321";
+  (typeof process !== "undefined" && process.env.PUBLIC_FRONTEND_ORIGIN?.trim()) ||
+  (import.meta.env.PUBLIC_FRONTEND_ORIGIN?.trim()) ||
+  "http://localhost:4321";
 
 async function validateSession(
   request: Request,

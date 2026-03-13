@@ -36,3 +36,7 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: "4321"
+      - key: PUBLIC_FRONTEND_ORIGIN
+        value: https://dashboard.lucasramos.uy
+      - key: PUBLIC_API_BASE
+        value: https://api.lucasramos.uy/api
