@@ -56,5 +56,11 @@ export const auth = betterAuth({
       enabled: isProd,
       domain: isProd ? ".lucasramos.uy" : undefined,
     },
+    // Con crossSubDomainCookies el browser necesita SameSite=None; Secure para
+    // aceptar la cookie en requests cross-subdomain (dashboard. → api.).
+    // Better Auth usa Lax por defecto, lo que bloquea la cookie en prod.
+    defaultCookieAttributes: isProd
+      ? { sameSite: "none", secure: true }
+      : {},
   },
 });
