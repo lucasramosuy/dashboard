@@ -12,16 +12,22 @@ const practiceJournalsRouter = new Hono<AuthEnv>();
 
 practiceJournalsRouter.use("/*", authMiddleware);
 
-// GET all journals (optional filter by subject_id)
+// GET all journals (optional filter by subject_id or date)
 practiceJournalsRouter.get("/", async (c) => {
   const user = c.get("user");
   const subjectId = c.req.query("subject_id");
+  const date = c.req.query("date");
 
   if (subjectId) {
     if (!(await dbService.ownership.subjectBelongsToUser(subjectId, user.id))) {
       return c.json({ error: "Not found" }, 404);
     }
     return c.json(await dbService.journals.getBySubject(subjectId));
+  }
+
+  // PERF-2: support ?date= query param to fetch a single day's journals
+  if (date) {
+    return c.json(await dbService.journals.getByDate(user.id, date));
   }
 
   return c.json(await dbService.journals.getByUser(user.id));

@@ -1,25 +1,14 @@
 import { Hono } from "hono";
 
 import { dbService } from "../lib/db";
+import { generateSlug } from "../lib/utils";
 
-import type { Subject } from "@dashboard/shared-types";
+import type { Subject, Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
 
 import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 import { createSubjectSchema, updateSubjectSchema } from "@dashboard/shared-types";
 import { subjectsService } from "../services/subjectsService";
-
-const generateSlug = (text: string) => {
-  return text
-    .toString()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
-};
 
 const subjectsRouter = new Hono<AuthEnv>();
 
@@ -76,11 +65,11 @@ subjectsRouter.get("/:id", async (c) => {
 
   // Pre-computar promedio de grade de las tasks asociadas
   const tasks = await dbService.tasks.getBySubject(id);
-  const gradedTasks = tasks.filter((t: any) => t.grade != null);
+  const gradedTasks = tasks.filter((t: Task) => t.grade != null);
   const gradeAvg =
     gradedTasks.length > 0
       ? Math.round(
-          (gradedTasks.reduce((sum: number, t: any) => sum + Number(t.grade), 0) /
+          (gradedTasks.reduce((sum: number, t: Task) => sum + Number(t.grade), 0) /
             gradedTasks.length) *
             10,
         ) / 10

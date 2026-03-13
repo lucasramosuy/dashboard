@@ -45,9 +45,8 @@ export const icalService = {
         }
       }
 
-      // 3. Update the DB
-      await dbService.icalEvents.deleteByUser(userId);
-      await dbService.icalEvents.insertBatch(eventsToInsert);
+      // 3. Update the DB — atomic batch replace (ARCH-8)
+      await dbService.icalEvents.replaceByUser(userId, eventsToInsert);
 
       // 4. Update user last sync
       await db.execute({

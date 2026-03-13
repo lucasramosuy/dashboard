@@ -3,23 +3,12 @@ import type { Task } from "@dashboard/shared-types";
 
 export const tasksService = {
   getWeeklyTasks: async (userId: string, startIso: string, endIso: string) => {
-    // Obtenemos todas las tareas del usuario (incluyendo las del planner)
-    const allTasks = await dbService.tasks.getByUser(userId, true);
-    const startDate = new Date(startIso);
-    const endDate = new Date(endIso);
-
-    // Normalizamos para agarrar todo el rango horario
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-
-    const filtered = allTasks.filter((t) => {
-      const taskDate = new Date(t.due_date);
-      return taskDate >= startDate && taskDate <= endDate;
-    });
+    // PERF-1: fetch only tasks within the date range at the DB level
+    const tasks = await dbService.tasks.getByUserAndDateRange(userId, startIso, endIso, true);
 
     // Agrupar por fecha en string ("YYYY-MM-DD")
     const grouped: Record<string, Task[]> = {};
-    for (const task of filtered) {
+    for (const task of tasks) {
       const dateKey = new Date(task.due_date).toISOString().split("T")[0];
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];

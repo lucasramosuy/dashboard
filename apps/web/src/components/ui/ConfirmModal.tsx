@@ -24,7 +24,7 @@ export function ConfirmModal({
   onCancel,
   isLoading,
 }: ConfirmModalProps) {
-  const dialogRef = useRef<any>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (isOpen) {

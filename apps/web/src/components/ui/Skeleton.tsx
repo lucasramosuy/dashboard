@@ -202,7 +202,7 @@ export function PlannerSkeleton() {
               </div>
               {/* Tareas */}
               <div className="flex-1 p-2 space-y-2">
-                {Array.from({ length: Math.floor(Math.random() * 3) + 1 }).map((_, j) => (
+                {Array.from({ length: (i % 3) + 1 }).map((_, j) => (
                   <div key={j} className="flex items-center gap-2">
                     <Skeleton variant="circular" className="w-4 h-4" />
                     <Skeleton variant="text" className="flex-1 h-3" />
