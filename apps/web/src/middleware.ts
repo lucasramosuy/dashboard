@@ -67,7 +67,13 @@ async function validateSession(
       return { valid: true, user: data.user };
     }
 
-    return { valid: false, reason: "La respuesta de la API no contiene datos de sesión." };
+    // Log para diagnóstico: muestra qué devolvió la API y qué Origin se usó
+    logger.warn("[Middleware] get-session devolvió sin sesión", {
+      origin_enviado: FRONTEND_ORIGIN,
+      api_base: API_BASE,
+      data_recibida: JSON.stringify(data),
+    });
+    return { valid: false, reason: `La API devolvió: ${JSON.stringify(data)} (Origin enviado: ${FRONTEND_ORIGIN})` };
   } catch (error) {
     logger.error("[Middleware] Error validando sesión:", error);
     return {
