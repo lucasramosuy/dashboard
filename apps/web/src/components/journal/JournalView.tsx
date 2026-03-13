@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import type { PracticeJournal } from "@dashboard/shared-types";
 import { useAuth } from "../../contexts/AuthContext";
 import { Toast } from "../ui/Toast";
 import { useToast } from "../../hooks/useToast";
 import { useJournalByDate, useJournals, useUpsertJournal } from "../../hooks/useDashboardQueries";
 
+// DX-2: These subjects are hardcoded for the current deployment.
+// Consider fetching from the API or a config endpoint if more are added.
 const PRACTICE_SUBJECTS = ["Derecho", "Sociología"];
 
 function formatDateDisplay(date: Date | string): string {
@@ -21,7 +24,7 @@ export const JournalView: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
   const [draftContent, setDraftContent] = useState("");
   const [draftSubjectId, setDraftSubjectId] = useState("");
-  const [selectedEntry, setSelectedEntry] = useState<any>(null);
+  const [selectedEntry, setSelectedEntry] = useState<PracticeJournal | null>(null);
   const dateInputRef = React.useRef<HTMLInputElement>(null);
 
   const { data: journalOnDate, isLoading: loadingJournal } = useJournalByDate(currentDate);
@@ -54,7 +57,7 @@ export const JournalView: React.FC = () => {
       },
       {
         onSuccess: () => showToast("Práctica guardada correctamente"),
-        onError: (e: any) => showToast(e.message, "error"),
+        onError: (e: Error) => showToast(e.message, "error"),
       },
     );
   };

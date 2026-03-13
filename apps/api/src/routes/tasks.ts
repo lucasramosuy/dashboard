@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import { dbService } from "../lib/db";
 import { tasksService } from "../services/tasksService";
+import { generateSlug } from "../lib/utils";
 
 import type { Task } from "@dashboard/shared-types";
 import { randomUUID } from "node:crypto";
@@ -12,18 +13,6 @@ import {
   updateTaskSchema,
   updateTaskStatusSchema,
 } from "@dashboard/shared-types";
-
-const generateSlug = (text: string) => {
-  return text
-    .toString()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
-};
 
 const tasksRouter = new Hono<AuthEnv>();
 

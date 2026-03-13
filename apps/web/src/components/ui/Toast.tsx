@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
 
 interface Props {
@@ -8,10 +8,13 @@ interface Props {
 }
 
 export const Toast: React.FC<Props> = ({ message, type = "success", onClose }) => {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
+    const timer = setTimeout(() => onCloseRef.current(), 4000);
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, []);
 
   const styles = {
     success:

@@ -1,6 +1,4 @@
 import React from "react";
-import { AuthProvider } from "../../contexts/AuthContext";
-import { ThemeProvider } from "../../contexts/ThemeContext";
 import { ThemeToggle } from "../layout/ThemeToggle";
 import { LogoutButton } from "../auth/LogoutButton";
 import { ProfileButton } from "../profile/ProfileButton";
@@ -9,16 +7,14 @@ interface SidebarActionsProps {
   variant?: "sidebar" | "floating";
 }
 
+// ARCH-4: Removed nested ThemeProvider/AuthProvider — these are already
+// provided at the app root. Nesting them caused duplicate contexts.
 export const SidebarActions: React.FC<SidebarActionsProps> = ({ variant }) => {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <div className="flex flex-col gap-1 w-full sidebar-actions-container">
-          <ProfileButton />
-          <ThemeToggle variant={variant} />
-          <LogoutButton />
-        </div>
-      </AuthProvider>
-    </ThemeProvider>
+    <div className="flex flex-col gap-1 w-full sidebar-actions-container">
+      <ProfileButton />
+      <ThemeToggle variant={variant} />
+      <LogoutButton />
+    </div>
   );
 };

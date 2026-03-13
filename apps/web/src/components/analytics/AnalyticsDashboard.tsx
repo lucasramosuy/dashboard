@@ -28,11 +28,11 @@ export const AnalyticsDashboard: React.FC = () => {
   useEffect(() => {
     // Detectar el modo oscuro desde el atributo html
     const checkTheme = () => {
-      setIsDark(document.body.dataset.theme === "dark");
+      setIsDark(document.documentElement.dataset.theme === "dark");
     };
     checkTheme();
     const observer = new window.MutationObserver(checkTheme);
-    observer.observe(document.body, { attributes: true, attributeFilter: ["data-theme"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => observer.disconnect();
   }, []);
 

@@ -1,11 +1,9 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import type { UserPublic } from "@dashboard/shared-types";
 import { api } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { logger, toError } from "../lib/logger";
-
-const queryClient = new QueryClient();
 
 interface AuthContextType {
   user: UserPublic | null;
@@ -25,6 +23,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // ARCH-5: Create QueryClient inside component to avoid shared state across renders
+  const [queryClient] = useState(() => new QueryClient());
   const { data: sessionData, isPending, error, refetch } = authClient.useSession();
 
   const user = sessionData?.user as UserPublic | null;

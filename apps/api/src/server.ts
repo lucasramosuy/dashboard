@@ -41,12 +41,19 @@ export const app = new Hono();
 app.onError(async (err, c) => {
   if (err instanceof z.ZodError) {
     logger.error("[Zod Error]", err.issues);
-    return c.json({ error: "Validation error", details: err.format() }, 400);
+    // ERR-3: return field-level errors without exposing full schema
+    const fieldErrors = err.issues.map((i) => ({ path: i.path.join("."), message: i.message }));
+    return c.json({ error: "Validation error", details: fieldErrors }, 400);
   }
   logger.error("[API Error]", err.stack || err);
 
-  // Intentamos obtener el usuario actual para Sentry Logging
-  const sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
+  // ERR-2: wrap getSession in try/catch to prevent cascading errors
+  let sessionData: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
+  try {
+    sessionData = await auth.api.getSession({ headers: c.req.raw.headers });
+  } catch {
+    // Session lookup failed — continue without user context
+  }
 
   // Aislamos el scope para que este error se mande específicamente con el cliente Hono
   Sentry.withIsolationScope(() => {
@@ -69,7 +76,8 @@ app.onError(async (err, c) => {
     });
   });
 
-  return c.json({ error: err.message || "Internal server error" }, 500);
+  // SEC-3: don't leak internal error messages to the client
+  return c.json({ error: "Internal server error" }, 500);
 });
 
 // ✅ 404 handler — JSON en vez de HTML
@@ -81,7 +89,8 @@ const ALLOWED_ORIGINS = (Bun.env.CORS_ORIGINS || "http://localhost:4321").split(
 app.use(
   "/api/*",
   cors({
-    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]),
+    // SEC-5: reject unknown origins instead of falling back to the first allowed origin
+    origin: (origin) => (ALLOWED_ORIGINS.includes(origin) ? origin : null),
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     exposeHeaders: ["Content-Length", "Set-Cookie"],
