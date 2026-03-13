@@ -90,8 +90,14 @@ app.use(
   }),
 );
 
-// Better Auth handler — debe ir ANTES que authRouter para no bloquear rutas de Better Auth
-app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c) => {
+// Better Auth handler — captura todas las rutas de /api/auth/* EXCEPTO /register
+// que es una ruta custom con validación de invite code.
+app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c, next) => {
+  // Delegar /api/auth/register al authRouter custom
+  if (c.req.path === "/api/auth/register") {
+    return next();
+  }
+
   const origin = c.req.header("Origin");
   const validOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
 
