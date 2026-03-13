@@ -27,6 +27,8 @@ services:
     buildArgs:
       - key: PUBLIC_API_BASE
         value: https://api.lucasramos.uy/api
+      - key: PUBLIC_FRONTEND_ORIGIN
+        value: https://dashboard.lucasramos.uy
     envVars:
       - key: HOST
         value: 0.0.0.0
