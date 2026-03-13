@@ -1,24 +1,13 @@
 import { Hono } from "hono";
-import { auth } from "../lib/auth.better";
 import { db, dbService } from "../lib/db";
 import { updateIcalSchema } from "@dashboard/shared-types";
 import { icalService } from "../services/icalService";
+import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 
-type Variables = {
-  user: typeof auth.$Infer.Session.user;
-};
+const icalRouter = new Hono<AuthEnv>();
 
-const icalRouter = new Hono<{ Variables: Variables }>();
-
-// Middleware auth
-icalRouter.use("*", async (c, next) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
-  if (!session || !session.user) {
-    return c.json({ error: "No autorizado" }, 401);
-  }
-  c.set("user", session.user as any); // Tipado flojo para acelerar
-  await next();
-});
+// BUG-2: use shared authMiddleware instead of inline auth
+icalRouter.use("*", authMiddleware);
 
 // PATCH /api/ical/config
 // Normaliza y guarda el feed URL del calendario.

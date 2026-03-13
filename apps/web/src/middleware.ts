@@ -47,6 +47,7 @@ async function validateSession(
     const response = await fetch(`${API_BASE}/auth/get-session`, {
       method: "GET",
       headers: fetchHeaders,
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {

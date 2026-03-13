@@ -29,7 +29,7 @@ function reviveDates(obj: any): any {
     const val = revived[key];
 
     // Regex inclusiva para YYYY-MM-DD (corto) o YYYY-MM-DDTHH... (ISO)
-    if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+    if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}(T|\s|$)/.test(val)) {
       const date = new Date(val);
       if (!isNaN(date.getTime())) {
         revived[key] = date;
@@ -46,8 +46,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
     // Sesión expirada: redirigir al login con contexto
     if (response.status === 401 && typeof window !== "undefined") {
       window.location.href = "/login?reason=session_expired";
-      // Retornar una promesa que nunca resuelve para detener la ejecución
-      return new Promise(() => {});
+      // TS-3: Typed as never — the redirect stops execution
+      return new Promise<never>(() => {});
     }
 
     let errorMessage = `Error API (${response.status}): ${response.statusText}`;
@@ -188,16 +188,11 @@ export const api = {
   },
 
   async getJournalByDate(date: string): Promise<PracticeJournal | null> {
-    const response = await apiFetch(`${API_BASE}/practice-journals`);
-    const journals = await handleResponse<PracticeJournal[]>(response);
-
+    // PERF-2: Use ?date= query param to fetch only the needed day
     const target = date.split("T")[0];
-    const found = journals.find((j) => {
-      const jDate =
-        j.date instanceof Date ? j.date.toISOString().split("T")[0] : String(j.date).split("T")[0];
-      return jDate === target;
-    });
-    return found ?? null;
+    const response = await apiFetch(`${API_BASE}/practice-journals?date=${target}`);
+    const journals = await handleResponse<PracticeJournal[]>(response);
+    return journals[0] ?? null;
   },
 
   async upsertJournal(data: Partial<PracticeJournal>): Promise<PracticeJournal> {

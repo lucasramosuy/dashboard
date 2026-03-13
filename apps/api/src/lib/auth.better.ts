@@ -1,23 +1,8 @@
 import { betterAuth } from "better-auth";
 import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
-
-// Misma lógica de resolución de config que db.ts — incluyendo soporte para test
-const getDbConfig = () => {
-  if (process.env.NODE_ENV === "test") {
-    return { url: "file:./data/test.sqlite" };
-  }
-  if (process.env.TURSO_DATABASE_URL) {
-    return {
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN ?? "",
-    };
-  }
-  const dbPath = process.env.DATABASE_PATH ?? "./data/database.sqlite";
-  return { url: `file:${dbPath}` };
-};
-
 import { createClient } from "@libsql/client";
+import { getDbConfig } from "./db";
 
 // En el entorno de tests necesitamos pasar explícitamente la config para SQLite local
 const libsqlClient = createClient(getDbConfig());

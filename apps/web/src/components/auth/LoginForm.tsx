@@ -29,8 +29,8 @@ export const LoginForm: React.FC = () => {
         await login(email, password);
       }
       window.location.href = "/";
-    } catch (err: any) {
-      setError(err.message || "Ocurrió un error. Por favor verificá tus datos.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error. Por favor verificá tus datos.");
     } finally {
       setLoading(false);
     }

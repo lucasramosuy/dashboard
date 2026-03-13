@@ -8,11 +8,16 @@ import {
   Absence,
   PracticeJournal,
   Invite,
+  IcalEvent,
 } from "@dashboard/shared-types";
 import { logger } from "./logger";
 
+// Column whitelists for dynamic UPDATE queries (SEC-1)
+const SUBJECT_COLUMNS = new Set<string>(["name", "total_classes", "slug", "track", "duration_weeks"]);
+const TASK_COLUMNS = new Set<string>(["title", "description", "status", "due_date", "slug", "type", "grade", "file_url", "comments", "is_planner"]);
+
 // --- DB CONFIG ---
-const getDbConfig = () => {
+export const getDbConfig = () => {
   if (Bun.env.NODE_ENV === "test") {
     return { url: "file:./data/test.sqlite" };
   }
@@ -30,6 +35,12 @@ const getDbConfig = () => {
 // Ensure data directory exists before creating client
 mkdirSync("./data", { recursive: true });
 export const db = createClient(getDbConfig());
+
+// Helper: check if a column exists in a table (ARCH-1/ERR-1)
+async function columnExists(table: string, column: string): Promise<boolean> {
+  const r = await db.execute(`PRAGMA table_info(${table})`);
+  return r.rows.some((row) => row.name === column);
+}
 
 // --- INIT ---
 export async function initDB() {
@@ -145,58 +156,47 @@ export async function initDB() {
     "write",
   );
 
-  // Intentar agregar columnas si ya existía la tabla y no las tiene
-  try {
+  // Migrations: add columns if they don't already exist (ARCH-1/ERR-1)
+  if (!(await columnExists("user", "ical_url"))) {
     await db.execute("ALTER TABLE user ADD COLUMN ical_url TEXT");
-  } catch {
-    /* ignored, column might already exist */
   }
-
-  try {
+  if (!(await columnExists("user", "last_ical_sync"))) {
     await db.execute("ALTER TABLE user ADD COLUMN last_ical_sync TEXT");
-  } catch {
-    /* ignored, column might already exist */
   }
 
   // Fase 9: nuevas columnas en subjects (track, duration_weeks) + slug
-  for (const col of [
-    "ALTER TABLE subjects ADD COLUMN track TEXT",
-    "ALTER TABLE subjects ADD COLUMN duration_weeks INTEGER",
-    "ALTER TABLE subjects ADD COLUMN slug TEXT",
-  ]) {
-    try {
-      await db.execute(col);
-    } catch {
-      /* ya existe */
+  const subjectMigrations: [string, string][] = [
+    ["subjects", "track"],
+    ["subjects", "duration_weeks"],
+    ["subjects", "slug"],
+  ];
+  for (const [table, col] of subjectMigrations) {
+    if (!(await columnExists(table, col))) {
+      await db.execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${col === "duration_weeks" ? "INTEGER" : "TEXT"}`);
     }
   }
 
   // Fase 9: nuevas columnas en tasks + slug
-  for (const col of [
-    "ALTER TABLE tasks ADD COLUMN type TEXT",
-    "ALTER TABLE tasks ADD COLUMN grade REAL",
-    "ALTER TABLE tasks ADD COLUMN file_url TEXT",
-    "ALTER TABLE tasks ADD COLUMN comments TEXT",
-    "ALTER TABLE tasks ADD COLUMN slug TEXT",
-  ]) {
-    try {
-      await db.execute(col);
-    } catch {
-      /* ya existe */
+  const taskMigrations: [string, string, string][] = [
+    ["tasks", "type", "TEXT"],
+    ["tasks", "grade", "REAL"],
+    ["tasks", "file_url", "TEXT"],
+    ["tasks", "comments", "TEXT"],
+    ["tasks", "slug", "TEXT"],
+  ];
+  for (const [table, col, colType] of taskMigrations) {
+    if (!(await columnExists(table, col))) {
+      await db.execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${colType}`);
     }
   }
 
-  try {
+  if (!(await columnExists("tasks", "is_planner"))) {
     await db.execute("ALTER TABLE tasks ADD COLUMN is_planner INTEGER DEFAULT 0");
-  } catch {
-    /* ya existe */
   }
 
   // Añadir user_id a practice_journals si no existe
-  try {
+  if (!(await columnExists("practice_journals", "user_id"))) {
     await db.execute("ALTER TABLE practice_journals ADD COLUMN user_id TEXT");
-  } catch {
-    /* ya existe */
   }
 
   // Migración: generar slugs para subjects que no tengan uno
@@ -293,6 +293,8 @@ export async function initDB() {
   }
 
   // Migración de datos: Fix de user_id NULL y duplicados en practice_journals
+  // BUG-3: This assigns orphaned journals to the first user — acceptable for single-user
+  // deployments but may misattribute data in multi-user setups.
   try {
     await db.execute(
       "UPDATE practice_journals SET user_id = (SELECT id FROM user LIMIT 1) WHERE user_id IS NULL",
@@ -347,6 +349,15 @@ function sanitizeValues(values: unknown[]): InValue[] {
     if (v === undefined) return null;
     return v as InValue;
   });
+}
+
+// Filter keys through a column whitelist to prevent SQL injection (SEC-1)
+function filterColumns(data: Record<string, unknown>, allowed: Set<string>): Record<string, unknown> {
+  const filtered: Record<string, unknown> = {};
+  for (const key of Object.keys(data)) {
+    if (allowed.has(key)) filtered[key] = data[key];
+  }
+  return filtered;
 }
 
 // --- SERVICE ---
@@ -435,10 +446,11 @@ export const dbService = {
     },
 
     update: async (idOrSlug: string, data: Partial<Subject>) => {
-      const sets = Object.keys(data)
-        .map((k) => `${k} = ?`)
-        .join(", ");
-      const values = [...Object.values(data), idOrSlug, idOrSlug];
+      const safe = filterColumns(data as Record<string, unknown>, SUBJECT_COLUMNS);
+      const keys = Object.keys(safe);
+      if (keys.length === 0) return;
+      const sets = keys.map((k) => `${k} = ?`).join(", ");
+      const values = [...Object.values(safe), idOrSlug, idOrSlug];
       return db.execute({
         sql: `UPDATE subjects SET ${sets} WHERE id = ? OR slug = ?`,
         args: sanitizeValues(values),
@@ -481,6 +493,23 @@ export const dbService = {
       return r.rows.map(toDate<Task>);
     },
 
+    // PERF-1: fetch tasks within a date range instead of all tasks
+    getByUserAndDateRange: async (userId: string, startDate: string, endDate: string, includePlanner = false): Promise<Task[]> => {
+      const sql = includePlanner
+        ? `SELECT DISTINCT t.* FROM tasks t
+           LEFT JOIN subjects s ON t.subject_id = s.id
+           WHERE (t.user_id = ? OR s.user_id = ?) AND t.due_date >= ? AND t.due_date <= ?`
+        : `SELECT DISTINCT t.* FROM tasks t
+           LEFT JOIN subjects s ON t.subject_id = s.id
+           WHERE (t.user_id = ? OR s.user_id = ?) AND t.is_planner = 0 AND t.due_date >= ? AND t.due_date <= ?`;
+
+      const r = await db.execute({
+        sql,
+        args: [userId, userId, startDate, endDate],
+      });
+      return r.rows.map(toDate<Task>);
+    },
+
     getById: async (idOrSlug: string): Promise<Task | null> => {
       const r = await db.execute({
         sql: "SELECT * FROM tasks WHERE id = ? OR slug = ?",
@@ -511,10 +540,11 @@ export const dbService = {
     },
 
     update: async (idOrSlug: string, data: Partial<Task>) => {
-      const sets = Object.keys(data)
-        .map((k) => `${k} = ?`)
-        .join(", ");
-      const values = [...Object.values(data), idOrSlug, idOrSlug];
+      const safe = filterColumns(data as Record<string, unknown>, TASK_COLUMNS);
+      const keys = Object.keys(safe);
+      if (keys.length === 0) return;
+      const sets = keys.map((k) => `${k} = ?`).join(", ");
+      const values = [...Object.values(safe), idOrSlug, idOrSlug];
       return db.execute({
         sql: `UPDATE tasks SET ${sets} WHERE id = ? OR slug = ?`,
         args: sanitizeValues(values),
@@ -586,6 +616,15 @@ export const dbService = {
       const r = await db.execute({
         sql: "SELECT * FROM practice_journals WHERE user_id = ? ORDER BY date DESC",
         args: [userId],
+      });
+      return r.rows.map(toDate<PracticeJournal>);
+    },
+
+    // PERF-2: fetch journals by specific date
+    getByDate: async (userId: string, date: string): Promise<PracticeJournal[]> => {
+      const r = await db.execute({
+        sql: "SELECT * FROM practice_journals WHERE user_id = ? AND date = ? ORDER BY date DESC",
+        args: [userId, date],
       });
       return r.rows.map(toDate<PracticeJournal>);
     },
@@ -703,12 +742,12 @@ export const dbService = {
 
   // --- ICAL EVENTS ---
   icalEvents: {
-    getByUser: async (userId: string): Promise<any[]> => {
+    getByUser: async (userId: string): Promise<IcalEvent[]> => {
       const r = await db.execute({
         sql: "SELECT * FROM ical_events WHERE user_id = ? ORDER BY start_date ASC",
         args: [userId],
       });
-      return r.rows.map(toDate<any>);
+      return r.rows.map(toDate<IcalEvent>);
     },
 
     deleteByUser: async (userId: string) => {
@@ -718,13 +757,23 @@ export const dbService = {
       });
     },
 
-    insertBatch: async (events: any[]) => {
+    insertBatch: async (events: IcalEvent[]) => {
       if (events.length === 0) return;
       const statements = events.map((e) => ({
         sql: "INSERT INTO ical_events (id, user_id, title, description, url, start_date) VALUES (?, ?, ?, ?, ?, ?)",
         args: sanitizeValues([e.id, e.user_id, e.title, e.description, e.url, e.start_date]),
       }));
       await db.batch(statements, "write");
+    },
+
+    // ARCH-8: Atomic delete-then-insert for iCal sync
+    replaceByUser: async (userId: string, events: IcalEvent[]) => {
+      const deleteStmt = { sql: "DELETE FROM ical_events WHERE user_id = ?", args: [userId] as InValue[] };
+      const insertStmts = events.map((e) => ({
+        sql: "INSERT INTO ical_events (id, user_id, title, description, url, start_date) VALUES (?, ?, ?, ?, ?, ?)",
+        args: sanitizeValues([e.id, e.user_id, e.title, e.description, e.url, e.start_date]),
+      }));
+      await db.batch([deleteStmt, ...insertStmts], "write");
     },
   },
 };

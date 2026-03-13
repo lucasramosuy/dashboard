@@ -35,6 +35,7 @@ export default [
         clearTimeout: "readonly",
         // Browser DOM Types
         HTMLButtonElement: "readonly",
+        HTMLDialogElement: "readonly",
         HTMLDivElement: "readonly",
         HTMLInputElement: "readonly",
         HTMLTextAreaElement: "readonly",
@@ -47,6 +48,8 @@ export default [
         Event: "readonly",
         KeyboardEvent: "readonly",
         MouseEvent: "readonly",
+        MutationObserver: "readonly",
+        AbortSignal: "readonly",
       },
     },
     rules: {
