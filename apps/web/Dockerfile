@@ -12,8 +12,11 @@ RUN bun install --frozen-lockfile
 
 WORKDIR /app/apps/web
 
-ARG PUBLIC_API_BASE=https://api.dashboard.lucasramos.uy/api
+ARG PUBLIC_API_BASE=https://api.lucasramos.uy/api
 ENV PUBLIC_API_BASE=$PUBLIC_API_BASE
+
+ARG PUBLIC_FRONTEND_ORIGIN=https://dashboard.lucasramos.uy
+ENV PUBLIC_FRONTEND_ORIGIN=$PUBLIC_FRONTEND_ORIGIN
 
 RUN bun run build
 
