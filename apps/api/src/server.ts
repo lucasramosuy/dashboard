@@ -90,7 +90,7 @@ app.use(
   }),
 );
 
-app.route("/api/auth", authRouter);
+// Better Auth handler — debe ir ANTES que authRouter para no bloquear rutas de Better Auth
 app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c) => {
   const origin = c.req.header("Origin");
   const validOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
@@ -119,6 +119,9 @@ app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c) => {
 
   return response;
 });
+
+// Custom auth routes (register con invite code) — DESPUÉS del handler de Better Auth
+app.route("/api/auth", authRouter);
 
 app.route("/api/subjects", subjectsRouter);
 app.route("/api/tasks", tasksRouter);
