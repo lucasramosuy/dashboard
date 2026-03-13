@@ -39,6 +39,12 @@ export default defineConfig({
         "/api": {
           target: "http://localhost:8787",
           changeOrigin: true,
+          cookieDomainRewrite: {
+            // Reescribe el dominio de las cookies de localhost:8787 → localhost (sin puerto)
+            // para que el browser las acepte desde localhost:4321
+            "localhost": "localhost",
+            "*": "",
+          },
         },
       },
       watch: {
