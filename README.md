@@ -73,6 +73,16 @@ Web (`apps/web/.env`, todo opcional en dev; las variables del runtime de Workers
 | `SENTRY_AUTH_TOKEN` | Subida de source maps a Sentry en el build              |
 | `PUBLIC_AGENTATION` | `true` para mostrar el overlay de Agentation (solo dev) |
 
+## Panel de administración
+
+`/dashboard/admin`, solo para los emails de `ADMIN_EMAILS` (el acceso aparece en **Mi Perfil**). Desde ahí se puede:
+
+- Crear invitaciones de un solo uso (el código se ve solo en pantalla, con botón copiar) y anular las que no se usaron.
+- Ver los usuarios: alta, última sesión y si la contraseña sigue en el formato viejo.
+- Resetear la contraseña de un usuario: genera una temporal que se muestra una sola vez y le cierra las sesiones. Después la cambia desde **Mi Perfil → Contraseña**.
+
+Como el repo es público, nada de esto pasa por GitHub Actions ni por logs.
+
 ## Registro con invitación
 
 El registro es **solo con código de invitación** de un solo uso (`POST /api/auth/register`). El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado y devuelve 403.
@@ -141,14 +151,15 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 `.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
 
-| Secret                  | Para qué                                  |
-| ----------------------- | ----------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Publicar el Worker                        |
-| `CLOUDFLARE_ACCOUNT_ID` | Cuenta de Cloudflare                      |
-| `TURSO_DATABASE_URL`    | Base (se sube como secret del Worker)     |
-| `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)     |
-| `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker) |
-| `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                      |
+| Secret                  | Para qué                                                   |
+| ----------------------- | ---------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Publicar el Worker                                         |
+| `CLOUDFLARE_ACCOUNT_ID` | Cuenta de Cloudflare                                       |
+| `TURSO_DATABASE_URL`    | Base (se sube como secret del Worker)                      |
+| `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)                      |
+| `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker)                  |
+| `ADMIN_EMAILS`          | Emails con acceso a `/dashboard/admin` (secret del Worker) |
+| `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                                       |
 
 ### Desarrollo local con el runtime de Workers
 
