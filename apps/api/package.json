@@ -26,7 +26,7 @@
     "@sentry/bun": "^10.75.3",
     "better-auth": "^1.7.6",
     "hono": "^4.13.9",
-    "kysely": "^0.28.17",
+    "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
     "node-ical": "^0.25.6",
     "p-limit": "^7.3.3",
