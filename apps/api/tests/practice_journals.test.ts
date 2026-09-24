@@ -96,4 +96,31 @@ describe("Practice Journals API Tests", () => {
     const body = (await res.json()) as PracticeJournal[];
     expect(body.every((j) => j.subject_id === subjectId)).toBe(true);
   });
+
+  it("GET /api/practice-journals?date= should find the entry of that day (texto libre)", async () => {
+    const headers = { "Content-Type": "application/json", Cookie: cookie };
+    await app.request("/api/practice-journals", {
+      method: "POST",
+      body: JSON.stringify({ subject_id: "Derecho", date: "2026-09-24", content: "Clase de hoy" }),
+      headers,
+    });
+    await app.request("/api/practice-journals", {
+      method: "POST",
+      body: JSON.stringify({ subject_id: "Derecho", date: "2026-09-23T00:00:00.000Z", content: "Ayer" }),
+      headers,
+    });
+
+    const res = await app.request("/api/practice-journals?date=2026-09-24", { headers });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as PracticeJournal[];
+    expect(body.length).toBe(1);
+    expect(body[0].content).toBe("Clase de hoy");
+    expect(body[0].subject_id).toBe("Derecho");
+    expect(String(body[0].date).slice(0, 10)).toBe("2026-09-24");
+  });
+
+  it("GET /api/practice-journals?date= should reject an invalid date", async () => {
+    const res = await app.request("/api/practice-journals?date=24/09/2026", { headers: { Cookie: cookie } });
+    expect(res.status).toBe(400);
+  });
 });
