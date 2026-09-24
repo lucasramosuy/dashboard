@@ -1,1 +1,36 @@
-// placeholder
+# Actualizaciones automáticas de dependencias.
+# Una vez por semana, agrupadas en pocos PRs y siempre contra dev.
+version: 2
+updates:
+  - package-ecosystem: "bun"
+    directory: "/" # bun.lock está en la raíz y cubre todo el monorepo
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Montevideo"
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Los saltos mayores (Astro 7, React 19, etc.) se hacen a mano en su propio PR
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Montevideo"
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
