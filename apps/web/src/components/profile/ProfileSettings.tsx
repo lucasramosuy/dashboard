@@ -37,10 +37,10 @@ const ProfileForm: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <header className="flex flex-col gap-2">
-        <h1 className="m-0 text-3xl font-bold text-theme-text">Mi Perfil</h1>
-        <p className="text-theme-text-muted m-0 text-lg">
-          Administra tu cuenta y preferencias personales.
+      <header className="flex flex-col gap-1 mb-2">
+        <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">Mi Perfil</h1>
+        <p className="text-theme-text-muted m-0 text-sm sm:text-base">
+          Administrá tu cuenta y preferencias personales.
         </p>
       </header>
 
