@@ -27,6 +27,9 @@ practiceJournalsRouter.get("/", async (c) => {
 
   // PERF-2: support ?date= query param to fetch a single day's journals
   if (date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return c.json({ error: "Invalid date format (YYYY-MM-DD)" }, 400);
+    }
     return c.json(await dbService.journals.getByDate(user.id, date));
   }
 
@@ -52,7 +55,10 @@ practiceJournalsRouter.post("/", async (c) => {
 
   // subject_id en journals es el nombre de la especialidad (ej. "Derecho"), no un UUID de UC
 
-  const parsedDate = new Date(body.date);
+  // El día del diario es el día local del usuario (YYYY-MM-DD). Lo guardamos como
+  // medianoche UTC de ese día para que no se corra por la zona horaria.
+  const day = /^\d{4}-\d{2}-\d{2}/.test(body.date) ? body.date.slice(0, 10) : null;
+  const parsedDate = day ? new Date(`${day}T00:00:00.000Z`) : new Date(NaN);
   if (isNaN(parsedDate.getTime())) {
     return c.json({ error: "Invalid date format" }, 400);
   }

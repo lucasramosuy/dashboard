@@ -1,212 +1,269 @@
 import React from "react";
+import { CalendarDays, Check, PenLine, ArrowRight } from "lucide-react";
+import type { Task } from "@dashboard/shared-types";
 import { useAuth } from "../../contexts/AuthContext";
-import { StatusBadge } from "../ui/StatusBadge";
-import { useTasks, useAtRiskSubjects, useUpdateTask } from "../../hooks/useDashboardQueries";
-import { cn } from "@/lib/utils";
-
-const BentoLink: React.FC<{
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-  dark?: boolean;
-}> = ({ href, children, className = "", dark }) => (
-  <a
-    href={href}
-    className={`bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg ${
-      dark ? "bg-theme-primary text-theme-bg **:text-theme-bg" : ""
-    } ${className}`}
-  >
-    {children}
-  </a>
-);
+import {
+  useTasks,
+  useSubjects,
+  useAllAbsences,
+  useJournals,
+  useIcalEvents,
+  useUpdateTask,
+} from "../../hooks/useDashboardQueries";
+import { PageHeader, Card, StatTile, ProgressBar } from "../ui/PageHeader";
+import {
+  attendanceInfo,
+  remainingLabel,
+  average,
+  daysUntil,
+  dueLabel,
+  formatDayLong,
+  toLocalDay,
+  todayKey,
+  dayKey,
+} from "../../lib/format";
+import { url } from "@/lib/utils";
 
 export const DashboardSummary: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const { data: atRisk = [], isLoading: loadingAtRisk } = useAtRiskSubjects();
-  const { data: tasks = [], isLoading: loadingTasks } = useTasks({ includePlanner: true });
+  const { data: tasks = [], isLoading: l1 } = useTasks({ includePlanner: true });
+  const { data: subjects = [], isLoading: l2 } = useSubjects();
+  const { data: absences = [], isLoading: l3 } = useAllAbsences();
+  const { data: journals = [] } = useJournals();
+  const { data: events = [] } = useIcalEvents();
   const updateTask = useUpdateTask();
 
-  const handleToggleTask = (task: any, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    updateTask.mutate({
-      id: task.id,
-      data: { status: task.status === "done" ? "todo" : "done" },
-    });
-  };
-
-  const loading = loadingAtRisk || loadingTasks;
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter((t) => t.status === "done").length;
-  const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-  const upcomingTasks = [...tasks]
-    .filter((t) => t.status !== "done")
-    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-    .slice(0, 3);
-
-  if (authLoading || loading) {
-    return (
-      <div
-        className="flex flex-col items-center justify-center gap-4 p-16 text-theme-text-muted text-sm"
-        aria-busy="true"
-        aria-label="Cargando resumen del dashboard"
-      ></div>
-    );
+  if (authLoading || l1 || l2 || l3) {
+    return <div className="p-16" aria-busy="true" aria-label="Cargando resumen" />;
   }
-
   if (!user) return null;
 
+  const subjectName = (id?: string | null) => subjects.find((s) => s.id === id)?.name;
+  const pending = tasks.filter((t) => t.status !== "done");
+  const overdue = pending.filter((t) => daysUntil(t.due_date) < 0);
+  const upcoming = [...pending].sort(
+    (a, b) => toLocalDay(a.due_date).getTime() - toLocalDay(b.due_date).getTime(),
+  );
+  const next = upcoming.find((t) => daysUntil(t.due_date) >= 0);
+  const grades = tasks.map((t) => t.grade).filter((g): g is number => g != null);
+  const avg = average(grades);
+
+  const attendance = subjects
+    .map((s) => {
+      const value = absences
+        .filter((a) => a.subject_id === s.id)
+        .reduce((sum, a) => sum + (a.calculated_value || 0), 0);
+      return { subject: s, info: attendanceInfo(s.total_classes, value) };
+    })
+    .sort((a, b) => a.info.remaining - b.info.remaining);
+  const atRisk = attendance.filter((a) => a.info.status !== "ok");
+
+  const weekEvents = events
+    .filter((e) => {
+      const n = daysUntil(e.start_date);
+      return n >= 0 && n <= 7;
+    })
+    .slice(0, 3);
+
+  const todayEntry = journals.find((j) => dayKey(j.date) === todayKey());
+  const lastEntry = [...journals].sort(
+    (a, b) => toLocalDay(b.date).getTime() - toLocalDay(a.date).getTime(),
+  )[0];
+
+  const toggle = (t: Task) =>
+    updateTask.mutate({ id: t.id, data: { status: t.status === "done" ? "todo" : "done" } });
+  const today = new Intl.DateTimeFormat("es-UY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+
   return (
-    <div className="max-w-275 mx-auto">
-      <header className="mb-10">
-        <h1 className="text-3xl sm:text-4xl font-bold m-0">Hola, {user.name.split(" ")[0]} 👋</h1>
-        <p className="text-theme-text-muted">Este es el estado de tu semestre académico.</p>
-      </header>
+    <div>
+      <PageHeader
+        title={`Hola, ${user.name.split(" ")[0]}`}
+        subtitle={today.charAt(0).toUpperCase() + today.slice(1)}
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-[minmax(160px,auto)] gap-5">
-        {/* CARD 1: Alertas */}
-        <BentoLink
-          href="/subjects"
-          className={`${atRisk.length > 0 ? "row-span-2 border-theme-danger bg-theme-danger-light" : ""}`}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatTile
+          label="Pendientes"
+          value={pending.length}
+          hint={
+            overdue.length
+              ? `${overdue.length} vencida${overdue.length > 1 ? "s" : ""}`
+              : "Nada vencido"
+          }
+          tone={overdue.length ? "danger" : "default"}
+          href={url("/tasks")}
+        />
+        <StatTile
+          label="Próxima entrega"
+          value={next ? dueLabel(next.due_date) : "—"}
+          hint={next?.title ?? "Sin entregas"}
+          href={url("/tasks")}
+        />
+        <StatTile
+          label="Asistencia"
+          value={atRisk.length ? `${atRisk.length} en riesgo` : "Al día"}
+          hint={
+            atRisk[0]
+              ? `${atRisk[0].subject.name}: ${remainingLabel(atRisk[0].info).toLowerCase()}`
+              : "Ninguna UC cerca del límite"
+          }
+          tone={
+            atRisk.some((a) => a.info.status === "danger")
+              ? "danger"
+              : atRisk.length
+                ? "warning"
+                : "success"
+          }
+          href={url("/subjects")}
+        />
+        <StatTile
+          label="Promedio"
+          value={avg ?? "—"}
+          hint={grades.length ? `${grades.length} notas cargadas` : "Sin notas aún"}
+          href={url("/analytics")}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4 sm:gap-6">
+        <Card
+          title="Próximas tareas"
+          action={
+            <a
+              href={url("/tasks")}
+              className="text-sm text-theme-text-muted no-underline hover:text-theme-text inline-flex items-center gap-1"
+            >
+              Ver todas <ArrowRight size={14} />
+            </a>
+          }
         >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold m-0">⚠️ Alertas</h2>
-            <StatusBadge variant={atRisk.length > 0 ? "danger" : "success"}>
-              {atRisk.length} UC
-            </StatusBadge>
-          </div>
-          {atRisk.length === 0 ? (
-            <p className="text-theme-text-muted">Todo bajo control. No hay riesgos detectados.</p>
+          {upcoming.length === 0 ? (
+            <p className="m-0 text-sm text-theme-text-muted">Sin tareas pendientes.</p>
           ) : (
-            <ul className="list-none p-0 m-0">
-              {atRisk.map((s) => (
-                <li
-                  key={s.id}
-                  className="p-3 bg-white/50 rounded-lg mb-2 flex flex-col gap-0.5 border border-theme-danger"
-                >
-                  <span className="font-bold text-theme-danger">{s.name}</span>
-                  <small className="text-theme-text-muted">Superó el límite de inasistencias</small>
-                </li>
-              ))}
-            </ul>
-          )}
-          <span className="block mt-4 text-xs text-theme-text-muted text-right" aria-hidden="true">
-            Ver UC →
-          </span>
-        </BentoLink>
-
-        {/* CARD 2: Próximas Tareas */}
-        <div
-          className="bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm no-underline text-inherit block cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-lg"
-          onClick={() => (window.location.href = "/tasks")}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold m-0">📅 Próximas Tareas</h2>
-          </div>
-
-          {upcomingTasks.length === 0 ? (
-            <p className="text-theme-text-muted">Sin tareas pendientes.</p>
-          ) : (
-            <ul className="list-none p-0 m-0 mt-2">
-              {upcomingTasks.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-start gap-3 py-3 border-b border-theme-border last:border-b-0 group"
-                >
-                  <button
-                    onClick={(e) => handleToggleTask(t, e)}
-                    aria-label="Alternar estado de la tarea"
-                    className={`w-6 h-6 min-w-6 min-h-6 mt-0.5 rounded-full border-2 flex items-center justify-center shrink-0 cursor-pointer p-0 z-10 ${
-                      t.status === "done"
-                        ? "border-theme-success bg-theme-success"
-                        : "border-theme-border bg-transparent hover:border-theme-primary"
-                    }`}
+            <ul className="list-none m-0 p-0">
+              {upcoming.slice(0, 6).map((t) => {
+                const n = daysUntil(t.due_date);
+                return (
+                  <li
+                    key={t.id}
+                    className="flex items-center gap-3 py-2.5 border-b border-theme-border last:border-b-0"
                   >
-                    {t.status === "done" && (
-                      <span className="text-white text-sm leading-none">✓</span>
-                    )}
-                  </button>
-                  <a
-                    href={`/tasks/${t.slug || t.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="no-underline text-inherit flex-1 hover:text-theme-primary transition-colors"
-                  >
-                    <div
-                      className={`font-semibold text-sm ${t.status === "done" ? "line-through text-theme-text-muted" : ""}`}
+                    <button
+                      onClick={() => toggle(t)}
+                      aria-label={`Marcar "${t.title}" como hecha`}
+                      className="w-5 h-5 shrink-0 rounded-full border-2 border-theme-border bg-transparent hover:border-theme-success hover:bg-theme-success-light flex items-center justify-center cursor-pointer p-0"
                     >
-                      {t.title}
-                    </div>
-                    <small className="text-theme-text-muted">
-                      Vence:{" "}
-                      {t.due_date instanceof Date
-                        ? t.due_date.toLocaleDateString("es-UY")
-                        : new Date(t.due_date).toLocaleDateString("es-UY")}
-                    </small>
-                  </a>
-                </li>
-              ))}
+                      <Check size={12} className="opacity-0 hover:opacity-100 text-theme-success" />
+                    </button>
+                    <a
+                      href={url(`/tasks/${t.slug || t.id}`)}
+                      className="flex-1 min-w-0 no-underline text-theme-text"
+                    >
+                      <span className="block text-sm font-medium truncate">{t.title}</span>
+                      {subjectName(t.subject_id) && (
+                        <span className="block text-xs text-theme-text-muted truncate">
+                          {subjectName(t.subject_id)}
+                        </span>
+                      )}
+                    </a>
+                    <span
+                      className={`text-xs font-medium whitespace-nowrap ${n < 0 ? "text-theme-danger" : n <= 2 ? "text-theme-warning" : "text-theme-text-muted"}`}
+                    >
+                      {dueLabel(t.due_date)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           )}
-          <div className="block mt-4 text-xs text-theme-text-muted text-right no-underline group-hover:underline">
-            Ver todas →
-          </div>
-        </div>
+          {weekEvents.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-theme-border">
+              <p className="m-0 mb-2 text-xs font-medium uppercase tracking-wide text-theme-text-muted">
+                Calendario (próximos 7 días)
+              </p>
+              {weekEvents.map((e) => (
+                <div key={e.id} className="flex items-center gap-2 py-1 text-sm">
+                  <CalendarDays size={14} className="text-theme-info shrink-0" />
+                  <span className="truncate flex-1">{e.title}</span>
+                  <span className="text-xs text-theme-text-muted">{dueLabel(e.start_date)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
 
-        {/* CARD 3: Acceso Rápido Práctica */}
-        <BentoLink href="/journal" dark>
-          <div className="flex flex-col justify-center items-center h-full min-h-30 gap-2">
-            <span className="text-4xl" aria-hidden="true">
-              ✍️
-            </span>
-            <span className="font-bold text-lg">Nueva Práctica</span>
-          </div>
-        </BentoLink>
-
-        {/* CARD 4: Progreso General */}
-        <BentoLink href="/analytics">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold m-0">Progreso General</h2>
-          </div>
-          <div className="h-2 bg-theme-border rounded overflow-hidden" aria-hidden="true">
-            <div
-              className={cn(
-                "h-full rounded transition-[width] duration-400",
-                progressPercent === 100
-                  ? "bg-success"
-                  : progressPercent >= 50
-                    ? "bg-zinc-900 dark:bg-zinc-100"
-                    : "bg-warning",
-              )}
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <p className="text-theme-text-muted mt-3 text-sm">
-            {totalTasks === 0 ? (
-              "No hay tareas registradas aún."
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <Card
+            title="Asistencia por UC"
+            action={
+              <a
+                href={url("/subjects")}
+                className="text-sm text-theme-text-muted no-underline hover:text-theme-text inline-flex items-center gap-1"
+              >
+                UC <ArrowRight size={14} />
+              </a>
+            }
+          >
+            {attendance.length === 0 ? (
+              <p className="m-0 text-sm text-theme-text-muted">
+                Agregá tus UC para seguir las faltas.
+              </p>
             ) : (
-              <>
-                <strong>{doneTasks}</strong> de <strong>{totalTasks}</strong> tareas completadas (
-                {progressPercent}%)
-              </>
+              <ul className="list-none m-0 p-0 flex flex-col gap-3">
+                {attendance.slice(0, 5).map(({ subject, info }) => (
+                  <li key={subject.id}>
+                    <div className="flex justify-between gap-2 text-sm mb-1">
+                      <a
+                        href={url(`/subjects/${subject.slug || subject.id}`)}
+                        className="font-medium no-underline text-theme-text truncate"
+                      >
+                        {subject.name}
+                      </a>
+                      <span
+                        className={`text-xs whitespace-nowrap ${info.status === "danger" ? "text-theme-danger" : info.status === "warning" ? "text-theme-warning" : "text-theme-text-muted"}`}
+                      >
+                        {remainingLabel(info)}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={info.maxAbsences ? (info.absences / info.maxAbsences) * 100 : 0}
+                      tone={
+                        info.status === "danger"
+                          ? "danger"
+                          : info.status === "warning"
+                            ? "warning"
+                            : "ok"
+                      }
+                      label={`Faltas usadas en ${subject.name}`}
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
-          </p>
-          <span className="block mt-4 text-xs text-theme-text-muted text-right" aria-hidden="true">
-            Ver analíticas →
-          </span>
-        </BentoLink>
+          </Card>
 
-        {/* CARD 5: Integración Schoology */}
-        <BentoLink href="/schoology" className="sm:col-span-2 lg:col-span-2">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold m-0">🔗 Integración Schoology</h2>
-          </div>
-          <p className="text-theme-text-muted text-sm">
-            Administra la cuenta vinculada para tus tareas académicas.
-          </p>
-          <span className="block mt-4 text-xs text-theme-text-muted text-right" aria-hidden="true">
-            Configurar →
-          </span>
-        </BentoLink>
+          <Card title="Diario de práctica">
+            {lastEntry ? (
+              <p className="m-0 mb-4 text-sm text-theme-text-muted line-clamp-3">
+                <span className="font-medium text-theme-text">
+                  Última: {formatDayLong(lastEntry.date)}.
+                </span>{" "}
+                {lastEntry.content}
+              </p>
+            ) : (
+              <p className="m-0 mb-4 text-sm text-theme-text-muted">Todavía no hay entradas.</p>
+            )}
+            <a
+              href={url("/journal")}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-theme-primary text-theme-bg text-sm font-medium no-underline hover:opacity-90"
+            >
+              <PenLine size={16} /> {todayEntry ? "Editar la de hoy" : "Escribir la de hoy"}
+            </a>
+          </Card>
+        </div>
       </div>
     </div>
   );

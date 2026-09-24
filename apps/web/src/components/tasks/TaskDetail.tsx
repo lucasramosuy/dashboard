@@ -6,6 +6,7 @@ import { useTask, useUpdateTaskStatus } from "../../hooks/useDashboardQueries";
 import { BackButton } from "../navigation/BackButton";
 import { Button } from "../ui/Button";
 import { DetailSkeleton } from "../ui/Skeleton";
+import { url } from "@/lib/utils";
 
 interface Props {
   id: string;
@@ -60,18 +61,20 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
   if (!task) return <p className="text-theme-text-muted">Tarea no encontrada.</p>;
 
   return (
-    <div className="max-w-800px mx-auto">
-      <header className="flex justify-between items-center mb-10 border-b border-theme-border pb-4 gap-4">
+    <div className="max-w-800px">
+      <header className="flex flex-wrap justify-between items-center mb-6 sm:mb-8 gap-4">
         <div className="flex items-center gap-4">
-          <BackButton fallback="/tasks" />
-          <h1 className="m-0 text-theme-text">{task.title}</h1>
+          <BackButton fallback={url("/tasks")} />
+          <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">
+            {task.title}
+          </h1>
         </div>
         <StatusBadge variant={STATUS_VARIANTS[task.status]}>
           {STATUS_LABELS[task.status]}
         </StatusBadge>
       </header>
 
-      <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm mb-10">
+      <section className="bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm mb-6">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-8 mb-8 border-b border-theme-border pb-6">
           <div>
             <h4 className={labelCls}>Fecha de Vencimiento</h4>
@@ -81,7 +84,7 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
             <h4 className={labelCls}>UC</h4>
             <p className="text-lg font-bold m-0">
               <a
-                href={`/subjects/${task.subject_id}`}
+                href={url(`/subjects/${task.subject_id}`)}
                 className="text-theme-primary no-underline hover:underline"
                 aria-label="Ir a los detalles de la UC cursada"
               >
@@ -112,7 +115,7 @@ export const TaskDetail: React.FC<Props> = ({ id }) => {
           </Button>
           <Button
             variant="secondary"
-            onClick={() => (window.location.href = "/tasks")}
+            onClick={() => (window.location.href = url("/tasks"))}
             aria-label="Volver a lista de tareas"
           >
             Volver a Tareas

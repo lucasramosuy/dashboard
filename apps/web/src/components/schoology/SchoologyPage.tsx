@@ -14,10 +14,10 @@ const SchoologyContent: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <header className="flex flex-col gap-2">
-        <h1 className="m-0 text-3xl font-bold text-theme-text">Integración Schoology</h1>
-        <p className="text-theme-text-muted m-0 text-lg">
-          Sincroniza tus tareas y eventos desde tu calendario de Schoology.
+      <header className="flex flex-col gap-1 mb-2">
+        <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">Integración Schoology</h1>
+        <p className="text-theme-text-muted m-0 text-sm sm:text-base">
+          Sincronizá tus tareas y eventos desde tu calendario de Schoology.
         </p>
       </header>
       <section className="flex flex-col gap-6">

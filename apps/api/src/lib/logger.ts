@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/bun";
+import * as Sentry from "@sentry/core";
 
 export const toError = (err: unknown): Error => {
   if (err instanceof Error) return err;

@@ -4,28 +4,36 @@ on:
   push:
     branches: [dev]
   pull_request:
-    branches: [dev]
+    branches: [dev, prod]
+
+# Si llega un push nuevo al mismo PR/rama, se cancela la corrida anterior
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: "1.4.2"
 
 jobs:
   backend-tests:
     name: Backend API Tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.9"
+          bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Cache de dependencias
+        uses: actions/cache@v6
         with:
-          node-version: "22"
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run API tests
         working-directory: apps/api
@@ -33,72 +41,39 @@ jobs:
           NODE_ENV: test
         run: bun test
 
-  lint:
-    name: Lint
+  check-and-build:
+    name: Lint, Type Check y Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.9"
+          bun-version: ${{ env.BUN_VERSION }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run lint
-        run: bun run lint
-
-  type-check:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Cache de dependencias
+        uses: actions/cache@v6
         with:
-          bun-version: "1.3.9"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
-      - name: Run type check (API + Web)
+      # Lint (ESLint) + tsc de la API + astro check de la web
+      - name: Lint + type check
         run: bun run check
 
-  frontend-build:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: "1.3.9"
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build frontend
+      - name: Build web
         working-directory: apps/web
         run: bun run build
+
+      # Valida el bundle del Worker (tamaño, bindings, config) sin publicar nada
+      - name: Worker dry-run
+        working-directory: apps/web
+        run: bunx wrangler deploy --dry-run

@@ -1,6 +1,5 @@
 import { createClient } from "@libsql/client";
 import type { InValue } from "@libsql/client";
-import { mkdirSync } from "fs";
 import {
   UserPublic,
   Subject,
@@ -13,28 +12,56 @@ import {
 import { logger } from "./logger";
 
 // Column whitelists for dynamic UPDATE queries (SEC-1)
-const SUBJECT_COLUMNS = new Set<string>(["name", "total_classes", "slug", "track", "duration_weeks"]);
-const TASK_COLUMNS = new Set<string>(["title", "description", "status", "due_date", "slug", "type", "grade", "file_url", "comments", "is_planner"]);
+const SUBJECT_COLUMNS = new Set<string>([
+  "name",
+  "total_classes",
+  "slug",
+  "track",
+  "duration_weeks",
+]);
+const TASK_COLUMNS = new Set<string>([
+  "title",
+  "description",
+  "status",
+  "due_date",
+  "slug",
+  "type",
+  "grade",
+  "file_url",
+  "comments",
+  "is_planner",
+]);
 
 // --- DB CONFIG ---
 export const getDbConfig = () => {
-  if (Bun.env.NODE_ENV === "test") {
+  if (process.env.NODE_ENV === "test") {
     return { url: "file:./data/test.sqlite" };
   }
-  if (Bun.env.TURSO_DATABASE_URL) {
+  if (process.env.TURSO_DATABASE_URL) {
     return {
-      url: Bun.env.TURSO_DATABASE_URL,
-      authToken: Bun.env.TURSO_AUTH_TOKEN ?? "",
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN ?? "",
     };
   }
+  // Worker sin Turso configurado (dev con API_PROXY_URL): la API real corre en Bun,
+  // pero el módulo se importa igual. libsql web no acepta file:, así que se apunta a
+  // un sqld local (`turso dev`), que solo se usa si alguien consulta la base.
+  if (typeof globalThis.Bun === "undefined") {
+    return { url: "http://127.0.0.1:8080" };
+  }
   // dev fallback — archivo local, igual que antes
-  const dbPath = Bun.env.DATABASE_PATH ?? "./data/database.sqlite";
+  const dbPath = process.env.DATABASE_PATH ?? "./data/database.sqlite";
   return { url: `file:${dbPath}` };
 };
 
-// Ensure data directory exists before creating client
-mkdirSync("./data", { recursive: true });
-export const db = createClient(getDbConfig());
+// Con SQLite local (dev/tests en Bun) la carpeta data/ tiene que existir.
+// En Workers siempre se usa Turso, así que no se toca el filesystem.
+const dbConfig = getDbConfig();
+if (dbConfig.url.startsWith("file:")) {
+  const { mkdirSync } = await import("node:fs");
+  mkdirSync("./data", { recursive: true });
+}
+export const db = createClient(dbConfig);
 
 // Helper: check if a column exists in a table (ARCH-1/ERR-1)
 async function columnExists(table: string, column: string): Promise<boolean> {
@@ -172,7 +199,9 @@ export async function initDB() {
   ];
   for (const [table, col] of subjectMigrations) {
     if (!(await columnExists(table, col))) {
-      await db.execute(`ALTER TABLE ${table} ADD COLUMN ${col} ${col === "duration_weeks" ? "INTEGER" : "TEXT"}`);
+      await db.execute(
+        `ALTER TABLE ${table} ADD COLUMN ${col} ${col === "duration_weeks" ? "INTEGER" : "TEXT"}`,
+      );
     }
   }
 
@@ -318,7 +347,7 @@ export async function initDB() {
   const config = getDbConfig();
   const location = config.url.startsWith("file::memory:")
     ? "in-memory (test)"
-    : (Bun.env.TURSO_DATABASE_URL ?? "local file");
+    : (process.env.TURSO_DATABASE_URL ?? "local file");
   logger.info(`[DB] Database initialized: ${location}`);
 }
 
@@ -352,7 +381,10 @@ function sanitizeValues(values: unknown[]): InValue[] {
 }
 
 // Filter keys through a column whitelist to prevent SQL injection (SEC-1)
-function filterColumns(data: Record<string, unknown>, allowed: Set<string>): Record<string, unknown> {
+function filterColumns(
+  data: Record<string, unknown>,
+  allowed: Set<string>,
+): Record<string, unknown> {
   const filtered: Record<string, unknown> = {};
   for (const key of Object.keys(data)) {
     if (allowed.has(key)) filtered[key] = data[key];
@@ -494,7 +526,12 @@ export const dbService = {
     },
 
     // PERF-1: fetch tasks within a date range instead of all tasks
-    getByUserAndDateRange: async (userId: string, startDate: string, endDate: string, includePlanner = false): Promise<Task[]> => {
+    getByUserAndDateRange: async (
+      userId: string,
+      startDate: string,
+      endDate: string,
+      includePlanner = false,
+    ): Promise<Task[]> => {
       const sql = includePlanner
         ? `SELECT DISTINCT t.* FROM tasks t
            LEFT JOIN subjects s ON t.subject_id = s.id
@@ -623,7 +660,8 @@ export const dbService = {
     // PERF-2: fetch journals by specific date
     getByDate: async (userId: string, date: string): Promise<PracticeJournal[]> => {
       const r = await db.execute({
-        sql: "SELECT * FROM practice_journals WHERE user_id = ? AND date = ? ORDER BY date DESC",
+        // date se guarda como ISO (YYYY-MM-DDT00:00:00.000Z): comparamos solo el día
+        sql: "SELECT * FROM practice_journals WHERE user_id = ? AND substr(date, 1, 10) = ? ORDER BY date DESC",
         args: [userId, date],
       });
       return r.rows.map(toDate<PracticeJournal>);
@@ -768,7 +806,10 @@ export const dbService = {
 
     // ARCH-8: Atomic delete-then-insert for iCal sync
     replaceByUser: async (userId: string, events: IcalEvent[]) => {
-      const deleteStmt = { sql: "DELETE FROM ical_events WHERE user_id = ?", args: [userId] as InValue[] };
+      const deleteStmt = {
+        sql: "DELETE FROM ical_events WHERE user_id = ?",
+        args: [userId] as InValue[],
+      };
       const insertStmts = events.map((e) => ({
         sql: "INSERT INTO ical_events (id, user_id, title, description, url, start_date) VALUES (?, ?, ?, ?, ?, ?)",
         args: sanitizeValues([e.id, e.user_id, e.title, e.description, e.url, e.start_date]),

@@ -1,9 +1,10 @@
 ---
+import { url } from "@/lib/utils";
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 import { SubjectDetailPage } from "../../components/subjects/SubjectDetailPage";
 
 const { id } = Astro.params;
-if (!id) return Astro.redirect("/subjects");
+if (!id) return Astro.redirect(url("/subjects"));
 ---
 
 <DashboardLayout title="Detalle de UC">

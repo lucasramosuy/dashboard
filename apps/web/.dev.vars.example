@@ -1,0 +1,8 @@
+# Copiar a .dev.vars para `bun run dev` (astro dev con el runtime de Workers).
+# Con API_PROXY_URL la API se reenvía al server de Bun (cd apps/api && bun run dev),
+# que usa la base SQLite local. En ese caso el CORS_ORIGINS de apps/api/.env tiene que
+# incluir el origen de la web (http://localhost:4321).
+API_PROXY_URL=http://localhost:8787
+NODE_ENV=development
+BETTER_AUTH_URL=http://localhost:4321
+CORS_ORIGINS=http://localhost:4321

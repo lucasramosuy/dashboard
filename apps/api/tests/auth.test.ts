@@ -76,4 +76,21 @@ describe("Backend API Tests (Auth - Better Auth)", () => {
     expect(body.user.name).toBe(testName);
     expect(body.user).not.toHaveProperty("password");
   });
+
+  it("POST /api/auth/sign-up/email should be blocked (registro solo con invite)", async () => {
+    const res = await app.request("/api/auth/sign-up/email", {
+      method: "POST",
+      body: JSON.stringify({ email: "intruso@example.com", password: "intruso123", name: "Intruso" }),
+      headers: { "Content-Type": "application/json", Origin: "http://localhost:4321" },
+    });
+    expect(res.status).toBe(403);
+
+    // El usuario no se creó: no puede iniciar sesión
+    const login = await app.request("/api/auth/sign-in/email", {
+      method: "POST",
+      body: JSON.stringify({ email: "intruso@example.com", password: "intruso123" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(login.status).toBeGreaterThanOrEqual(400);
+  });
 });

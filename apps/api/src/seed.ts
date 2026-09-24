@@ -56,15 +56,15 @@ async function seed() {
 
   // 3. UC
   const subjects = [
-    { id: randomUUID(), name: "Sistemas Operativos", total_classes: 24, user_id: user.id },
-    { id: randomUUID(), name: "Arquitectura de Software", total_classes: 32, user_id: user.id },
+    { id: randomUUID(), name: "Pedagogía", total_classes: 32, user_id: user.id },
+    { id: randomUUID(), name: "Didáctica I", total_classes: 64, user_id: user.id },
   ];
   for (const s of subjects) {
     await dbService.subjects.create(s);
     console.log(`✅ UC creada: ${s.name}`);
   }
 
-  // 4. Inasistencias (riesgo en Sistemas Operativos)
+  // 4. Inasistencias (riesgo en Pedagogía)
   console.log("⚠️ Generando datos de riesgo de asistencia...");
   for (let i = 0; i < 6; i++) {
     const absence: Absence = {
@@ -82,16 +82,18 @@ async function seed() {
     {
       id: randomUUID(),
       subject_id: subjects[1].id,
-      title: "Diagrama de Microservicios",
-      description: "Diseñar la comunicación mediante eventos",
+      user_id: user.id,
+      title: "Planificación de unidad",
+      description: "Planificar una unidad de 4 clases para la práctica",
       status: "todo",
       due_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
     },
     {
       id: randomUUID(),
       subject_id: subjects[0].id,
-      title: "Laboratorio: Kernel Modules",
-      description: "Compilar un módulo simple de Linux",
+      user_id: user.id,
+      title: "Ensayo Freire",
+      description: "Ensayo sobre Pedagogía del oprimido",
       status: "in-progress",
       due_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
     },

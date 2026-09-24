@@ -17,6 +17,12 @@
   --color-theme-accent: var(--theme-accent);
   --color-theme-success: var(--theme-success);
   --color-theme-warning: var(--theme-warning);
+  --color-theme-danger: var(--theme-danger);
+  --color-theme-danger-light: var(--theme-danger-light);
+  --color-theme-success-light: var(--theme-success-light);
+  --color-theme-warning-light: var(--theme-warning-light);
+  --color-theme-info: var(--theme-info);
+  --color-theme-info-light: var(--theme-info-light);
 
   @keyframes fade-in {
     0% {
@@ -72,6 +78,8 @@
     --theme-success-light: #f2faf6;
     --theme-warning: #b37400;
     --theme-warning-light: #fff8e1;
+    --theme-info: #1d5fa8;
+    --theme-info-light: #eef5fd;
   }
 
   [data-theme="dark"] {
@@ -85,6 +93,10 @@
     --theme-success-light: #0a2218;
     --theme-warning: #ffb300;
     --theme-warning-light: #2d2200;
+    --theme-danger: #f87171;
+    --theme-success: #4ade9a;
+    --theme-info: #7db8f7;
+    --theme-info-light: #0c1d33;
   }
 
   body {

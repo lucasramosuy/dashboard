@@ -4,6 +4,15 @@ import type { Subject, Task, PracticeJournal, Absence } from "@dashboard/shared-
 
 // --- SUBJECTS ---
 
+// Reglas CFE (semanas y clases sugeridas por trayecto). Vienen de la API, una sola fuente.
+export const useCfeRules = () => {
+  return useQuery({
+    queryKey: ["cfe-rules"],
+    queryFn: () => api.getCfeRules(),
+    staleTime: Infinity,
+  });
+};
+
 export const useSubjects = () => {
   return useQuery({
     queryKey: ["subjects"],

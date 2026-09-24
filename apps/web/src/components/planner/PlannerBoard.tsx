@@ -5,6 +5,9 @@ import type { Task } from "@dashboard/shared-types";
 import { Modal } from "../ui/Modal";
 import { PlannerSkeleton } from "../ui/Skeleton";
 import "./PlannerBoard.css";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { useIcalEvents } from "../../hooks/useDashboardQueries";
+import { dayKey, todayKey as localTodayKey } from "../../lib/format";
 
 export function PlannerBoard() {
   const queryClient = useQueryClient();
@@ -43,7 +46,7 @@ export function PlannerBoard() {
   // ----- MUTACIONES -----
   const updateTaskDateMutation = useMutation({
     mutationFn: ({ id, date }: { id: string; date: string }) =>
-      api.updateTask(id, { due_date: new Date(date) }),
+      api.updateTask(id, { due_date: new Date(`${date}T12:00:00Z`) }),
     onMutate: async ({ id, date }) => {
       await queryClient.cancelQueries({ queryKey: ["plannerTasks", weekStartIso, weekEndIso] });
       const previousTasks = queryClient.getQueryData(["plannerTasks", weekStartIso, weekEndIso]);
@@ -62,7 +65,7 @@ export function PlannerBoard() {
         }
         if (taskToMove) {
           if (!newGrouped[date]) newGrouped[date] = [];
-          newGrouped[date].push({ ...taskToMove, due_date: new Date(date) });
+          newGrouped[date].push({ ...taskToMove, due_date: new Date(`${date}T12:00:00Z`) });
         }
         return newGrouped;
       });
@@ -138,11 +141,19 @@ export function PlannerBoard() {
     setCurrentWeekStart(today);
   };
 
-  const todayKey = new Date().toISOString().split("T")[0];
+  const todayKey = localTodayKey();
+  const { data: icalEvents = [] } = useIcalEvents();
+  const eventsByDay = icalEvents.reduce<Record<string, typeof icalEvents>>((acc, e) => {
+    const k = dayKey(e.start_date);
+    (acc[k] ||= []).push(e);
+    return acc;
+  }, {});
+  const fmtShort = (d: Date) => d.toLocaleDateString("es-UY", { day: "numeric", month: "short" });
+  const weekLabel = `${fmtShort(daysOfWeek[0])} – ${fmtShort(daysOfWeek[6])}`;
 
   const getDayName = (d: Date) => d.toLocaleDateString("es-UY", { weekday: "long" });
   const getFullDate = (d: Date) =>
-    d.toLocaleDateString("es-UY", { day: "numeric", month: "long", year: "numeric" });
+    d.toLocaleDateString("es-UY", { day: "numeric", month: "short" });
 
   // ----- NUEVA TAREA -----
   const [isTaskModalOpen, setTaskModalOpen] = useState(false);
@@ -197,9 +208,27 @@ export function PlannerBoard() {
       <div className="planner-center">
         {/* Header de navegación */}
         <header className="planner-header">
-          <button className="planner-today-btn" onClick={navCurrentWeek}>
-            Hoy
-          </button>
+          <div className="planner-header__title">
+            <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">
+              Planner
+            </h1>
+            <span className="text-sm text-theme-text-muted">{weekLabel}</span>
+          </div>
+          <div className="planner-header__nav">
+            <button className="planner-icon-btn" onClick={navPrevWeek} aria-label="Semana anterior">
+              <ChevronLeft size={18} />
+            </button>
+            <button className="planner-today-btn" onClick={navCurrentWeek}>
+              Hoy
+            </button>
+            <button
+              className="planner-icon-btn"
+              onClick={navNextWeek}
+              aria-label="Semana siguiente"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
           {updateTaskDateMutation.isPending && (
             <span className="text-theme-text-muted text-xs">Guardando...</span>
           )}
@@ -208,7 +237,7 @@ export function PlannerBoard() {
         {/* Grilla de días */}
         <div className="planner-grid">
           {daysOfWeek.map((day) => {
-            const dateKey = day.toISOString().split("T")[0];
+            const dateKey = dayKey(day);
             const dayTasks = groupedTasks[dateKey] || [];
             const isToday = dateKey === todayKey;
 
@@ -236,6 +265,15 @@ export function PlannerBoard() {
 
                 {/* Lista de tareas */}
                 <div className="planner-col__tasks">
+                  {(eventsByDay[dateKey] || []).map((ev) => (
+                    <div key={ev.id} className="planner-event" title={ev.description || ev.title}>
+                      <CalendarDays size={12} className="shrink-0" />
+                      <span className="planner-item__title">{ev.title}</span>
+                    </div>
+                  ))}
+                  {dayTasks.length === 0 && !(eventsByDay[dateKey] || []).length && (
+                    <span className="planner-empty">Sin tareas</span>
+                  )}
                   {dayTasks.map((task) => {
                     const isDone = task.status === "done";
                     return (
@@ -337,7 +375,6 @@ export function PlannerBoard() {
           <div className="planner-detail" onClick={(e) => e.stopPropagation()}>
             <div className="planner-detail__header">
               <span className="planner-detail__date">
-                📅{" "}
                 {selectedTask.due_date
                   ? new Date(selectedTask.due_date).toLocaleDateString("es-UY", {
                       day: "2-digit",

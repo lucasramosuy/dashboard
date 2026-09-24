@@ -7,7 +7,7 @@
   - Backend: Bun + Hono (apps/api), persistencia SQLite/Turso.
   - Frontend: Astro + React + Oat (apps/web).
   - Shared types: packages/shared-types.
-  - Hosting principal: Render.
+  - Hosting: Cloudflare Workers (web + API en lucasramos.uy/dashboard) + Turso.
 - SPECS.md es la fuente de verdad de la arquitectura. No cambies decisiones de diseño sin marcarlo explícitamente como “propuesta”.
 
 ## Estilo de respuestas

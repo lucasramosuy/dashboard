@@ -7,7 +7,10 @@ import { SubjectForm } from "../subjects/SubjectForm";
 import { Toast } from "../ui/Toast";
 import { Button } from "../ui/Button";
 import { TableSkeleton } from "../ui/Skeleton";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
+import { PageHeader, cardCls, ProgressBar } from "../ui/PageHeader";
+import { IconButton } from "../ui/IconButton";
+import { attendanceInfo, remainingLabel, average } from "../../lib/format";
 import { useToast } from "../../hooks/useToast";
 import type { Subject } from "@dashboard/shared-types";
 import {
@@ -15,11 +18,23 @@ import {
   useCreateSubject,
   useUpdateSubject,
   useDeleteSubject,
+  useAllAbsences,
+  useTasks,
 } from "../../hooks/useDashboardQueries";
+import { url } from "@/lib/utils";
+
+const Mini: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+  <div className="rounded-lg bg-theme-bg py-2">
+    <span className="block text-base font-semibold text-theme-text">{value}</span>
+    <span className="block text-2xs uppercase tracking-wide text-theme-text-muted">{label}</span>
+  </div>
+);
 
 export const SubjectList: React.FC = () => {
   const { loading: authLoading } = useAuth();
   const { data: subjects = [], isLoading } = useSubjects();
+  const { data: absences = [] } = useAllAbsences();
+  const { data: tasks = [] } = useTasks();
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
@@ -68,94 +83,121 @@ export const SubjectList: React.FC = () => {
     return <TableSkeleton rows={4} cols={3} />;
   }
 
+  const openNew = () => {
+    setEditingSubject(undefined);
+    setModalOpen(true);
+  };
+
   return (
     <>
-      <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
-        <header className="flex justify-between items-center mb-6 flex-wrap gap-3">
-          <h1 className="m-0 text-theme-text">Unidades Curriculares</h1>
-          <button
-            onClick={() => {
-              setEditingSubject(undefined);
-              setModalOpen(true);
-            }}
-            className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent hover:-translate-y-px hover:shadow-md cursor-pointer transition-all duration-150"
-            aria-label="Nueva UC"
-          >
-            + Nueva
-          </button>
-        </header>
-
+      <div>
+        <PageHeader
+          title="Unidades Curriculares"
+          subtitle={`${subjects.length} UC · mínimo 75% de asistencia (reglamento CFE)`}
+          actions={
+            <Button onClick={openNew} aria-label="Nueva UC">
+              <Plus size={16} className="mr-1.5" /> Nueva UC
+            </Button>
+          }
+        />
         {subjects.length === 0 ? (
-          <EmptyState
-            title="Aún no hay materias registradas"
-            description="Las materias o Unidades Curriculares te permiten organizar tus notas y tareas vinculadas."
-            actionLabel="+ Crear mi primera materia"
-            onAction={() => {
-              setEditingSubject(undefined);
-              setModalOpen(true);
-            }}
-            icon={<BookOpen className="w-8 h-8 opacity-50" strokeWidth={1.5} />}
-          />
+          <div className={`${cardCls} p-6`}>
+            <EmptyState
+              title="Aún no hay materias registradas"
+              description="Las materias o Unidades Curriculares te permiten organizar tus notas y tareas vinculadas."
+              actionLabel="+ Crear mi primera materia"
+              onAction={openNew}
+              icon={<BookOpen className="w-8 h-8 opacity-50" strokeWidth={1.5} />}
+            />
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-400px" aria-label="Lista de UC">
-              <thead>
-                <tr>
-                  <th className="text-left px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
-                    Nombre
-                  </th>
-                  <th className="text-left px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
-                    Clases Totales
-                  </th>
-                  <th className="text-right px-3 py-2 border-b-2 border-theme-border text-xs uppercase tracking-wider text-theme-text-muted">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {subjects.map((s) => (
-                  <tr key={s.id} className="hover:bg-theme-bg transition-colors">
-                    <td className="px-3 py-3 border-b border-theme-border">
+          <ul
+            className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 gap-4"
+            aria-label="Lista de UC"
+          >
+            {subjects.map((s) => {
+              const absValue = absences
+                .filter((a) => a.subject_id === s.id)
+                .reduce((sum, a) => sum + (a.calculated_value || 0), 0);
+              const info = attendanceInfo(s.total_classes, absValue);
+              const subjectTasks = tasks.filter((t) => t.subject_id === s.id);
+              const pendingCount = subjectTasks.filter((t) => t.status !== "done").length;
+              const avg = average(
+                subjectTasks.map((t) => t.grade).filter((g): g is number => g != null),
+              );
+              return (
+                <li key={s.id} className={`${cardCls} p-5 flex flex-col gap-4`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                       <a
-                        href={`/subjects/${s.slug || s.id}`}
-                        className="text-theme-primary font-semibold no-underline hover:underline"
+                        href={url(`/subjects/${s.slug || s.id}`)}
+                        className="block text-lg font-semibold text-theme-text no-underline hover:underline truncate"
                       >
                         {s.name}
                       </a>
-                    </td>
-                    <td className="px-3 py-3 border-b border-theme-border text-theme-text">
-                      {s.total_classes}
-                    </td>
-                    <td className="px-3 py-3 border-b border-theme-border">
-                      <div className="flex justify-end items-center gap-1.5 flex-wrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingSubject(s);
-                            setModalOpen(true);
-                          }}
-                          aria-label={`Editar UC ${s.name}`}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setDeletingId(s.id)}
-                          aria-label={`Eliminar UC ${s.name}`}
-                        >
-                          Eliminar
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <span className="text-xs text-theme-text-muted">
+                        {s.track ? (s.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} ·{" "}
+                        {s.total_classes} clases
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 -mr-2 -mt-1">
+                      <IconButton
+                        label={`Editar UC ${s.name}`}
+                        onClick={() => {
+                          setEditingSubject(s);
+                          setModalOpen(true);
+                        }}
+                      >
+                        <Pencil size={16} />
+                      </IconButton>
+                      <IconButton
+                        label={`Eliminar UC ${s.name}`}
+                        danger
+                        onClick={() => setDeletingId(s.id)}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1.5">
+                      <span className="text-theme-text-muted">
+                        Faltas {info.absences} de {info.maxAbsences}
+                      </span>
+                      <span
+                        className={
+                          info.status === "danger"
+                            ? "text-theme-danger font-medium"
+                            : info.status === "warning"
+                              ? "text-theme-warning font-medium"
+                              : "text-theme-text-muted"
+                        }
+                      >
+                        {remainingLabel(info)}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={info.maxAbsences ? (info.absences / info.maxAbsences) * 100 : 0}
+                      tone={
+                        info.status === "danger"
+                          ? "danger"
+                          : info.status === "warning"
+                            ? "warning"
+                            : "ok"
+                      }
+                      label={`Faltas usadas en ${s.name}`}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <Mini label="Asistencia" value={`${info.percentage}%`} />
+                    <Mini label="Promedio" value={avg ?? "—"} />
+                    <Mini label="Pendientes" value={pendingCount} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
-
         <Modal
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
