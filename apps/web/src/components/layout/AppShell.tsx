@@ -16,7 +16,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <ThemeProvider>
         <AuthProvider>
           {children}
-          {import.meta.env.DEV && <Agentation />}
+          {import.meta.env.DEV && import.meta.env.PUBLIC_AGENTATION === "true" && <Agentation />}
         </AuthProvider>
       </ThemeProvider>
     </Sentry.ErrorBoundary>
