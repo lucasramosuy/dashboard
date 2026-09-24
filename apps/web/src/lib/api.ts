@@ -103,6 +103,11 @@ export const api = {
     await handleResponse(response);
   },
 
+  async getCfeRules(): Promise<{ track: string; weeks: number; suggestedClasses: number }[]> {
+    const response = await apiFetch(`${API_BASE}/subjects/cfe-rules`);
+    return handleResponse(response);
+  },
+
   async getSubjects(): Promise<Subject[]> {
     const response = await apiFetch(`${API_BASE}/subjects`);
     return handleResponse<Subject[]>(response);

@@ -153,10 +153,6 @@ app.route("/api/sentry-tunnel", sentryTunnelRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-app.get("/api/test-error", () => {
-  throw new Error("Sentry Example API Error");
-});
-
 const port = Bun.env.PORT || 8787;
 
 const server = Bun.serve({

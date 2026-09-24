@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Subject } from "@dashboard/shared-types";
+import { useCfeRules } from "../../hooks/useDashboardQueries";
 
 interface Props {
   initialData?: Subject;
@@ -8,20 +9,18 @@ interface Props {
   loading?: boolean;
 }
 
-const CFE_RULES: Record<string, number> = {
-  semestral: 15,
-  anual: 30,
-};
-
 export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, loading }) => {
   const [name, setName] = useState(initialData?.name || "");
   const [track, setTrack] = useState<string>(initialData?.track || "");
   const [totalClassesStr, setTotalClassesStr] = useState(String(initialData?.total_classes ?? 1));
+  const { data: cfeRules = [] } = useCfeRules();
+  const rule = (t: string) => cfeRules.find((r) => r.track === t);
 
   const handleTrackChange = (value: string) => {
     setTrack(value);
-    if (value && CFE_RULES[value]) {
-      setTotalClassesStr(String(CFE_RULES[value]));
+    const r = value ? rule(value) : undefined;
+    if (r) {
+      setTotalClassesStr(String(r.suggestedClasses));
     }
   };
 
@@ -33,7 +32,7 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
       name,
       total_classes: total,
       track: (track || undefined) as Subject["track"],
-      duration_weeks: track ? CFE_RULES[track] : undefined,
+      duration_weeks: track ? rule(track)?.weeks : undefined,
     });
   };
 
@@ -71,7 +70,7 @@ export const SubjectForm: React.FC<Props> = ({ initialData, onSubmit, onCancel, 
         </select>
         {track && (
           <small className="text-theme-text-muted mt-1 block text-xs">
-            Sugerencia CFE: {CFE_RULES[track]} clases
+            Sugerencia CFE: {rule(track)?.suggestedClasses} clases
           </small>
         )}
       </div>
