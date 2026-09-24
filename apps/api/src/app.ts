@@ -11,6 +11,7 @@ import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
 import { icalRouter } from "./routes/ical";
 import { sentryTunnelRouter } from "./routes/sentry_tunnel";
+import { adminRouter } from "./routes/admin";
 import { auth } from "./lib/auth.better";
 import { z } from "zod";
 
@@ -126,5 +127,6 @@ app.route("/api/practice-journals", practiceJournalsRouter);
 app.route("/api/absences", absencesRouter);
 app.route("/api/ical", icalRouter);
 app.route("/api/sentry-tunnel", sentryTunnelRouter);
+app.route("/api/admin", adminRouter);
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
