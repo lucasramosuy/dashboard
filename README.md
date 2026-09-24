@@ -85,10 +85,21 @@ Para generar códigos (máximo 10 activos a la vez):
 cd apps/api && bun run invites
 ```
 
+### Contraseñas
+
+Las contraseñas se guardan con **PBKDF2-SHA256** (WebCrypto, 30.000 iteraciones, salt aleatoria) en `apps/api/src/lib/password.ts`, en lugar del scrypt por defecto de Better Auth: scrypt usa 70-160 ms de CPU y el plan gratuito de Cloudflare Workers da 10 ms por request. Los hashes scrypt viejos se siguen aceptando.
+
+Para cambiarle la contraseña a un usuario (pide la contraseña nueva por la terminal; con las variables de Turso apunta a producción):
+
+```bash
+cd apps/api && bun run set-password <email>
+```
+
 ## Schoology (iCal)
 
 - El enlace se guarda en el usuario (`ical_url`) desde la pantalla **Schoology**.
 - Se sincroniza al tocar **Sincronizar** y una vez por día a las 00:00 (Montevideo), con un cron dentro de la API.
+- El feed se parsea con un parser propio y liviano (`apps/api/src/lib/ics.ts`, sin `node-ical`): fechas UTC, con `TZID`, flotantes (se toman como hora de Montevideo) y de día completo. No expande `RRULE`.
 - Cada sincronización reemplaza los eventos del usuario (tabla `ical_events`). Descarta los de hace más de 30 días.
 - Los eventos se muestran en Inicio (próximos 7 días), en el Planner y en Schoology. No se convierten en tareas.
 
