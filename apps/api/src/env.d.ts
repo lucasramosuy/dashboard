@@ -6,6 +6,5 @@ declare module "bun" {
     TURSO_AUTH_TOKEN?: string;
     BETTER_AUTH_URL?: string;
     CORS_ORIGINS?: string;
-    DEV_LOGIN_ENABLED?: string;
   }
 }
