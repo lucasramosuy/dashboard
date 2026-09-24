@@ -1,9 +1,10 @@
 ---
+import { url } from "@/lib/utils";
 import DashboardLayout from "../../layouts/DashboardLayout.astro";
 import { TaskDetailPage } from "../../components/tasks/TaskDetailPage";
 
 const { id } = Astro.params;
-if (!id) return Astro.redirect("/tasks");
+if (!id) return Astro.redirect(url("/tasks"));
 ---
 
 <DashboardLayout title="Detalle de Tarea">
