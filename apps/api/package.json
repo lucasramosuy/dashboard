@@ -21,14 +21,14 @@
   "dependencies": {
     "@better-auth/cli": "^1.4.21",
     "@dashboard/shared-types": "workspace:*",
-    "@libsql/client": "^0.17.4",
+    "@libsql/client": "^0.18.0",
     "@libsql/kysely-libsql": "^0.4.1",
     "@sentry/bun": "^10.75.3",
     "better-auth": "^1.7.6",
     "hono": "^4.13.9",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
-    "node-ical": "^0.25.6",
+    "node-ical": "^0.27.2",
     "p-limit": "^7.3.3",
     "zod": "^4.6.5"
   }
