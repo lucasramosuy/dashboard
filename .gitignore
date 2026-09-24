@@ -58,3 +58,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Ignore Astro
 .astro
+
+# Cloudflare Workers (wrangler)
+.wrangler
+.dev.vars
