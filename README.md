@@ -21,7 +21,7 @@ Dashboard académico para estudiantes de formación docente (CFE): unidades curr
 dashboard/
 ├── apps/
 │   ├── api/            # Backend: Hono + Bun + libSQL (SQLite local / Turso)
-│   └── web/            # Frontend: Astro 6 + React 18 + Tailwind 4
+│   └── web/            # Frontend: Astro 7 + React 18 + Tailwind 4
 ├── packages/
 │   └── shared-types/   # Tipos y esquemas (zod) compartidos
 ├── MD/                 # SPECS.md y ROADMAP.md
