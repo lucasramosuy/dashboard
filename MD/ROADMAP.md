@@ -509,4 +509,5 @@ Fase B (pendiente):
 - [x] Rehash automático: las contraseñas scrypt pasan a PBKDF2 en el primer login correcto (no hace falta resetearlas).
 - [x] Deploy con GitHub Actions (wrangler) desde `prod`.
 - [x] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
+- [x] Panel `/dashboard/admin` (invitaciones, usuarios, reset de contraseña) y cambio de contraseña en Mi Perfil.
 - [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
