@@ -13,6 +13,12 @@ import {
 
 import { BackButton } from "../navigation/BackButton";
 import { SubjectDetailSkeleton } from "../ui/Skeleton";
+import { Plus, Trash2 } from "lucide-react";
+import type { Subject } from "@dashboard/shared-types";
+import { PageHeader, Card, StatTile, ProgressBar } from "../ui/PageHeader";
+import { IconButton } from "../ui/IconButton";
+import { Button } from "../ui/Button";
+import { attendanceInfo, remainingLabel, toLocalDay, formatDay, formatDayShort, daysUntil, todayKey } from "../../lib/format";
 
 interface Props {
   id: string;
@@ -21,11 +27,7 @@ interface Props {
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent";
 
-const btnOutline =
-  "px-3 py-1.5 rounded-lg text-sm font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150";
 
-const btnPrimary =
-  "px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 whitespace-nowrap disabled:opacity-45 disabled:cursor-not-allowed";
 
 export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const { loading: authLoading } = useAuth();
@@ -36,7 +38,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const deleteAbsence = useDeleteAbsence();
 
   const dateInputRef = React.useRef<HTMLInputElement>(null);
-  const [absenceDate, setAbsenceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [absenceDate, setAbsenceDate] = useState(todayKey());
   const [absenceValue, setAbsenceValue] = useState<number>(1);
   const [showAbsenceForm, setShowAbsenceForm] = useState(false);
   const { toast, showToast, hideToast } = useToast();
@@ -55,7 +57,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
       {
         onSuccess: () => {
           setShowAbsenceForm(false);
-          setAbsenceDate(new Date().toISOString().split("T")[0]);
+          setAbsenceDate(todayKey());
           setAbsenceValue(1);
           showToast("Inasistencia registrada");
         },
@@ -79,61 +81,70 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   if (!subject) return <p className="text-theme-text-muted">UC no encontrada.</p>;
 
   const totalAbsenceValue = absences.reduce((sum, a) => sum + (a.calculated_value || 0), 0);
-  const attendancePercentage =
-    subject.total_classes > 0
-      ? Math.max(
-          0,
-          Math.round(((subject.total_classes - totalAbsenceValue) / subject.total_classes) * 100),
-        )
-      : 100;
-  const riskVariant =
-    attendancePercentage < 75 ? "danger" : attendancePercentage < 85 ? "warning" : "success";
+  const info = attendanceInfo(subject.total_classes, totalAbsenceValue);
+  const riskVariant = info.status === "danger" ? "danger" : info.status === "warning" ? "warning" : "success";
+  const gradeAvg = (subject as Subject & { gradeAvg?: number | null }).gradeAvg ?? null;
+  const graded = tasks.filter((t) => t.grade != null);
+  const pendingTasks = tasks.filter((t) => t.status !== "done");
+  const sortedAbsences = [...absences].sort((a, b) => toLocalDay(b.date).getTime() - toLocalDay(a.date).getTime());
+  const sortedTasks = [...tasks].sort((a, b) => toLocalDay(a.due_date).getTime() - toLocalDay(b.due_date).getTime());
 
   return (
     <>
-      <div className="max-w-900px mx-auto">
-        <header className="flex justify-between items-center mb-8 border-b border-theme-border pb-4 flex-wrap gap-3">
-          <div className="flex items-center gap-4">
-            <BackButton fallback="/subjects" />
-            <h1 className="m-0 text-theme-text">{subject.name}</h1>
-          </div>
-          <StatusBadge variant={riskVariant}>
-            {riskVariant === "success"
-              ? "Bajo riesgo"
-              : riskVariant === "warning"
-                ? "Riesgo medio"
-                : "Alto riesgo"}
-          </StatusBadge>
-        </header>
+      <div>
+        <PageHeader
+          back={<BackButton fallback="/subjects" />}
+          title={subject.name}
+          badge={
+            <StatusBadge variant={riskVariant}>
+              {riskVariant === "success" ? "Asistencia al día" : riskVariant === "warning" ? "Cerca del límite" : "Límite superado"}
+            </StatusBadge>
+          }
+          subtitle={`${subject.track ? (subject.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} · ${subject.total_classes} clases`}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
-          {/* Métricas */}
-          <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl m-0 text-theme-text">Asistencia</h2>
-              <button
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <StatTile label="Asistencia" value={`${info.percentage}%`} tone={riskVariant === "success" ? "default" : riskVariant} />
+          <StatTile
+            label="Faltas"
+            value={`${info.absences} / ${info.maxAbsences}`}
+            hint={remainingLabel(info)}
+            tone={info.status === "danger" ? "danger" : info.status === "warning" ? "warning" : "default"}
+          />
+          <StatTile label="Promedio" value={gradeAvg ?? "—"} hint={graded.length ? `${graded.length} nota${graded.length > 1 ? "s" : ""}` : "Sin notas"} />
+          <StatTile label="Pendientes" value={pendingTasks.length} hint={`${tasks.length} tareas en total`} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card
+            title="Inasistencias"
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setShowAbsenceForm(!showAbsenceForm)}
-                className={`${btnOutline} text-xs`}
                 aria-expanded={showAbsenceForm}
                 aria-controls="absence-form"
               >
-                {showAbsenceForm ? "Cancelar" : "+ Registrar inasistencia"}
-              </button>
+                {showAbsenceForm ? "Cancelar" : <><Plus size={14} className="mr-1" /> Registrar</>}
+              </Button>
+            }
+          >
+            <div className="mb-4">
+              <ProgressBar
+                value={info.maxAbsences ? (info.absences / info.maxAbsences) * 100 : 0}
+                tone={info.status === "danger" ? "danger" : info.status === "warning" ? "warning" : "ok"}
+                label="Faltas usadas"
+              />
+              <p className="m-0 mt-1.5 text-xs text-theme-text-muted">
+                Justificada = media falta. Límite: {info.maxAbsences} faltas (25% de {subject.total_classes}).
+              </p>
             </div>
-
             {showAbsenceForm && (
-              <div
-                id="absence-form"
-                className="bg-theme-bg border border-theme-border rounded-lg p-4 mb-4"
-              >
+              <div id="absence-form" className="bg-theme-bg border border-theme-border rounded-lg p-4 mb-4">
                 <div className="flex gap-3 flex-wrap items-end">
-                  <div className="flex-1 min-w-140px">
-                    <label
-                      htmlFor="absenceDate"
-                      className="block text-xs mb-1 text-theme-text-muted"
-                    >
-                      Fecha
-                    </label>
+                  <div className="flex-1 min-w-[140px]">
+                    <label htmlFor="absenceDate" className="block text-xs mb-1 text-theme-text-muted">Fecha</label>
                     <input
                       ref={dateInputRef}
                       id="absenceDate"
@@ -141,123 +152,70 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                       className={inputCls}
                       value={absenceDate}
                       onChange={(e) => setAbsenceDate(e.target.value)}
-                      onClick={() => {
-                        if (dateInputRef.current && "showPicker" in HTMLInputElement.prototype) {
-                          try {
-                            dateInputRef.current.showPicker();
-                          } catch {
-                            /* ignore */
-                          }
-                        }
-                      }}
                     />
                   </div>
-                  <div className="flex-1 min-w-140px">
-                    <label
-                      htmlFor="absenceType"
-                      className="block text-xs mb-1 text-theme-text-muted"
-                    >
-                      Tipo
-                    </label>
+                  <div className="flex-1 min-w-[140px]">
+                    <label htmlFor="absenceType" className="block text-xs mb-1 text-theme-text-muted">Tipo</label>
                     <select
                       id="absenceType"
                       className={`${inputCls} [&>option]:bg-theme-card-bg [&>option]:text-theme-text`}
                       value={absenceValue}
                       onChange={(e) => setAbsenceValue(Number(e.target.value))}
                     >
-                      <option value={1}>Falta completa (1)</option>
-                      <option value={0.5}>Media falta (0.5)</option>
+                      <option value={1}>Falta (1)</option>
+                      <option value={0.5}>Justificada (0,5)</option>
                     </select>
                   </div>
-                  <button
-                    onClick={handleCreateAbsence}
-                    className={btnPrimary}
-                    disabled={createAbsence.isPending}
-                    aria-label="Guardar inasistencia"
-                  >
-                    {createAbsence.isPending ? "Guardando..." : "Guardar"}
-                  </button>
+                  <Button onClick={handleCreateAbsence} isLoading={createAbsence.isPending} aria-label="Guardar inasistencia">
+                    Guardar
+                  </Button>
                 </div>
               </div>
             )}
-
-            <div className="text-center py-4">
-              <span
-                className="text-5xl font-bold text-theme-primary"
-                aria-label={`Porcentaje de asistencia: ${attendancePercentage}%`}
-              >
-                {attendancePercentage}%
-              </span>
-              <p className="text-theme-text-muted mt-1 mb-0">Asistencia actual</p>
-            </div>
-
-            <div className="border-t border-theme-border pt-4">
-              <p className="my-2">
-                Clases totales: <strong>{subject.total_classes}</strong>
-              </p>
-              <p className="my-2">
-                Inasistencias: <strong className="text-theme-danger">{totalAbsenceValue}</strong>
-              </p>
-            </div>
-
-            {absences.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-theme-text-muted mb-2">Historial de inasistencias</p>
-                <ul className="list-none p-0 m-0" aria-label="Historial de inasistencias">
-                  {absences.map((a) => (
-                    <li
-                      key={a.id}
-                      className="flex justify-between items-center py-1.5 border-b border-theme-border last:border-b-0"
-                    >
-                      <span className="text-sm">
-                        {new Date(a.date).toLocaleDateString("es-UY")} —{" "}
-                        <strong>
-                          {a.calculated_value === 0.5 ? "Media falta" : "Falta completa"}
-                        </strong>
-                      </span>
-                      <button
-                        onClick={() => handleDeleteAbsence(a.id)}
-                        className="bg-transparent border-none cursor-pointer text-theme-danger text-xs hover:underline"
-                        aria-label={`Eliminar inasistencia del ${new Date(a.date).toLocaleDateString("es-UY")}`}
-                      >
-                        ✕
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
-
-          {/* Tareas */}
-          <section className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl mb-4 text-theme-text">Historial de Tareas</h2>
-            {tasks.length === 0 ? (
-              <p className="text-theme-text-muted">No hay tareas asociadas.</p>
+            {sortedAbsences.length === 0 ? (
+              <p className="m-0 text-sm text-theme-text-muted">Sin faltas registradas.</p>
             ) : (
-              <ul className="list-none p-0" aria-label="Historial de Tareas">
-                {tasks.map((t) => (
-                  <li
-                    key={t.id}
-                    className="flex justify-between py-3 border-b border-theme-border last:border-b-0"
-                  >
-                    <a
-                      href={`/tasks/${t.slug || t.id}`}
-                      className="no-underline text-theme-text hover:text-theme-primary transition-colors"
-                    >
-                      {t.title}
-                    </a>
-                    <StatusBadge variant={t.status === "done" ? "success" : "warning"}>
-                      {t.status === "done" ? "Ok" : "Pendiente"}
-                    </StatusBadge>
+              <ul className="list-none p-0 m-0" aria-label="Historial de inasistencias">
+                {sortedAbsences.map((a) => (
+                  <li key={a.id} className="flex justify-between items-center py-2 border-b border-theme-border last:border-b-0">
+                    <span className="text-sm">
+                      {formatDayShort(a.date)}
+                      <span className="ml-2 text-xs text-theme-text-muted">{a.calculated_value === 0.5 ? "Justificada · 0,5" : "Falta · 1"}</span>
+                    </span>
+                    <IconButton label={`Eliminar inasistencia del ${formatDay(a.date)}`} danger onClick={() => handleDeleteAbsence(a.id)}>
+                      <Trash2 size={15} />
+                    </IconButton>
                   </li>
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
+
+          <Card title="Tareas y notas">
+            {sortedTasks.length === 0 ? (
+              <p className="m-0 text-sm text-theme-text-muted">No hay tareas asociadas.</p>
+            ) : (
+              <ul className="list-none p-0 m-0" aria-label="Tareas de la UC">
+                {sortedTasks.map((t) => (
+                  <li key={t.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-theme-border last:border-b-0">
+                    <a href={`/tasks/${t.slug || t.id}`} className="min-w-0 no-underline text-theme-text">
+                      <span className={`block text-sm font-medium truncate ${t.status === "done" ? "text-theme-text-muted" : ""}`}>{t.title}</span>
+                      <span className="block text-xs text-theme-text-muted">{formatDayShort(t.due_date)}{t.type ? ` · ${t.type.charAt(0).toUpperCase() + t.type.slice(1)}` : ""}</span>
+                    </a>
+                    {t.grade != null ? (
+                      <span className="text-base font-bold text-theme-text">{t.grade}</span>
+                    ) : (
+                      <StatusBadge variant={t.status === "done" ? "success" : daysUntil(t.due_date) < 0 ? "danger" : "warning"}>
+                        {t.status === "done" ? "Hecha" : daysUntil(t.due_date) < 0 ? "Vencida" : "Pendiente"}
+                      </StatusBadge>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </div>
       </div>
-
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </>
   );
