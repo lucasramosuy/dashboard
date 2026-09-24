@@ -9,3 +9,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // ARCH-9: formatDate removed — canonical version lives in lib/format.ts
+
+/**
+ * Arma una ruta interna con el base de Astro ("/dashboard").
+ * url("/tasks") → "/dashboard/tasks"; url("/") → "/dashboard/".
+ */
+export function url(path: string): string {
+  return `${import.meta.env.BASE_URL.replace(/\/$/, "")}${path}`;
+}
