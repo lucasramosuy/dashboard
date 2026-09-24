@@ -93,6 +93,10 @@ Para cambiarle la contraseña a un usuario (pide la contraseña nueva por la ter
 cd apps/api && bun run set-password <email>
 ```
 
+## App en el celu (PWA)
+
+El dashboard se puede instalar como app: en Android (Chrome) "Instalar app" o "Agregar a pantalla principal"; en iPhone (Safari) Compartir → "Agregar a inicio". Abre a pantalla completa con su ícono. Archivos: `apps/web/public/manifest.webmanifest` y los íconos `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` y `apple-touch-icon.png` (generados desde `favicon.svg`). No hay service worker: la app necesita conexión, igual que la web.
+
 ## Schoology (iCal)
 
 - El enlace se guarda en el usuario (`ical_url`) desde la pantalla **Schoology**.

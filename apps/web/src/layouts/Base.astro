@@ -7,22 +7,28 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
       content="Un panel académico personal para organizar tus unidades curriculares, tareas, inasistencias y prácticas docentes, con estadísticas claras y seguimiento del progreso a lo largo del semestre."
     />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/favicon.svg`}
-    />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <!-- App instalable (PWA): ícono en la pantalla de inicio y pantalla completa -->
+    <link rel="manifest" href={`${base}/manifest.webmanifest`} />
+    <link rel="apple-touch-icon" href={`${base}/apple-touch-icon.png`} />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Dashboard" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-jetbrains-mono" preload />
     <link rel="canonical" href={`https://lucasramos.uy${Astro.url.pathname}`} />
