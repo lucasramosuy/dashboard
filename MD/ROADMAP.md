@@ -501,7 +501,8 @@ Fase B (pendiente):
 
 - [ ] Spike: login de Better Auth y node-ical en un Worker de prueba (límite de 10 ms de CPU del plan free).
 - [ ] API en Cloudflare Workers (Hono nativo), cron de iCal como Cron Trigger, `@sentry/cloudflare`.
-- [ ] Web con `@astrojs/cloudflare` y `base: "/dashboard"`, junto con Astro 7.
+- [x] Astro 7 (con `@astrojs/react` 7 y `@astrojs/node` 11 hasta la migración).
+- [ ] Web con `@astrojs/cloudflare` y `base: "/dashboard"`.
 - [ ] Ruteo en el Worker proxy de `lucasramos.uy/dashboard`, en el mismo origen.
 - [ ] Deploy con GitHub Actions (wrangler) desde `prod`.
 - [ ] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
