@@ -623,7 +623,8 @@ export const dbService = {
     // PERF-2: fetch journals by specific date
     getByDate: async (userId: string, date: string): Promise<PracticeJournal[]> => {
       const r = await db.execute({
-        sql: "SELECT * FROM practice_journals WHERE user_id = ? AND date = ? ORDER BY date DESC",
+        // date se guarda como ISO (YYYY-MM-DDT00:00:00.000Z): comparamos solo el día
+        sql: "SELECT * FROM practice_journals WHERE user_id = ? AND substr(date, 1, 10) = ? ORDER BY date DESC",
         args: [userId, date],
       });
       return r.rows.map(toDate<PracticeJournal>);
