@@ -499,7 +499,8 @@ Plan A (hecho, septiembre 2026):
 
 Fase B (pendiente):
 
-- [ ] Spike: login de Better Auth y node-ical en un Worker de prueba (límite de 10 ms de CPU del plan free).
+- [x] Spike en un Worker de prueba (24/09/2026, CPU real por request, límite free 10 ms): scrypt de Better Auth 67-161 ms, PBKDF2 30k 4-12 ms, PBKDF2 100k 16-36 ms, node-ical con 300 eventos 5-24 ms.
+- [x] Hash de contraseñas PBKDF2 (acepta los scrypt viejos) y parser iCal propio (~1 ms por feed) en lugar de node-ical.
 - [ ] API en Cloudflare Workers (Hono nativo), cron de iCal como Cron Trigger, `@sentry/cloudflare`.
 - [ ] Web con `@astrojs/cloudflare` y `base: "/dashboard"`, junto con Astro 7.
 - [ ] Ruteo en el Worker proxy de `lucasramos.uy/dashboard`, en el mismo origen.
