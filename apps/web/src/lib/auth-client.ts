@@ -1,9 +1,8 @@
 import { createAuthClient } from "better-auth/react";
+import { url } from "./utils";
 
+// Better Auth está en el mismo origen: /dashboard/api/auth
 export const authClient = createAuthClient({
   baseURL:
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/auth`
-      : (import.meta.env.PUBLIC_API_BASE as string | undefined) ??
-        "https://api.lucasramos.uy/api",
+    typeof window !== "undefined" ? `${window.location.origin}${url("/api/auth")}` : undefined,
 });
