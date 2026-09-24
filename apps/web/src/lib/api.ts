@@ -11,6 +11,19 @@ import * as Sentry from "@sentry/astro";
  */
 const API_BASE = url("/api");
 
+export type AdminUser = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+  lastSeen: Date | null;
+  hasPassword: boolean;
+  legacyHash: boolean;
+  admin: boolean;
+};
+
+export type AdminInvite = { id: string; code: string; createdAt: Date };
+
 /**
  * Helper para convertir strings de fecha a objetos Date en respuestas JSON
  * Soporta formato ISO completo (2026-02-23T...) y formato corto (2026-02-23)
@@ -276,5 +289,38 @@ export const api = {
   async getIcalEvents(): Promise<IcalEvent[]> {
     const response = await apiFetch(`${API_BASE}/ical/events`);
     return handleResponse<IcalEvent[]>(response);
+  },
+
+  // --- Admin (solo ADMIN_EMAILS) ---
+  async adminMe(): Promise<{ admin: boolean }> {
+    const response = await apiFetch(`${API_BASE}/admin/me`);
+    return handleResponse(response);
+  },
+
+  async adminUsers(): Promise<AdminUser[]> {
+    const response = await apiFetch(`${API_BASE}/admin/users`);
+    return handleResponse<AdminUser[]>(response);
+  },
+
+  async adminResetPassword(userId: string): Promise<{ password: string }> {
+    const response = await apiFetch(`${API_BASE}/admin/users/${userId}/reset-password`, {
+      method: "POST",
+    });
+    return handleResponse(response);
+  },
+
+  async adminInvites(): Promise<AdminInvite[]> {
+    const response = await apiFetch(`${API_BASE}/admin/invites`);
+    return handleResponse<AdminInvite[]>(response);
+  },
+
+  async adminCreateInvite(): Promise<AdminInvite> {
+    const response = await apiFetch(`${API_BASE}/admin/invites`, { method: "POST" });
+    return handleResponse<AdminInvite>(response);
+  },
+
+  async adminDeleteInvite(id: string): Promise<void> {
+    const response = await apiFetch(`${API_BASE}/admin/invites/${id}`, { method: "DELETE" });
+    await handleResponse(response);
   },
 };
