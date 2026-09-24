@@ -1,1 +1,12 @@
-placeholder
+---
+import DashboardLayout from "../layouts/DashboardLayout.astro";
+import { AdminPanel } from "../components/admin/AdminPanel";
+---
+
+<DashboardLayout title="Administración">
+  <div class="dash-container" style="padding: 2rem 1rem; max-width: 720px; margin: 0 auto;">
+    <section>
+      <AdminPanel client:only="react" />
+    </section>
+  </div>
+</DashboardLayout>
