@@ -85,7 +85,7 @@ cd apps/api && bun run invites
 
 ### Contraseñas
 
-Las contraseñas se guardan con **PBKDF2-SHA256** (WebCrypto, 30.000 iteraciones, salt aleatoria) en `apps/api/src/lib/password.ts`, en lugar del scrypt por defecto de Better Auth: scrypt usa 70-160 ms de CPU y el plan gratuito de Cloudflare Workers da 10 ms por request. Los hashes scrypt viejos se siguen aceptando.
+Las contraseñas se guardan con **PBKDF2-SHA256** (WebCrypto, 30.000 iteraciones, salt aleatoria) en `apps/api/src/lib/password.ts`, en lugar del scrypt por defecto de Better Auth: scrypt usa 70-160 ms de CPU y el plan gratuito de Cloudflare Workers da 10 ms por request. Los hashes scrypt viejos se siguen aceptando y se re-guardan solos en PBKDF2 en el primer login correcto.
 
 Para cambiarle la contraseña a un usuario (pide la contraseña nueva por la terminal; con las variables de Turso apunta a producción):
 
