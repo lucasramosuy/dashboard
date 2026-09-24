@@ -72,3 +72,8 @@ jobs:
       - name: Build web
         working-directory: apps/web
         run: bun run build
+
+      # Valida el bundle del Worker (tamaño, bindings, config) sin publicar nada
+      - name: Worker dry-run
+        working-directory: apps/web
+        run: bunx wrangler deploy --dry-run
