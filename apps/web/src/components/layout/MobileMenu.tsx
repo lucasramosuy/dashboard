@@ -3,6 +3,7 @@ import { SidebarActions } from "../layout/SidebarActions";
 import { Menu, X, BookOpen } from "lucide-react";
 
 import { navItems } from "../../config/nav";
+import { url } from "@/lib/utils";
 
 interface Props {
   currentPath: string;
@@ -12,7 +13,8 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const currentLabel =
-    navItems.find((i) => (i.href === "/" ? currentPath === "/" : currentPath.startsWith(i.href)))?.label ?? "";
+    navItems.find((i) => (i.href === "/" ? currentPath === "/" : currentPath.startsWith(i.href)))
+      ?.label ?? "";
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Focus trap y body scroll lock
@@ -52,7 +54,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
     <>
       {/* Barra superior móvil: no tapa contenido como el botón flotante */}
       <div className="md:hidden sticky top-0 z-50 flex items-center justify-between h-14 px-4 bg-theme-bg/90 backdrop-blur border-b border-theme-border">
-        <a href="/" className="flex items-center gap-2 no-underline text-theme-text">
+        <a href={url("/")} className="flex items-center gap-2 no-underline text-theme-text">
           <BookOpen size={20} />
           <span className="font-bold text-base">Mi Panel</span>
         </a>
@@ -88,9 +90,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
             <div className="flex justify-between items-center p-5 border-b border-theme-border/50">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-theme-primary animate-pulse"></span>
-                <span className="text-lg font-bold tracking-tight text-theme-text">
-                  Mi Panel
-                </span>
+                <span className="text-lg font-bold tracking-tight text-theme-text">Mi Panel</span>
               </div>
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-full text-theme-text-muted hover:text-theme-text hover:bg-theme-card-bg transition-all duration-200 cursor-pointer"
@@ -107,7 +107,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
                 return (
                   <a
                     key={item.href}
-                    href={item.href}
+                    href={url(item.href)}
                     className={`group relative flex items-center gap-4 p-3.5 rounded-xl no-underline transition-all duration-200 ${
                       isActive
                         ? "bg-theme-primary text-theme-bg shadow-md"
@@ -123,9 +123,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
                     >
                       <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                     </span>
-                    <span className="text-base font-medium leading-none">
-                      {item.label}
-                    </span>
+                    <span className="text-base font-medium leading-none">{item.label}</span>
                   </a>
                 );
               })}
