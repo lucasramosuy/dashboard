@@ -4,10 +4,8 @@ Sentry.init({
     import.meta.env.PUBLIC_SENTRY_DSN ||
     "https://f8ee541e1cbbf5ab6d935de9bfd9e6b9@o4510988275482624.ingest.us.sentry.io/4510988282822656",
 
-  // Tunnel para evitar bloqueos por ad-blockers. Apunta directo al dominio de la API.
-  tunnel: import.meta.env.PUBLIC_API_BASE
-    ? `${import.meta.env.PUBLIC_API_BASE}/sentry-tunnel`
-    : "/api/sentry-tunnel",
+  // Tunnel por la propia API (mismo origen) para evitar bloqueos por ad-blockers.
+  tunnel: `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/sentry-tunnel`,
 
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/astro/configuration/options/#sendDefaultPii
