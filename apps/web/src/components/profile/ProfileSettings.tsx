@@ -3,6 +3,9 @@ import { useAuth } from "../../contexts/AuthContext";
 import { AppShell } from "../layout/AppShell";
 import { authClient } from "../../lib/auth-client";
 import { ProfileSkeleton } from "../ui/Skeleton";
+import { Button } from "../ui/Button";
+import { api } from "../../lib/api";
+import { url } from "../../lib/utils";
 
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
@@ -38,7 +41,9 @@ const ProfileForm: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 w-full">
       <header className="flex flex-col gap-1 mb-2">
-        <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">Mi Perfil</h1>
+        <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">
+          Mi Perfil
+        </h1>
         <p className="text-theme-text-muted m-0 text-sm sm:text-base">
           Administrá tu cuenta y preferencias personales.
         </p>
@@ -86,23 +91,119 @@ const ProfileForm: React.FC = () => {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
-            disabled={isSaving || !name.trim()}
-          >
+          <Button type="submit" disabled={isSaving || !name.trim()}>
             {isSaving ? "Guardando..." : "Guardar cambios"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
   );
 };
 
+const PasswordForm: React.FC = () => {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    const { error } = await authClient.changePassword({
+      currentPassword: current,
+      newPassword: next,
+      revokeOtherSessions: true,
+    });
+    if (error) {
+      setMessage({ type: "error", text: error.message || "No se pudo cambiar la contraseña" });
+    } else {
+      setMessage({ type: "success", text: "Contraseña actualizada" });
+      setCurrent("");
+      setNext("");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-4">
+      <h2 className="text-xl font-bold m-0 text-theme-text">Contraseña</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+            Contraseña actual
+          </label>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            required
+            className={inputCls}
+          />
+        </div>
+        <div>
+          <label className="block mb-1 text-sm font-medium text-theme-text-muted">
+            Contraseña nueva (mínimo 8 caracteres)
+          </label>
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            minLength={8}
+            required
+            className={inputCls}
+          />
+        </div>
+        {message && (
+          <div
+            className={`px-4 py-3 rounded-lg text-sm border ${
+              message.type === "error"
+                ? "bg-theme-danger-light text-theme-danger border-theme-danger"
+                : "bg-theme-success-light text-theme-success border-theme-success"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+        <Button type="submit" disabled={saving || !current || next.length < 8}>
+          {saving ? "Guardando..." : "Cambiar contraseña"}
+        </Button>
+      </form>
+    </div>
+  );
+};
+
+// Acceso al panel de administración, solo visible para ADMIN_EMAILS
+const AdminLink: React.FC = () => {
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    api
+      .adminMe()
+      .then((r) => setAdmin(r.admin))
+      .catch(() => setAdmin(false));
+  }, []);
+  if (!admin) return null;
+  return (
+    <a
+      href={url("/admin")}
+      className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm flex flex-col gap-1 no-underline hover:border-theme-accent transition-all duration-150"
+    >
+      <span className="text-xl font-bold text-theme-text">Administración</span>
+      <span className="text-sm text-theme-text-muted">Usuarios, invitaciones y contraseñas.</span>
+    </a>
+  );
+};
+
 export const ProfileSettings: React.FC = () => {
   return (
     <AppShell>
-      <ProfileForm />
+      <div className="flex flex-col gap-6 w-full">
+        <ProfileForm />
+        <PasswordForm />
+        <AdminLink />
+      </div>
     </AppShell>
   );
 };
