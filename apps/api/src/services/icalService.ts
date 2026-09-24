@@ -1,4 +1,4 @@
-import ical from "node-ical";
+import { parseIcs } from "../lib/ics";
 import { db, dbService } from "../lib/db";
 import { IcalEvent } from "@dashboard/shared-types";
 import { logger } from "../lib/logger";
@@ -11,16 +11,17 @@ export const icalService = {
 
     try {
       // 1. Fetch and parse calendar
-      const events = await ical.async.fromURL(icalUrl);
+      const res = await fetch(icalUrl, { headers: { Accept: "text/calendar" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status} al descargar el iCal`);
+      const events = parseIcs(await res.text());
 
       // 2. Resolve events
       const eventsToInsert: IcalEvent[] = [];
       const now = new Date();
 
-      for (const rawEvent of Object.values(events)) {
-        const event = rawEvent as any;
-        if (event && event.type === "VEVENT" && event.summary) {
-          const eventStart = new Date(event.start);
+      for (const event of events) {
+        if (event.summary && event.start) {
+          const eventStart = event.start;
           if (eventStart.getTime() < now.getTime() - 1000 * 60 * 60 * 24 * 30) {
             continue;
           }
@@ -37,7 +38,7 @@ export const icalService = {
           eventsToInsert.push({
             id: globalThis.crypto.randomUUID(),
             user_id: userId,
-            title: String(event.summary),
+            title: event.summary,
             description: description,
             url: url,
             start_date: eventStart,

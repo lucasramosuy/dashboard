@@ -11,6 +11,7 @@
     "test:watch": "bun test --watch",
     "seed": "bun src/seed.ts",
     "invites": "bun src/invites.ts",
+    "set-password": "bun src/set-password.ts",
     "check": "tsc -p tsconfig.json"
   },
   "devDependencies": {
@@ -28,7 +29,6 @@
     "hono": "^4.13.9",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
-    "node-ical": "^0.27.2",
     "p-limit": "^7.3.3",
     "zod": "^4.6.5"
   }

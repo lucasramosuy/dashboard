@@ -3,6 +3,7 @@ import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
 import { createClient } from "@libsql/client";
 import { getDbConfig } from "./db";
+import { hashPassword, verifyPassword } from "./password";
 
 // En el entorno de tests necesitamos pasar explícitamente la config para SQLite local
 const libsqlClient = createClient(getDbConfig());
@@ -25,6 +26,8 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    // PBKDF2 en vez de scrypt para entrar en el límite de CPU de Workers (ver lib/password.ts)
+    password: { hash: hashPassword, verify: verifyPassword },
   },
   user: {
     additionalFields: {
@@ -44,8 +47,6 @@ export const auth = betterAuth({
     // Con crossSubDomainCookies el browser necesita SameSite=None; Secure para
     // aceptar la cookie en requests cross-subdomain (dashboard. → api.).
     // Better Auth usa Lax por defecto, lo que bloquea la cookie en prod.
-    defaultCookieAttributes: isProd
-      ? { sameSite: "none", secure: true }
-      : {},
+    defaultCookieAttributes: isProd ? { sameSite: "none", secure: true } : {},
   },
 });

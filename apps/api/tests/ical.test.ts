@@ -1,33 +1,42 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { app } from "../src/server";
 import { auth } from "../src/lib/auth.better";
 import type { IcalEvent } from "@dashboard/shared-types";
 
-// Mockear node-ical para devolver un VEVENT falso sin hacer requests HTTP
-mock.module("node-ical", () => {
-  return {
-    default: {
-      async: {
-        fromURL: async () => {
-          return {
-            "mock-event-1": {
-              type: "VEVENT",
-              summary: "Clase de prueba",
-              description: "Esta es una clase mockeada - Link: https://zoom.us/mock",
-              start: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Mañana
-            },
-            "mock-event-past": {
-              type: "VEVENT",
-              summary: "Clase antigua (debe ser ignorada si es muy vieja, pero acá es reciente)",
-              description: "Otra clase",
-              start: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Ayer
-            },
-          };
-        },
-      },
-    },
-  };
-});
+// Mockear fetch del feed iCal para no hacer requests HTTP reales
+const icsDate = (offsetDays: number) =>
+  new Date(Date.now() + offsetDays * 86400000).toISOString().replace(/[-:]/g, "").slice(0, 15) +
+  "Z";
+const MOCK_ICS = [
+  "BEGIN:VCALENDAR",
+  "VERSION:2.0",
+  "BEGIN:VEVENT",
+  "UID:mock-event-1",
+  `DTSTART:${icsDate(1)}`, // Mañana
+  "SUMMARY:Clase de prueba",
+  "DESCRIPTION:Esta es una clase mockeada - Link: https://zoom.us/mock",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "UID:mock-event-past",
+  `DTSTART:${icsDate(-1)}`, // Ayer
+  "SUMMARY:Clase antigua (debe ser ignorada si es muy vieja\\, pero acá es reciente)",
+  "DESCRIPTION:Otra clase",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "UID:mock-event-old",
+  `DTSTART:${icsDate(-60)}`, // Hace 60 días: se descarta
+  "SUMMARY:Clase muy vieja",
+  "END:VEVENT",
+  "END:VCALENDAR",
+].join("\r\n");
+
+const realFetch = globalThis.fetch;
+globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
+  const [input] = args;
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+  if (url.startsWith("https://mock.url.com")) return new Response(MOCK_ICS);
+  return realFetch(...args);
+}) as typeof fetch;
 
 async function getTestCookie(): Promise<{ cookie: string }> {
   const email = `ical-${Date.now()}@test.com`;
@@ -90,7 +99,7 @@ describe("iCal Integration API Tests", () => {
       },
     });
 
-    // 2. Sincronizar (usará el mock de node-ical)
+    // 2. Sincronizar (usará el fetch mockeado)
     const res = await app.request("/api/ical/sync", {
       method: "POST",
       headers: { Cookie: cookie },

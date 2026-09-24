@@ -76,6 +76,9 @@ export default [
     },
     rules: {
       "no-unused-vars": "off", // base rule
+      // TypeScript ya valida identificadores y globals (WebCrypto, TextEncoder, tipos DOM);
+      // no-undef da falsos positivos en TS (recomendación oficial de typescript-eslint).
+      "no-undef": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
         { args: "after-used" /* y cualquier otra opción que quieras */ },

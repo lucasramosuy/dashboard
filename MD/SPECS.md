@@ -211,6 +211,7 @@ Gestionado por **Better Auth** (`lib/auth.better.ts`).
 - Sesiones: HTTP-only cookies gestionadas automáticamente por Better Auth.
 - Registro: **solo con invite**. Endpoint custom `POST /api/auth/register` que valida el invite code y luego llama a `auth.api.signUpEmail()` internamente. El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado en `server.ts` (responde 403) y tiene test.
 - Login/Logout: manejados por Better Auth wildcard handler.
+- Hash de contraseñas: PBKDF2-SHA256 con WebCrypto (`lib/password.ts`, 30.000 iteraciones, formato `pbkdf2$sha256$<iter>$<salt>$<hash>`), configurado en `emailAndPassword.password`. Verifica también los hashes scrypt heredados. Motivo: entrar en los 10 ms de CPU por request de Workers free. Script `bun run set-password <email>` para regenerar una contraseña.
 
 Usuario dev (solo desarrollo):
 
