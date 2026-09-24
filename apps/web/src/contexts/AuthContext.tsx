@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { logger, toError } from "../lib/logger";
+import { url } from "@/lib/utils";
 
 interface AuthContextType {
   user: UserPublic | null;
@@ -68,12 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await authClient.signOut();
-      window.location.replace("/login");
+      window.location.replace(url("/login"));
     } catch (err: unknown) {
       const error = toError(err);
       logger.error("[Auth Error] Error al cerrar sesión:", error);
       // Fallback seguro por si la sesión de red falla pero necesitamos limpiar UI
-      window.location.replace("/login");
+      window.location.replace(url("/login"));
     }
   };
 
