@@ -21,6 +21,7 @@ import {
   useUpdateTask,
   useDeleteTask,
 } from "../../hooks/useDashboardQueries";
+import { url } from "@/lib/utils";
 
 const STATUS_LABELS: Record<Task["status"], string> = {
   todo: "Pendiente",
@@ -124,7 +125,14 @@ export const TaskList: React.FC = () => {
 
   const DueCell: React.FC<{ t: Task }> = ({ t }) => {
     const n = daysUntil(t.due_date);
-    const tone = t.status === "done" ? "text-theme-text-muted" : n < 0 ? "text-theme-danger font-medium" : n <= 2 ? "text-theme-warning font-medium" : "text-theme-text-muted";
+    const tone =
+      t.status === "done"
+        ? "text-theme-text-muted"
+        : n < 0
+          ? "text-theme-danger font-medium"
+          : n <= 2
+            ? "text-theme-warning font-medium"
+            : "text-theme-text-muted";
     return (
       <span className={`text-sm ${tone}`}>
         {formatDay(t.due_date)}
@@ -136,9 +144,15 @@ export const TaskList: React.FC = () => {
   const Check: React.FC<{ t: Task }> = ({ t }) => (
     <button
       onClick={() => toggleDone(t)}
-      aria-label={t.status === "done" ? `Marcar "${t.title}" como pendiente` : `Marcar "${t.title}" como hecha`}
+      aria-label={
+        t.status === "done"
+          ? `Marcar "${t.title}" como pendiente`
+          : `Marcar "${t.title}" como hecha`
+      }
       className={`w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center cursor-pointer p-0 ${
-        t.status === "done" ? "border-theme-success bg-theme-success text-white" : "border-theme-border bg-transparent hover:border-theme-success"
+        t.status === "done"
+          ? "border-theme-success bg-theme-success text-white"
+          : "border-theme-border bg-transparent hover:border-theme-success"
       }`}
     >
       {t.status === "done" && <CheckIcon size={12} strokeWidth={3} />}
@@ -147,7 +161,13 @@ export const TaskList: React.FC = () => {
 
   const Actions: React.FC<{ t: Task }> = ({ t }) => (
     <div className="flex justify-end items-center">
-      <IconButton label={`Editar tarea ${t.title}`} onClick={() => { setEditingTask(t); setModalOpen(true); }}>
+      <IconButton
+        label={`Editar tarea ${t.title}`}
+        onClick={() => {
+          setEditingTask(t);
+          setModalOpen(true);
+        }}
+      >
         <Pencil size={16} />
       </IconButton>
       <IconButton label={`Eliminar tarea ${t.title}`} danger onClick={() => setDeletingId(t.id)}>
@@ -168,7 +188,11 @@ export const TaskList: React.FC = () => {
       <div>
         <PageHeader
           title="Tareas"
-          subtitle={counts.overdue ? `${counts.pending} pendientes · ${counts.overdue} vencidas` : `${counts.pending} pendientes`}
+          subtitle={
+            counts.overdue
+              ? `${counts.pending} pendientes · ${counts.overdue} vencidas`
+              : `${counts.pending} pendientes`
+          }
           actions={
             <Button onClick={openNew} aria-label="Nueva Tarea">
               <Plus size={16} className="mr-1.5" /> Nueva tarea
@@ -211,7 +235,9 @@ export const TaskList: React.FC = () => {
             >
               <option value="">Todas las UC</option>
               {subjects.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </div>
@@ -228,7 +254,9 @@ export const TaskList: React.FC = () => {
             />
           </div>
         ) : visible.length === 0 ? (
-          <div className={`${cardCls} p-8 text-center text-sm text-theme-text-muted`}>No hay tareas con este filtro.</div>
+          <div className={`${cardCls} p-8 text-center text-sm text-theme-text-muted`}>
+            No hay tareas con este filtro.
+          </div>
         ) : (
           <>
             {/* Desktop: tabla */}
@@ -238,26 +266,55 @@ export const TaskList: React.FC = () => {
                   <tr className="bg-theme-bg">
                     <th className="w-10 px-4 py-2.5" aria-label="Hecha" />
                     {["Tarea", "Vence", "Tipo", "Estado", "Nota"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-theme-text-muted">{h}</th>
+                      <th
+                        key={h}
+                        className="text-left px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-theme-text-muted"
+                      >
+                        {h}
+                      </th>
                     ))}
                     <th className="w-24" aria-label="Acciones" />
                   </tr>
                 </thead>
                 <tbody>
                   {visible.map((t) => (
-                    <tr key={t.id} className="border-t border-theme-border hover:bg-theme-bg/60 transition-colors">
-                      <td className="px-4 py-3"><Check t={t} /></td>
+                    <tr
+                      key={t.id}
+                      className="border-t border-theme-border hover:bg-theme-bg/60 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <Check t={t} />
+                      </td>
                       <td className="px-3 py-3">
-                        <a href={`/tasks/${t.slug || t.id}`} className={`font-medium no-underline hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}>
+                        <a
+                          href={url(`/tasks/${t.slug || t.id}`)}
+                          className={`font-medium no-underline hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
+                        >
                           {t.title}
                         </a>
-                        {subjectName(t.subject_id) && <span className="block text-xs text-theme-text-muted">{subjectName(t.subject_id)}</span>}
+                        {subjectName(t.subject_id) && (
+                          <span className="block text-xs text-theme-text-muted">
+                            {subjectName(t.subject_id)}
+                          </span>
+                        )}
                       </td>
-                      <td className="px-3 py-3"><DueCell t={t} /></td>
-                      <td className="px-3 py-3 text-sm text-theme-text-muted">{t.type ? TYPE_LABELS[t.type] : "—"}</td>
-                      <td className="px-3 py-3"><StatusBadge variant={STATUS_VARIANTS[t.status]}>{STATUS_LABELS[t.status]}</StatusBadge></td>
-                      <td className="px-3 py-3 text-sm font-semibold">{t.grade != null ? t.grade : "—"}</td>
-                      <td className="px-2 py-3"><Actions t={t} /></td>
+                      <td className="px-3 py-3">
+                        <DueCell t={t} />
+                      </td>
+                      <td className="px-3 py-3 text-sm text-theme-text-muted">
+                        {t.type ? TYPE_LABELS[t.type] : "—"}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusBadge variant={STATUS_VARIANTS[t.status]}>
+                          {STATUS_LABELS[t.status]}
+                        </StatusBadge>
+                      </td>
+                      <td className="px-3 py-3 text-sm font-semibold">
+                        {t.grade != null ? t.grade : "—"}
+                      </td>
+                      <td className="px-2 py-3">
+                        <Actions t={t} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -265,23 +322,41 @@ export const TaskList: React.FC = () => {
             </div>
 
             {/* Mobile: tarjetas */}
-            <ul className="md:hidden list-none m-0 p-0 flex flex-col gap-2" aria-label="Lista de tareas">
+            <ul
+              className="md:hidden list-none m-0 p-0 flex flex-col gap-2"
+              aria-label="Lista de tareas"
+            >
               {visible.map((t) => (
                 <li key={t.id} className={`${cardCls} p-4 flex items-start gap-3`}>
-                  <div className="pt-0.5"><Check t={t} /></div>
+                  <div className="pt-0.5">
+                    <Check t={t} />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <a href={`/tasks/${t.slug || t.id}`} className={`block font-medium no-underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}>
+                    <a
+                      href={url(`/tasks/${t.slug || t.id}`)}
+                      className={`block font-medium no-underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
+                    >
                       {t.title}
                     </a>
                     <span className="block text-xs text-theme-text-muted mb-2">
-                      {[subjectName(t.subject_id), t.type ? TYPE_LABELS[t.type] : null, t.grade != null ? `Nota ${t.grade}` : null].filter(Boolean).join(" · ")}
+                      {[
+                        subjectName(t.subject_id),
+                        t.type ? TYPE_LABELS[t.type] : null,
+                        t.grade != null ? `Nota ${t.grade}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <StatusBadge variant={STATUS_VARIANTS[t.status]}>{STATUS_LABELS[t.status]}</StatusBadge>
+                      <StatusBadge variant={STATUS_VARIANTS[t.status]}>
+                        {STATUS_LABELS[t.status]}
+                      </StatusBadge>
                       <DueCell t={t} />
                     </div>
                   </div>
-                  <div className="-mr-2 -mt-1"><Actions t={t} /></div>
+                  <div className="-mr-2 -mt-1">
+                    <Actions t={t} />
+                  </div>
                 </li>
               ))}
             </ul>
