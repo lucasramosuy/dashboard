@@ -1,1 +1,21 @@
-placeholder
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "dashboard",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // lucasramos.uy/dashboard sirve web + API. La ruta es más específica que la del Worker
+  // "proxy" del dominio, así que Cloudflare la resuelve primero.
+  "routes": [{ "pattern": "lucasramos.uy/dashboard*", "zone_name": "lucasramos.uy" }],
+  "workers_dev": false,
+  // Sync diario del iCal: 00:00 de Montevideo = 03:00 UTC
+  "triggers": { "crons": ["0 3 * * *"] },
+  "vars": {
+    "NODE_ENV": "production",
+    "BETTER_AUTH_URL": "https://lucasramos.uy",
+    "CORS_ORIGINS": "https://lucasramos.uy",
+  },
+  // Secrets (wrangler secret put / GitHub Actions): TURSO_DATABASE_URL, TURSO_AUTH_TOKEN,
+  // BETTER_AUTH_SECRET y opcional SENTRY_DSN.
+  "observability": { "enabled": true },
+}
