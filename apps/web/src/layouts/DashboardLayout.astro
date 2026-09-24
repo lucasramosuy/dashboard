@@ -31,7 +31,7 @@ const pathname = Astro.url.pathname;
       <nav class="sidebar-nav">
         {
           navItems.map(({ href, icon: Icon, label }) => (
-            <a href={href} class={`app-nav-link${pathname === href ? " active" : ""}`}>
+            <a href={href} class={`app-nav-link${(href === "/" ? pathname === "/" : pathname.startsWith(href)) ? " active" : ""}`}>
               <span class="sidebar-icon-item">
                 <Icon size={20} strokeWidth={2.5} />
               </span>
@@ -47,12 +47,12 @@ const pathname = Astro.url.pathname;
       </div>
     </aside>
 
+    {/* Barra superior + menú móvil */}
+    <MobileMenu client:only="react" currentPath={pathname} />
+
     <main id="main-content" class="app-main">
       <slot />
     </main>
-
-    {/* Menú flotante móvil (fase 8) */}
-    <MobileMenu client:only="react" currentPath={pathname} />
   </div>
 </Base>
 
@@ -244,13 +244,14 @@ const pathname = Astro.url.pathname;
   .app-main {
     flex: 1;
     min-width: 0;
-    max-width: 80%; /* Reduce un 20% el contenedor */
-    margin: 0 auto; /* Centrar horizontalmente */
-    padding: 2.5rem;
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 2.5rem 2.5rem 3rem;
     background: var(--theme-bg);
-    display: flex; /* Para centrado vertical si todo el contenido lo necesita */
+    display: flex;
     flex-direction: column;
-    justify-content: center; /* Centrado vertical ("al medio", no "muy arriba") */
+    justify-content: flex-start;
   }
 
   /* ===== MOBILE ACTIONS (theme + logout) ===== */
@@ -274,9 +275,11 @@ const pathname = Astro.url.pathname;
       display: none !important;
     }
 
+    .app-shell {
+      flex-direction: column;
+    }
     .app-main {
-      padding: 1.5rem 1.25rem;
-      padding-bottom: 6rem; /* Space for the floating button */
+      padding: 1.25rem 1rem 2.5rem;
     }
   }
 </style>
