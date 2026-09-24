@@ -112,7 +112,7 @@ El dashboard se puede instalar como app: en Android (Chrome) "Instalar app" o "A
 | `bun run dev`     | API + web en paralelo                          |
 | `bun run dev:api` | Solo la API                                    |
 | `bun run dev:web` | Solo la web                                    |
-| `bun run build`   | Build de producción (API + web)                |
+| `bun run build`   | Build del Worker (web + API)                   |
 | `bun run test`    | Tests de la API (`bun test`)                   |
 | `bun run lint`    | ESLint                                         |
 | `bun run check`   | Lint + tsc de la API + `astro check` de la web |
