@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Book } from "lucide-react";
+import { url } from "../../lib/utils";
 export const LoginForm: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -28,9 +29,11 @@ export const LoginForm: React.FC = () => {
       } else {
         await login(email, password);
       }
-      window.location.href = "/";
+      window.location.href = url("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Ocurrió un error. Por favor verificá tus datos.");
+      setError(
+        err instanceof Error ? err.message : "Ocurrió un error. Por favor verificá tus datos.",
+      );
     } finally {
       setLoading(false);
     }

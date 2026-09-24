@@ -1,0 +1,66 @@
+name: Deploy
+
+# Publica web + API (un solo Worker) en lucasramos.uy/dashboard cada vez que se mergea a prod.
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  deploy:
+    name: Migrar Turso y publicar Worker
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # CREATE TABLE IF NOT EXISTS + columnas nuevas; no borra datos
+      - name: Migrar base (Turso)
+        working-directory: apps/api
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: bun run migrate
+
+      - name: Build web
+        working-directory: apps/web
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: bun run build
+
+      # Sube los secrets del Worker y publica (rutas y cron salen de wrangler.jsonc)
+      - name: Deploy a Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          packageManager: bun
+          wranglerVersion: "4.139.0"
+          command: deploy
+          secrets: |
+            TURSO_DATABASE_URL
+            TURSO_AUTH_TOKEN
+            BETTER_AUTH_SECRET
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}

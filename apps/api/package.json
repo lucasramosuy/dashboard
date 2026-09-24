@@ -10,6 +10,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "seed": "bun src/seed.ts",
+    "migrate": "bun src/migrate.ts",
     "invites": "bun src/invites.ts",
     "set-password": "bun src/set-password.ts",
     "check": "tsc -p tsconfig.json"
@@ -25,11 +26,11 @@
     "@libsql/client": "^0.18.0",
     "@libsql/kysely-libsql": "^0.4.1",
     "@sentry/bun": "^10.75.3",
+    "@sentry/core": "10.75.3",
     "better-auth": "^1.7.6",
     "hono": "^4.13.9",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
-    "p-limit": "^7.3.3",
     "zod": "^4.6.5"
   }
 }

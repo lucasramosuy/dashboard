@@ -1,17 +1,15 @@
 import type { Subject, Task, Absence, PracticeJournal, IcalEvent } from "@dashboard/shared-types";
 import { authClient } from "./auth-client";
+import { url } from "./utils";
 import * as Sentry from "@sentry/astro";
 
 /**
  * Cliente de API para el dashboard académico.
  *
- * En desarrollo, Astro proxyea /api → localhost:8787.
- * En producción, PUBLIC_API_BASE apunta al backend real.
+ * La API vive en el mismo origen que la web, bajo /dashboard/api
+ * (el Worker la despacha; ver src/worker.ts).
  */
-const API_BASE =
-  import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
-    ? import.meta.env.PUBLIC_API_BASE
-    : "/api";
+const API_BASE = url("/api");
 
 /**
  * Helper para convertir strings de fecha a objetos Date en respuestas JSON
@@ -45,7 +43,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     // Sesión expirada: redirigir al login con contexto
     if (response.status === 401 && typeof window !== "undefined") {
-      window.location.href = "/login?reason=session_expired";
+      window.location.href = url("/login?reason=session_expired");
       // TS-3: Typed as never — the redirect stops execution
       return new Promise<never>(() => {});
     }

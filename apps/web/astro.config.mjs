@@ -1,6 +1,6 @@
 import { defineConfig, fontProviders } from "astro/config";
 import react from "@astrojs/react";
-import node from "@astrojs/node";
+import cloudflare from "@astrojs/cloudflare";
 import sentry from "@sentry/astro";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -8,6 +8,8 @@ export default defineConfig({
   integrations: [
     react(),
     sentry({
+      // En el server (Worker) Sentry lo inicializa @sentry/cloudflare en src/worker.ts.
+      enabled: { client: true, server: false },
       sourceMapsUploadOptions: {
         project: "javascript-astro",
         org: "lucass-space",
@@ -15,8 +17,11 @@ export default defineConfig({
       },
     }),
   ],
+  // Publicado en lucasramos.uy/dashboard (Worker de Cloudflare, ver wrangler.jsonc)
+  site: "https://lucasramos.uy",
+  base: "/dashboard",
   output: "server",
-  adapter: node({ mode: "standalone" }),
+  adapter: cloudflare({ imageService: "passthrough" }),
   fonts: [
     {
       name: "Inter",
@@ -35,18 +40,6 @@ export default defineConfig({
       include: ["recharts"],
     },
     server: {
-      proxy: {
-        "/api": {
-          target: "http://localhost:8787",
-          changeOrigin: true,
-          cookieDomainRewrite: {
-            // Reescribe el dominio de las cookies de localhost:8787 → localhost (sin puerto)
-            // para que el browser las acepte desde localhost:4321
-            "localhost": "localhost",
-            "*": "",
-          },
-        },
-      },
       watch: {
         ignored: ["**/apps/api/data/**"],
       },

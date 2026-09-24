@@ -7,7 +7,7 @@ Migrar el proyecto Dashboard desde Zo.space a una arquitectura basada en:
 - Repositorio en GitHub (monorepo).
 - Backend con Bun + Hono (APIs REST).
 - Frontend con Astro + React + Tailwind CSS (UI personalizable mediante utilidades, build vía Vite).
-- Hosting con una capa free generosa. Hoy: Render. Planeado: Cloudflare Workers en `lucasramos.uy/dashboard`, mismo origen, con Turso (ver ROADMAP, Fase 16).
+- Hosting gratis: un Cloudflare Worker en `lucasramos.uy/dashboard` (web + API en el mismo origen) con Turso (ver sección 3).
 - Uso de un AI coding assistant en CLI (Gemini Code Assist / Gemini CLI) para apoyar el desarrollo con una capa gratuita generosa.
 
 La meta es tener un entorno reproducible, documentado y sin dependencias en configuraciones internas de Zo.
@@ -22,13 +22,11 @@ Estructura propuesta (monorepo):
 
 /
 ├─ apps/
-│ ├─ web/ # Astro + React + Oat (frontend)
-│ │ └─ Dockerfile
-│ └─ api/ # Bun + Hono (backend)
-│ └─ Dockerfile
+│ ├─ web/ # Astro + React (frontend) y entrada del Worker (src/worker.ts, wrangler.jsonc)
+│ └─ api/ # Hono (backend): app.ts sin runtime, server.ts para Bun en local
 ├─ packages/
 │ └─ shared-types/ # Tipos TypeScript compartidos (Subject, Task, Practice, etc.)
-├─ render.yaml # Config de deploy para Render
+├─ .github/workflows/ # CI y deploy a Cloudflare
 ├─ .gitignore
 ├─ package.json # Scripts de orquestación (Bun workspaces)
 └─ README.md
@@ -257,47 +255,15 @@ Se publica dentro del monorepo (import local) y se utiliza tanto en apps/api com
 
 ## 3. Hosting y despliegue
 
-### 3.1. Opción principal: Render
+Un solo Cloudflare Worker (plan free) en `https://lucasramos.uy/dashboard`:
 
-Render ofrece una capa free razonable para servicios web y sitios estáticos, adecuada para proyectos personales como este dashboard.
-
-Backend – apps/api
-
-- Tipo: Web Service.
-- Runtime: Bun vía Dockerfile (`apps/api/Dockerfile`).
-
-Variables de entorno en producción:
-
-- `NODE_ENV=production`.
-- `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` (base de datos Turso).
-- `CORS_ORIGINS=https://dashboard.lucasramos.uy`.
-- `BETTER_AUTH_URL` (URL pública del backend).
-
-Frontend – apps/web
-
-- Tipo: Web Service (SSR con Astro/Node adapter).
-- Dockerfile: `apps/web/Dockerfile`.
-- Build arg: `PUBLIC_API_BASE=https://api.lucasramos.uy/api`.
-
-Dominios:
-
-- Web: `https://dashboard.lucasramos.uy`.
-- API: `https://api.lucasramos.uy`.
-- CORS configurado para permitir el dominio del frontend.
-
-### 3.2. Opción alternativa: Cloudflare Pages + otro backend
-
-Frontend
-
-- Deploy de Astro a Cloudflare Pages, aprovechando su capa free muy amplia.
-
-Backend
-
-- Cloudflare Workers + Hono (adaptado a runtime Workers) o un Web Service en Render.
-
-Configuración
-
-- Rutas de Pages que apunten /api/\* a Workers o al backend correspondiente.
+- Entrada: `apps/web/src/worker.ts`. `/dashboard/api/*` va a Hono (`apps/api/src/app.ts`, se le saca el prefijo `/dashboard`); el resto lo sirve Astro con `@astrojs/cloudflare` y `base: "/dashboard"`.
+- Mismo origen: sin CORS ni cookies cross-domain. El middleware SSR valida la sesión llamando a la API en proceso.
+- Ruta `lucasramos.uy/dashboard*` en `apps/web/wrangler.jsonc`, más específica que la del Worker proxy del dominio.
+- Base: Turso. Variables del Worker: `NODE_ENV`, `BETTER_AUTH_URL=https://lucasramos.uy`, `CORS_ORIGINS=https://lucasramos.uy` (en `wrangler.jsonc`); secrets `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, opcional `SENTRY_DSN`.
+- Cron Trigger `0 3 * * *` (00:00 Montevideo): sync del iCal de todos los usuarios, de a uno.
+- Límite free: 10 ms de CPU por request. PBKDF2 30k (4-12 ms medido) y parser iCal propio.
+- Deploy: `.github/workflows/deploy.yml` en push a `prod`.
 
 ---
 
@@ -330,20 +296,14 @@ apps/api
 
 Config en el frontend:
 
-- En desarrollo: Astro proxyea `/api` → `http://localhost:8787` (configurado en `astro.config.mjs`). `API_BASE = '/api'`.
-- En producción: `PUBLIC_API_BASE` apunta al backend real (e.g. `https://api.lucasramos.uy/api`).
-- El cliente Better Auth (`auth-client.ts`) determina `baseURL` automáticamente desde `PUBLIC_API_BASE` o `window.location.origin`.
+- La API se llama siempre en el mismo origen, en `/dashboard/api` (helper `url()` de `lib/utils`).
+- En desarrollo, con `API_PROXY_URL` (en `apps/web/.dev.vars`) las llamadas a la API se reenvían al server de Bun (`http://localhost:8787`).
 
 ### 4.2. Deploy
 
-Flujo básico:
-
-1. Hacer push del repo a GitHub.
-2. Conectar Render al repo:
-   - Crear servicio para apps/api.
-   - Crear Static Site para apps/web.
-3. Configurar rutas /api → backend.
-4. Verificar login y dashboard con datos demo.
+1. PR `dev` → `prod`.
+2. Al mergear, GitHub Actions migra Turso, hace el build y publica el Worker.
+3. Verificar login y dashboard en `https://lucasramos.uy/dashboard`.
 
 ---
 
@@ -403,7 +363,7 @@ Integración
 
 Hosting
 
-- Configurar servicios en Render (o combinación Cloudflare Pages + backend).
+- Publicar el Worker en Cloudflare con GitHub Actions.
 - Validar login y dashboard en entorno remoto.
 
 Limpieza & docs

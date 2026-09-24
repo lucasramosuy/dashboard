@@ -21,6 +21,7 @@ import {
   useAllAbsences,
   useTasks,
 } from "../../hooks/useDashboardQueries";
+import { url } from "@/lib/utils";
 
 const Mini: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div className="rounded-lg bg-theme-bg py-2">
@@ -110,43 +111,80 @@ export const SubjectList: React.FC = () => {
             />
           </div>
         ) : (
-          <ul className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 gap-4" aria-label="Lista de UC">
+          <ul
+            className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 gap-4"
+            aria-label="Lista de UC"
+          >
             {subjects.map((s) => {
-              const absValue = absences.filter((a) => a.subject_id === s.id).reduce((sum, a) => sum + (a.calculated_value || 0), 0);
+              const absValue = absences
+                .filter((a) => a.subject_id === s.id)
+                .reduce((sum, a) => sum + (a.calculated_value || 0), 0);
               const info = attendanceInfo(s.total_classes, absValue);
               const subjectTasks = tasks.filter((t) => t.subject_id === s.id);
               const pendingCount = subjectTasks.filter((t) => t.status !== "done").length;
-              const avg = average(subjectTasks.map((t) => t.grade).filter((g): g is number => g != null));
+              const avg = average(
+                subjectTasks.map((t) => t.grade).filter((g): g is number => g != null),
+              );
               return (
                 <li key={s.id} className={`${cardCls} p-5 flex flex-col gap-4`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <a href={`/subjects/${s.slug || s.id}`} className="block text-lg font-semibold text-theme-text no-underline hover:underline truncate">
+                      <a
+                        href={url(`/subjects/${s.slug || s.id}`)}
+                        className="block text-lg font-semibold text-theme-text no-underline hover:underline truncate"
+                      >
                         {s.name}
                       </a>
                       <span className="text-xs text-theme-text-muted">
-                        {s.track ? (s.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} · {s.total_classes} clases
+                        {s.track ? (s.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} ·{" "}
+                        {s.total_classes} clases
                       </span>
                     </div>
                     <div className="flex items-center gap-1 -mr-2 -mt-1">
-                      <IconButton label={`Editar UC ${s.name}`} onClick={() => { setEditingSubject(s); setModalOpen(true); }}>
+                      <IconButton
+                        label={`Editar UC ${s.name}`}
+                        onClick={() => {
+                          setEditingSubject(s);
+                          setModalOpen(true);
+                        }}
+                      >
                         <Pencil size={16} />
                       </IconButton>
-                      <IconButton label={`Eliminar UC ${s.name}`} danger onClick={() => setDeletingId(s.id)}>
+                      <IconButton
+                        label={`Eliminar UC ${s.name}`}
+                        danger
+                        onClick={() => setDeletingId(s.id)}
+                      >
                         <Trash2 size={16} />
                       </IconButton>
                     </div>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1.5">
-                      <span className="text-theme-text-muted">Faltas {info.absences} de {info.maxAbsences}</span>
-                      <span className={info.status === "danger" ? "text-theme-danger font-medium" : info.status === "warning" ? "text-theme-warning font-medium" : "text-theme-text-muted"}>
+                      <span className="text-theme-text-muted">
+                        Faltas {info.absences} de {info.maxAbsences}
+                      </span>
+                      <span
+                        className={
+                          info.status === "danger"
+                            ? "text-theme-danger font-medium"
+                            : info.status === "warning"
+                              ? "text-theme-warning font-medium"
+                              : "text-theme-text-muted"
+                        }
+                      >
                         {remainingLabel(info)}
                       </span>
                     </div>
                     <ProgressBar
                       value={info.maxAbsences ? (info.absences / info.maxAbsences) * 100 : 0}
-                      tone={info.status === "danger" ? "danger" : info.status === "warning" ? "warning" : "ok"}
+                      tone={
+                        info.status === "danger"
+                          ? "danger"
+                          : info.status === "warning"
+                            ? "warning"
+                            : "ok"
+                      }
                       label={`Faltas usadas en ${s.name}`}
                     />
                   </div>

@@ -63,17 +63,15 @@ API (`apps/api/.env`):
 | `CORS_ORIGINS`                            | Orígenes permitidos, separados por coma                  |
 | `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | Base en Turso. Si no están, usa SQLite local             |
 | `DATABASE_PATH`                           | Ruta del SQLite local (default `./data/database.sqlite`) |
-| `SENTRY_BUN_DSN` / `SENTRY_HONO_DSN`      | Opcionales, errores a Sentry                             |
+| `SENTRY_DSN`                              | Opcional, errores a Sentry                               |
 
-Web (`apps/web/.env`, todo opcional en dev):
+Web (`apps/web/.env`, todo opcional en dev; las variables del runtime de Workers van en `apps/web/.dev.vars`, ver Hosting):
 
-| Variable                 | Uso                                                       |
-| ------------------------ | --------------------------------------------------------- |
-| `PUBLIC_API_BASE`        | URL de la API si no está en el mismo origen               |
-| `PUBLIC_FRONTEND_ORIGIN` | Origen público del frontend (validación de sesión en SSR) |
-| `PUBLIC_SENTRY_DSN`      | Sentry en el navegador                                    |
-| `SENTRY_AUTH_TOKEN`      | Subida de source maps a Sentry en el build                |
-| `PUBLIC_AGENTATION`      | `true` para mostrar el overlay de Agentation (solo dev)   |
+| Variable            | Uso                                                     |
+| ------------------- | ------------------------------------------------------- |
+| `PUBLIC_SENTRY_DSN` | Sentry en el navegador                                  |
+| `SENTRY_AUTH_TOKEN` | Subida de source maps a Sentry en el build              |
+| `PUBLIC_AGENTATION` | `true` para mostrar el overlay de Agentation (solo dev) |
 
 ## Registro con invitación
 
@@ -126,7 +124,38 @@ cd apps/api && bun run set-password <email>
 
 ## Hosting
 
-Hoy el deploy está pensado para Render (`render.yaml` y Dockerfiles). La migración planeada es a **Cloudflare Workers** en `lucasramos.uy/dashboard` (web y API en el mismo origen, a través del Worker proxy), con base en **Turso** (plan free) y deploy por GitHub Actions desde `prod`. Ver `MD/ROADMAP.md`, Fase 16.
+Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/dashboard`, en el mismo origen:
+
+- `apps/web/src/worker.ts` es la entrada. `/dashboard/api/*` va a la app de Hono (`apps/api/src/app.ts`); el resto lo sirve Astro (`@astrojs/cloudflare`, `base: "/dashboard"`).
+- La ruta `lucasramos.uy/dashboard*` (en `apps/web/wrangler.jsonc`) es más específica que la del Worker proxy del dominio, así que Cloudflare la resuelve primero.
+- Base: **Turso** (plan free). `bun run migrate` en `apps/api` crea o actualiza las tablas.
+- Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo).
+- Errores: `@sentry/cloudflare`.
+- Límite a tener en cuenta: 10 ms de CPU por request en el plan free. Por eso las contraseñas usan PBKDF2 y el iCal un parser propio.
+
+### Deploy
+
+`.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
+
+| Secret                  | Para qué                                  |
+| ----------------------- | ----------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Publicar el Worker                        |
+| `CLOUDFLARE_ACCOUNT_ID` | Cuenta de Cloudflare                      |
+| `TURSO_DATABASE_URL`    | Base (se sube como secret del Worker)     |
+| `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)     |
+| `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker) |
+| `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                      |
+
+### Desarrollo local con el runtime de Workers
+
+`bun run dev` sigue siendo la forma normal (API en Bun + Astro). Para probar el Worker tal como corre en producción:
+
+```bash
+cd apps/web && cp .dev.vars.example .dev.vars
+bun run build && bunx wrangler dev
+```
+
+Con `API_PROXY_URL` en `.dev.vars` la API se reenvía al server de Bun local. Ojo: `wrangler dev` usa el host de la ruta (`lucasramos.uy`) como origen, así que el `CORS_ORIGINS` de la API local tiene que incluirlo.
 
 ## Tecnologías
 

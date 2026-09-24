@@ -1,4 +1,5 @@
 ---
+import { url } from "@/lib/utils";
 import DashboardLayout from "../layouts/DashboardLayout.astro";
 ---
 
@@ -23,12 +24,12 @@ import DashboardLayout from "../layouts/DashboardLayout.astro";
     <div class="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-sm">
       <button
         class="inline-flex items-center justify-center rounded-button font-medium transition-all duration-150 focus-visible:ring-2 disabled:opacity-50 h-12 px-6 text-base border border-zinc-200 bg-surface hover:bg-zinc-50 dark:border-zinc-800 dark:bg-surface-dark-secondary dark:hover:bg-surface-dark-tertiary w-full sm:w-auto cursor-pointer"
-        onclick="window.history.length > 2 ? window.history.back() : (window.location.href = '/')"
+        onclick="window.history.length > 2 ? window.history.back() : (window.location.href = '/dashboard/')"
       >
         Volver atrás
       </button>
       <a
-        href="/"
+        href={url("/")}
         class="inline-flex items-center justify-center rounded-button font-medium transition-all duration-150 focus-visible:ring-2 disabled:opacity-50 h-12 px-6 text-base bg-interactive text-surface hover:bg-interactive-hover dark:bg-interactive-dark dark:text-surface-dark dark:hover:bg-interactive-dark-hover w-full sm:w-auto no-underline"
       >
         Ir al Panel
