@@ -7,7 +7,7 @@ Migrar el proyecto Dashboard desde Zo.space a una arquitectura basada en:
 - Repositorio en GitHub (monorepo).
 - Backend con Bun + Hono (APIs REST).
 - Frontend con Astro + React + Tailwind CSS (UI personalizable mediante utilidades, build vía Vite).
-- Hosting con una capa free generosa (preferencia Render; alternativa Cloudflare Pages + otro backend).
+- Hosting con una capa free generosa. Hoy: Render. Planeado: Cloudflare Workers en `lucasramos.uy/dashboard`, mismo origen, con Turso (ver ROADMAP, Fase 16).
 - Uso de un AI coding assistant en CLI (Gemini Code Assist / Gemini CLI) para apoyar el desarrollo con una capa gratuita generosa.
 
 La meta es tener un entorno reproducible, documentado y sin dependencias en configuraciones internas de Zo.
@@ -194,8 +194,8 @@ Esquema de Tablas:
 - `verification`: id, identifier, value, expiresAt, etc. (gestionada por Better Auth).
 - `subjects`: id, name, total_classes, user_id (FK).
 - `absences`: id, subject_id (FK), date, type, calculated_value.
-- `tasks`: id, subject_id (FK), title, description, status, due_date.
-- `practice_journals`: id, subject_id (FK), date, content.
+- `tasks`: id, subject_id (FK), user_id, title, description, status, due_date, grade.
+- `practice_journals`: id, subject_id (texto libre: la especialidad, por ejemplo "Derecho"; no es FK a UC), user_id, date (ISO, medianoche UTC del día local), content. `GET /api/practice-journals?date=YYYY-MM-DD` busca por día.
 - `invites`: id, code (UNIQUE), used, created_at.
 
 Config vía env:
@@ -209,13 +209,13 @@ Config vía env:
 Gestionado por **Better Auth** (`lib/auth.better.ts`).
 
 - Sesiones: HTTP-only cookies gestionadas automáticamente por Better Auth.
-- Registro: endpoint custom `POST /api/auth/register` que valida invite code y luego llama a `auth.api.signUpEmail()` internamente.
+- Registro: **solo con invite**. Endpoint custom `POST /api/auth/register` que valida el invite code y luego llama a `auth.api.signUpEmail()` internamente. El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado en `server.ts` (responde 403) y tiene test.
 - Login/Logout: manejados por Better Auth wildcard handler.
 
 Usuario dev (solo desarrollo):
 
-- Se crea mediante `seed.ts` (`bun run seed`).
-- `DEV_LOGIN_ENABLED` controla si se permite login con credenciales demo.
+- Se crea mediante `seed.ts` (`bun run seed`): usuario demo, 2 UC de profesorado, inasistencias y tareas con `user_id`.
+- En producción no se corre el seed.
 
 ### Lógica de negocio
 
@@ -271,7 +271,6 @@ Variables de entorno en producción:
 - `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` (base de datos Turso).
 - `CORS_ORIGINS=https://dashboard.lucasramos.uy`.
 - `BETTER_AUTH_URL` (URL pública del backend).
-- `DEV_LOGIN_ENABLED=false`.
 
 Frontend – apps/web
 

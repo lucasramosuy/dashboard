@@ -94,8 +94,8 @@
 ### 5.5. Política de demo + prod
 
 - [x] Mantener usuario(s) demo actuales:
-  - `DEV_LOGIN_ENABLED=true` solo en dev.
-  - En prod, `DEV_LOGIN_ENABLED=false` (nadie entra como demo desde afuera).
+  - El usuario demo sale solo del seed (`bun run seed`), que no se corre en prod.
+  - El registro es solo con invite: el sign-up público de Better Auth está bloqueado (403).
 - [x] Definir:
   - Cuántos usuarios reales máximos permitís (además de demo).
   - Cuántos invites querés tener activos a la vez (máx. 10 ya está decidido).
@@ -457,7 +457,7 @@ Factores técnicos concretos considerados:
   - `sentry.client.config.ts`: traces `0.2`, replays `0.1` en prod.
   - `sentry.server.config.ts`: traces `0.2`, profiles `0.2` en prod.
   - Logger centralizado (`apps/api/src/lib/logger.ts`) delega a `Sentry.captureException` en prod.
-  - Pendiente: verificar en Sentry Dashboard que `/api/test-error` genera evento.
+  - El endpoint de prueba de errores se eliminó en la limpieza (PR #62).
 - [x] Verificar que dev usa la DB de dev y prod usa la DB de prod en Turso y eliminar slite en local.
   - Lógica en `db.ts` y `auth.better.ts`: `NODE_ENV=test` → SQLite test, `TURSO_DATABASE_URL` → Turso prod, fallback → SQLite local.
   - Pendiente: confirmar que Render inyecta `TURSO_DATABASE_URL` de producción.
@@ -485,3 +485,24 @@ Factores técnicos concretos considerados:
     - Todos los endpoints usan `ownership.*BelongsToUser()` antes de operar sobre recursos. Sin vulnerabilidades IDOR.
 - [ ] Smoke Test End 2 End:
   - Login con un usuario vivo, chequeo exhaustivo en la consola web e inspección con Dev Tools Lighthouse Report para pulir advertencias de performance y A11y.
+
+## 🟡 Fase 16 — Plan A (arreglos) y migración a Cloudflare
+
+Plan A (hecho, septiembre 2026):
+
+- [x] UI refresh: encabezados y tarjetas consistentes, fechas por día local, tareas con filtros, UC en tarjetas, analíticas con promedios, planner mobile (PR #56).
+- [x] Registro solo con invite, con test del bloqueo de sign-up (PR #57).
+- [x] Diario: búsqueda por día (`?date=`), fecha sin corrimiento y especialidad en texto libre (PR #58).
+- [x] better-auth 1.7 y actualizaciones menores (PR #59), kysely 0.29 (PR #62).
+- [x] Limpieza: endpoints de diagnóstico y de prueba de errores, sqlite3 sin uso, variables muertas, CFE_RULES desde la API, seed de profesorado (PR #62).
+- [x] Docs al día, CI con setup-bun v2, cache y PRs a prod, Dependabot semanal agrupado.
+
+Fase B (pendiente):
+
+- [ ] Spike: login de Better Auth y node-ical en un Worker de prueba (límite de 10 ms de CPU del plan free).
+- [ ] API en Cloudflare Workers (Hono nativo), cron de iCal como Cron Trigger, `@sentry/cloudflare`.
+- [ ] Web con `@astrojs/cloudflare` y `base: "/dashboard"`, junto con Astro 7.
+- [ ] Ruteo en el Worker proxy de `lucasramos.uy/dashboard`, en el mismo origen.
+- [ ] Deploy con GitHub Actions (wrangler) desde `prod`.
+- [ ] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
+- [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
