@@ -46,7 +46,7 @@ export function PlannerBoard() {
   // ----- MUTACIONES -----
   const updateTaskDateMutation = useMutation({
     mutationFn: ({ id, date }: { id: string; date: string }) =>
-      api.updateTask(id, { due_date: new Date(date) }),
+      api.updateTask(id, { due_date: new Date(`${date}T12:00:00Z`) }),
     onMutate: async ({ id, date }) => {
       await queryClient.cancelQueries({ queryKey: ["plannerTasks", weekStartIso, weekEndIso] });
       const previousTasks = queryClient.getQueryData(["plannerTasks", weekStartIso, weekEndIso]);
@@ -65,7 +65,7 @@ export function PlannerBoard() {
         }
         if (taskToMove) {
           if (!newGrouped[date]) newGrouped[date] = [];
-          newGrouped[date].push({ ...taskToMove, due_date: new Date(date) });
+          newGrouped[date].push({ ...taskToMove, due_date: new Date(`${date}T12:00:00Z`) });
         }
         return newGrouped;
       });
@@ -209,7 +209,9 @@ export function PlannerBoard() {
         {/* Header de navegación */}
         <header className="planner-header">
           <div className="planner-header__title">
-            <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">Planner</h1>
+            <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">
+              Planner
+            </h1>
             <span className="text-sm text-theme-text-muted">{weekLabel}</span>
           </div>
           <div className="planner-header__nav">
@@ -219,7 +221,11 @@ export function PlannerBoard() {
             <button className="planner-today-btn" onClick={navCurrentWeek}>
               Hoy
             </button>
-            <button className="planner-icon-btn" onClick={navNextWeek} aria-label="Semana siguiente">
+            <button
+              className="planner-icon-btn"
+              onClick={navNextWeek}
+              aria-label="Semana siguiente"
+            >
               <ChevronRight size={18} />
             </button>
           </div>
