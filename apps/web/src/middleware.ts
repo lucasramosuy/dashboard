@@ -1,97 +1,54 @@
 import { defineMiddleware } from "astro:middleware";
-import * as Sentry from "@sentry/astro";
-import { logger } from "./lib/logger";
+import * as Sentry from "@sentry/cloudflare";
+import { url } from "./lib/utils";
+import { handleApi } from "./server/api";
 
+// Rutas relativas al base de Astro ("/dashboard")
 const PUBLIC_ROUTES = ["/login"];
 const IGNORED_PREFIXES = ["/api", "/_", "/_image"];
 
-// UAs de bots, health checkers e infra que nunca tienen cookie de sesión.
-// No tienen sentido en Sentry y generan falsos positivos.
-const BOT_UA_PATTERNS = ["Go-http-client", "Render", "kube-probe", "GoogleHC", "curl"];
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.includes(pathname);
+function appPath(pathname: string): string {
+  return (pathname.startsWith(BASE) ? pathname.slice(BASE.length) : pathname) || "/";
 }
 
-function isIgnoredRoute(pathname: string): boolean {
-  return IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-}
-
-// URL de la API para el middleware SSR (server-to-server).
-// INTERNAL_API_BASE es una variable de entorno RUNTIME (no build-time) que permite
-// apuntar al origen interno de Render (http://dashboard-api:8787/api) para evitar
-// pasar por Cloudflare en los requests server-to-server de validación de sesión.
-// Si no está definida, cae a PUBLIC_API_BASE (build-time) y luego al default.
-const API_BASE =
-  (typeof process !== "undefined" && process.env.INTERNAL_API_BASE?.trim()) ||
-  (import.meta.env.PUBLIC_API_BASE && import.meta.env.PUBLIC_API_BASE.trim() !== ""
-    ? import.meta.env.PUBLIC_API_BASE
-    : "http://localhost:8787/api");
-
-// El origen del frontend: Better Auth valida este valor contra trustedOrigins.
-// Usamos process.env como fuente primaria (runtime, siempre disponible en Node SSR),
-// con import.meta.env como fallback (build-time, bakeado por Vite/Astro).
-// NUNCA debe ser localhost en prod — si lo es, Better Auth rechazará todas las sesiones.
-const FRONTEND_ORIGIN =
-  (typeof process !== "undefined" && process.env.PUBLIC_FRONTEND_ORIGIN?.trim()) ||
-  (import.meta.env.PUBLIC_FRONTEND_ORIGIN?.trim()) ||
-  "http://localhost:4321";
-
+// Valida la sesión llamando a Better Auth en el mismo Worker (sin salir a la red).
 async function validateSession(
   request: Request,
   cookieHeader: string,
 ): Promise<{ valid: boolean; user?: Record<string, unknown>; reason?: string }> {
   try {
-    const fetchHeaders = new Headers();
-    fetchHeaders.set("Cookie", cookieHeader);
-    fetchHeaders.set("Accept", "application/json");
-
-    // Better Auth valida Origin contra trustedOrigins. Enviamos el origen del frontend
-    // (que está en trustedOrigins) en lugar del origen del request entrante, que puede
-    // no tener header Origin (navegaciones directas del browser no lo envían).
-    fetchHeaders.set("Origin", FRONTEND_ORIGIN);
-
-    const userAgent = request.headers.get("User-Agent");
-    if (userAgent) fetchHeaders.set("User-Agent", userAgent);
-
-    const response = await fetch(`${API_BASE}/auth/get-session`, {
-      method: "GET",
-      headers: fetchHeaders,
-      signal: AbortSignal.timeout(5000),
-    });
+    const origin = new URL(request.url).origin;
+    const response = await handleApi(
+      new Request(`${origin}${BASE}/api/auth/get-session`, {
+        headers: { Cookie: cookieHeader, Accept: "application/json", Origin: origin },
+      }),
+    );
 
     if (!response.ok) {
-      const errorText = await response.text();
-      return { valid: false, reason: `HTTP ${response.status}: ${errorText}` };
+      return { valid: false, reason: `HTTP ${response.status}: ${await response.text()}` };
     }
 
     const data = await response.json();
-
     if (data?.session && data?.user) {
       return { valid: true, user: data.user };
     }
-
-    // Log para diagnóstico: muestra qué devolvió la API y qué Origin se usó
-    logger.warn("[Middleware] get-session devolvió sin sesión", {
-      origin_enviado: FRONTEND_ORIGIN,
-      api_base: API_BASE,
-      data_recibida: JSON.stringify(data),
-    });
-    return { valid: false, reason: `La API devolvió: ${JSON.stringify(data)} (Origin enviado: ${FRONTEND_ORIGIN})` };
+    return { valid: false, reason: "Sin sesión" };
   } catch (error) {
-    logger.error("[Middleware] Error validando sesión:", error);
+    console.error("[Middleware] Error validando sesión:", error);
     return {
       valid: false,
-      reason: `Error de red interna (fetch falló): ${error instanceof Error ? error.message : String(error)}`,
+      reason: `Error validando sesión: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const { url, request, redirect } = context;
-  const pathname = url.pathname;
+  const { request, redirect } = context;
+  const pathname = appPath(context.url.pathname);
 
-  if (isIgnoredRoute(pathname)) {
+  if (IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return next();
   }
 
@@ -100,46 +57,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
     cookieHeader.includes("better-auth.session_token") ||
     cookieHeader.includes("__Secure-better-auth.session_token");
 
-  if (isPublicRoute(pathname)) {
+  if (PUBLIC_ROUTES.includes(pathname)) {
     if (hasSessionCookie) {
       const { valid } = await validateSession(request, cookieHeader);
-      if (valid) {
-        return redirect("/", 302);
-      }
+      if (valid) return redirect(url("/"), 302);
     }
     return next();
   }
 
   if (!hasSessionCookie) {
-    const ua = request.headers.get("User-Agent") || "";
-    const isBot = BOT_UA_PATTERNS.some((p) => ua.includes(p));
-
-    // Health checkers y bots nunca tienen cookie — no son errores reales.
-    // Responder 200 vacío para que Render no marque el servicio como caído.
-    if (isBot) {
-      return new Response(null, { status: 200 });
-    }
-
-    Sentry.captureMessage("Falta cookie de sesión en ruta protegida", {
-      level: "warning",
-      extra: {
-        pathname,
-        headers: cookieHeader || "Ninguna cookie recibida",
-      },
-    });
-    return redirect("/login", 302);
+    return redirect(url("/login"), 302);
   }
 
   const { valid, user, reason } = await validateSession(request, cookieHeader);
   if (!valid) {
-    Sentry.captureMessage("Sesión rechazada por el backend en middleware", {
-      level: "error",
-      extra: {
-        pathname,
-        motivo_del_rechazo: reason || "Motivo desconocido",
-      },
+    Sentry.captureMessage("Sesión rechazada en middleware", {
+      level: "warning",
+      extra: { pathname, motivo_del_rechazo: reason || "Motivo desconocido" },
     });
-    return redirect("/login", 302);
+    return redirect(url("/login"), 302);
   }
 
   if (user && typeof user.email === "string") {
