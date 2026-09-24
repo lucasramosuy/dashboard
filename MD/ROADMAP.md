@@ -501,10 +501,11 @@ Fase B (pendiente):
 
 - [x] Spike en un Worker de prueba (24/09/2026, CPU real por request, límite free 10 ms): scrypt de Better Auth 67-161 ms, PBKDF2 30k 4-12 ms, PBKDF2 100k 16-36 ms, node-ical con 300 eventos 5-24 ms.
 - [x] Hash de contraseñas PBKDF2 (acepta los scrypt viejos) y parser iCal propio (~1 ms por feed) en lugar de node-ical.
-- [ ] API en Cloudflare Workers (Hono nativo), cron de iCal como Cron Trigger, `@sentry/cloudflare`.
+- [x] API en Cloudflare Workers (Hono nativo), cron de iCal como Cron Trigger, `@sentry/cloudflare`.
 - [x] Astro 7 (con `@astrojs/react` 7 y `@astrojs/node` 11 hasta la migración).
-- [ ] Web con `@astrojs/cloudflare` y `base: "/dashboard"`.
-- [ ] Ruteo en el Worker proxy de `lucasramos.uy/dashboard`, en el mismo origen.
-- [ ] Deploy con GitHub Actions (wrangler) desde `prod`.
-- [ ] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
+- [x] Web con `@astrojs/cloudflare` y `base: "/dashboard"`.
+- [x] Ruta `lucasramos.uy/dashboard*` en el mismo origen (en `wrangler.jsonc`).
+- [ ] Primer deploy: secrets del repo, `migrate` contra Turso, regenerar contraseñas y chequear que la ruta gane sobre el Worker proxy.
+- [x] Deploy con GitHub Actions (wrangler) desde `prod`.
+- [x] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
 - [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
