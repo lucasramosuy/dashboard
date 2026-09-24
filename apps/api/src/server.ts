@@ -107,6 +107,12 @@ app.on(["GET", "POST", "OPTIONS"], "/api/auth/*", async (c, next) => {
     return next();
   }
 
+  // El registro solo se permite con invite (POST /api/auth/register).
+  // Bloqueamos el sign-up público de Better Auth para que no se pueda saltear.
+  if (c.req.path.startsWith("/api/auth/sign-up")) {
+    return c.json({ error: "El registro requiere un código de invitación" }, 403);
+  }
+
   const origin = c.req.header("Origin");
   const validOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : null;
 
