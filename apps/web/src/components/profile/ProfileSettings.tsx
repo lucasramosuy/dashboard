@@ -6,6 +6,7 @@ import { ProfileSkeleton } from "../ui/Skeleton";
 import { Button } from "../ui/Button";
 import { api } from "../../lib/api";
 import { url } from "../../lib/utils";
+import { SessionsCard } from "./SessionsCard";
 
 const inputCls =
   "w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent disabled:opacity-60 disabled:cursor-not-allowed";
@@ -202,6 +203,7 @@ export const ProfileSettings: React.FC = () => {
       <div className="flex flex-col gap-6 w-full">
         <ProfileForm />
         <PasswordForm />
+        <SessionsCard />
         <AdminLink />
       </div>
     </AppShell>

@@ -303,7 +303,7 @@ export const api = {
   },
 
   // --- Admin (solo ADMIN_EMAILS) ---
-  async adminMe(): Promise<{ admin: boolean }> {
+  async adminMe(): Promise<{ admin: boolean; passkeys?: number; passkeyRequired?: boolean }> {
     const response = await apiFetch(`${API_BASE}/admin/me`);
     return handleResponse(response);
   },

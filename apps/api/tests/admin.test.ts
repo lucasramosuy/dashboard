@@ -41,7 +41,7 @@ describe("Panel admin", () => {
 
   it("el admin lista usuarios sin exponer hashes", async () => {
     const cookie = await login(ADMIN);
-    expect(await (await req("/api/admin/me", cookie)).json()).toEqual({ admin: true });
+    expect(await (await req("/api/admin/me", cookie)).json()).toEqual({ admin: true, passkeys: 0, passkeyRequired: false });
     const users = (await (await req("/api/admin/users", cookie)).json()) as Record<
       string,
       unknown
