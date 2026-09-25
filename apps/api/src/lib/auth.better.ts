@@ -1,9 +1,11 @@
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
+import { passkey } from "@better-auth/passkey";
 import { LibsqlDialect } from "@libsql/kysely-libsql";
 import { Kysely } from "kysely";
 import { db } from "./db";
 import { hashPassword, isLegacyHash, verifyPassword } from "./password";
+import { PASSKEY_MUTATION_PATHS, checkAdminPasskey, markSessionPasskey } from "./admin-passkey";
 
 // Kysely con dialecto libsql — funciona con Turso, SQLite local e in-memory (tests)
 const kyselyDb = new Kysely({
@@ -11,6 +13,10 @@ const kyselyDb = new Kysely({
     client: db as any, // Bypass TS2322 version mismatch error
   }),
 });
+
+// La passkey queda atada al dominio de BETTER_AUTH_URL (lucasramos.uy en prod,
+// el workers.dev en el preview, localhost en local).
+const authUrl = new URL(process.env.BETTER_AUTH_URL || "http://localhost:4321");
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
@@ -30,11 +36,40 @@ export const auth = betterAuth({
       last_ical_sync: { type: "date", required: false },
     },
   },
+  plugins: [
+    passkey({
+      rpID: authUrl.hostname,
+      rpName: "Dashboard",
+      origin: authUrl.origin,
+    }),
+  ],
   hooks: {
+    // Passkeys: solo admins, y si ya tienen una, cambiarlas exige sesión con passkey
+    before: createAuthMiddleware(async (ctx) => {
+      if (!PASSKEY_MUTATION_PATHS.has(ctx.path)) return;
+      const current = await getSessionFromCtx(ctx);
+      if (!current) throw new APIError("UNAUTHORIZED");
+      const gate = await checkAdminPasskey(current.user, current.session.id);
+      if (gate === "not-admin") {
+        throw new APIError("FORBIDDEN", { message: "Las passkeys son solo para administración" });
+      }
+      if (gate === "passkey-required") {
+        throw new APIError("FORBIDDEN", {
+          message: "Entrá con tu passkey para cambiar las passkeys",
+          code: "PASSKEY_REQUIRED",
+        });
+      }
+    }),
     // Rehash al entrar: si la contraseña todavía está en scrypt (formato viejo), después
     // de un login correcto se vuelve a guardar en PBKDF2. Así nadie tiene que resetearla
     // y el próximo login ya entra en el límite de CPU de Workers.
     after: createAuthMiddleware(async (ctx) => {
+      // Sesión iniciada con passkey: queda marcada para abrir el panel de admin
+      if (ctx.path === "/passkey/verify-authentication") {
+        const sessionId = ctx.context.newSession?.session.id;
+        if (sessionId) await markSessionPasskey(sessionId);
+        return;
+      }
       if (ctx.path !== "/sign-in/email") return;
       const userId = ctx.context.newSession?.user.id;
       const password = (ctx.body as { password?: unknown } | undefined)?.password;
