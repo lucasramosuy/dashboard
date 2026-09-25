@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Book } from "lucide-react";
 import { url } from "../../lib/utils";
+import { resetCaptcha } from "../../lib/captcha";
+import { Turnstile } from "./Turnstile";
 export const LoginForm: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -34,6 +36,7 @@ export const LoginForm: React.FC = () => {
       setError(
         err instanceof Error ? err.message : "Ocurrió un error. Por favor verificá tus datos.",
       );
+      resetCaptcha();
     } finally {
       setLoading(false);
     }
@@ -151,6 +154,8 @@ export const LoginForm: React.FC = () => {
             {error}
           </div>
         )}
+
+        <Turnstile />
 
         <button
           type="submit"
