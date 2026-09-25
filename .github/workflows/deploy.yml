@@ -73,4 +73,6 @@ jobs:
 
       # Si algo quedó roto después de publicar, el run queda en rojo y GitHub avisa por mail
       - name: Smoke test contra producción
+        env:
+          SMOKE_KEY: ${{ secrets.SMOKE_KEY }}
         run: bash scripts/smoke.sh https://lucasramos.uy/dashboard
