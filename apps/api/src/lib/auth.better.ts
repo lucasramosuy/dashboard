@@ -42,6 +42,22 @@ export const auth = betterAuth({
       await rehashIfLegacy(userId, password);
     }),
   },
+  // Rate limit guardado en la base (tabla rateLimit): en Workers la memoria es por
+  // instancia y el límite en memoria casi no frenaba nada. Solo en producción.
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production",
+    storage: "database",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/change-password": { window: 60, max: 5 },
+    },
+  },
+  advanced: {
+    // Detrás de Cloudflare la IP real del visitante viene en este header
+    ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
+  },
   trustedOrigins: process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",")
     : ["http://localhost:4321"],
