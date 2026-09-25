@@ -2,6 +2,7 @@ import type { Subject, Task, Absence, PracticeJournal, IcalEvent } from "@dashbo
 import { authClient } from "./auth-client";
 import { url } from "./utils";
 import * as Sentry from "@sentry/astro";
+import { captchaHeaders } from "./captcha";
 
 /**
  * Cliente de API para el dashboard académico.
@@ -95,6 +96,7 @@ export const api = {
     const { error } = await authClient.signIn.email({
       email,
       password,
+      fetchOptions: { headers: captchaHeaders() },
     });
     if (error) {
       throw new Error(error.message || "Error al iniciar sesión");
@@ -109,7 +111,7 @@ export const api = {
   }): Promise<void> {
     const response = await apiFetch(`${API_BASE}/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...captchaHeaders() },
       body: JSON.stringify(data),
     });
     await handleResponse(response);

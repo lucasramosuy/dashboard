@@ -122,6 +122,12 @@ export async function initDB() {
       createdAt TEXT,
       updatedAt TEXT
     )`,
+      `CREATE TABLE IF NOT EXISTS rateLimit (
+      id TEXT PRIMARY KEY,
+      key TEXT NOT NULL UNIQUE,
+      count INTEGER NOT NULL,
+      lastRequest INTEGER NOT NULL
+    )`,
       `CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
