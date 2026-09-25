@@ -3,6 +3,7 @@ import { db } from "./lib/db";
 import { icalService } from "./services/icalService";
 import { logger } from "./lib/logger";
 import { notifyNewEvents, sendDailySummary } from "./services/notifyService";
+import { sendTelegram } from "./lib/telegram";
 
 // Sincronización diaria de iCal a las 00:00 de Montevideo (03:00 UTC).
 // En Workers la dispara un Cron Trigger (wrangler.jsonc); en Bun, node-cron (server.ts).
@@ -45,6 +46,16 @@ export async function syncAllCalendars() {
       logger.info(
         `[Cron] Sincronización completada. Éxitos: ${successCount}, Errores: ${errorCount}`,
       );
+
+      if (errorCount > 0) {
+        try {
+          await sendTelegram(
+            `⚠️ Falló la sincronización de Schoology (iCal) para ${errorCount} de ${rs.rows.length} usuario(s). Revisá Sentry para el detalle.`,
+          );
+        } catch (err) {
+          logger.error("[Cron] No se pudo avisar la falla del sync por Telegram", err);
+        }
+      }
     },
     { schedule: { type: "crontab", value: ICAL_CRON_UTC }, timezone: "Etc/UTC" },
   );

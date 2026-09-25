@@ -150,7 +150,7 @@ El Worker le manda avisos a Lucas con el bot que ya existe (@claudionormativo_bo
 - **Resumen diario a las 07:00** (Montevideo): lo que vence hoy y mañana, los eventos de Schoology del día y cuántas tareas hay atrasadas. Si no hay nada, no manda mensaje.
 - **Novedades de Schoology**: cuando el sync de medianoche trae eventos nuevos, manda la lista en un mensaje silencioso (sin sonido).
 
-Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
+Si falla el deploy a producción, el backup semanal o el sync de iCal de algún usuario, el bot también avisa (con el link al run o a Sentry). Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
 
 ## Ramas y PRs
 
