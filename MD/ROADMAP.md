@@ -505,7 +505,12 @@ Fase B (pendiente):
 - [x] Astro 7 (con `@astrojs/react` 7 y `@astrojs/node` 11 hasta la migración).
 - [x] Web con `@astrojs/cloudflare` y `base: "/dashboard"`.
 - [x] Ruta `lucasramos.uy/dashboard*` en el mismo origen (en `wrangler.jsonc`).
-- [ ] Primer deploy: secrets del repo, `migrate` contra Turso, regenerar contraseñas y chequear que la ruta gane sobre el Worker proxy.
+- [x] Primer deploy (24/09/2026): secrets del repo, `migrate` contra Turso, ruta `lucasramos.uy/dashboard*` sirviendo el Worker.
+- [x] Rehash automático: las contraseñas scrypt pasan a PBKDF2 en el primer login correcto (no hace falta resetearlas).
 - [x] Deploy con GitHub Actions (wrangler) desde `prod`.
 - [x] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
-- [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
+- [x] Panel `/dashboard/admin` (invitaciones, usuarios, reset de contraseña) y cambio de contraseña en Mi Perfil.
+- [x] Backup semanal cifrado de Turso (Action + `bun run backup` / `restore`).
+- [x] Preview por PR en `workers.dev` con base demo propia (`.github/workflows/preview.yml`).
+- [x] Smoke test después de cada deploy (`scripts/smoke.sh`).
+- [x] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).

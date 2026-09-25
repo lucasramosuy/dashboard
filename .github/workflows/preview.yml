@@ -1,0 +1,150 @@
+name: Preview
+
+# Preview por PR: cada PR contra dev sube una versión del Worker "dashboard-preview" con
+# alias pr-<número> y comenta el link en el PR. Usa su propia base de Turso (datos demo),
+# nunca la de producción. El push a dev actualiza la versión base del preview.
+# Los PRs de forks y de Dependabot no tienen acceso a los secrets, así que se saltean.
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Cargar datos demo en la base del preview (borra cuentas y sesiones del preview)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  BUN_VERSION: "1.4.2"
+  WRANGLER_VERSION: "4.139.0"
+  PREVIEW_HOST: dashboard-preview.lucas-space.workers.dev
+  # Todos los comandos de wrangler llevan --name explícito: `wrangler secret` no lee la
+  # config generada por el build y sin --name apunta al Worker de producción ("dashboard").
+  PREVIEW_WORKER: dashboard-preview
+
+jobs:
+  preview:
+    name: Publicar preview
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_PREVIEW_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_AUTH_TOKEN }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Verificar secrets del preview
+        id: gate
+        run: |
+          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "Faltan TURSO_PREVIEW_DATABASE_URL / TURSO_PREVIEW_AUTH_TOKEN: se saltea el preview."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.ok == 'true'
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.gate.outputs.ok == 'true'
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.ok == 'true'
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        if: steps.gate.outputs.ok == 'true'
+        run: bun install --frozen-lockfile
+
+      - name: Migrar base del preview
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: apps/api
+        run: bun run migrate
+
+      - name: Datos demo
+        if: steps.gate.outputs.ok == 'true' && github.event_name == 'workflow_dispatch' && inputs.seed
+        working-directory: apps/api
+        run: bun run seed
+
+      # CLOUDFLARE_ENV=preview hace que el build genere la config del Worker "dashboard-preview"
+      - name: Build web (preview)
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_ENV: preview
+        run: bun run build
+
+      # Freno de seguridad: si la config generada no es la del preview, no se publica nada
+      - name: Verificar que el destino es el Worker del preview
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: apps/web
+        run: |
+          name="$(jq -r .name dist/server/wrangler.json)"
+          echo "Worker de destino: $name"
+          test "$name" = "$PREVIEW_WORKER" || { echo "El build no es del preview ($name): se corta."; exit 1; }
+
+      # Push a dev (o manual): despliega la versión base y sube los secrets del preview
+      - name: Deploy base del preview
+        if: steps.gate.outputs.ok == 'true' && github.event_name != 'pull_request'
+        working-directory: apps/web
+        run: |
+          set -euo pipefail
+          bun x wrangler@${WRANGLER_VERSION} deploy --name "$PREVIEW_WORKER"
+          printf '{"TURSO_DATABASE_URL":%s,"TURSO_AUTH_TOKEN":%s,"BETTER_AUTH_SECRET":%s}' \
+            "$(jq -Rn 'env.TURSO_DATABASE_URL')" "$(jq -Rn 'env.TURSO_AUTH_TOKEN')" \
+            "$(jq -Rn 'env.BETTER_AUTH_SECRET')" > "$RUNNER_TEMP/secrets.json"
+          bun x wrangler@${WRANGLER_VERSION} secret bulk "$RUNNER_TEMP/secrets.json" --name "$PREVIEW_WORKER"
+          rm -f "$RUNNER_TEMP/secrets.json"
+          echo "Preview base: https://${PREVIEW_HOST}/dashboard/"
+
+      # PR: sube una versión con alias pr-<número> (no cambia la versión base)
+      - name: Subir versión del PR
+        id: upload
+        if: steps.gate.outputs.ok == 'true' && github.event_name == 'pull_request'
+        working-directory: apps/web
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          ORIGIN="https://pr-${PR}-${PREVIEW_HOST}"
+          bun x wrangler@${WRANGLER_VERSION} versions upload \
+            --name "$PREVIEW_WORKER" \
+            --preview-alias "pr-${PR}" \
+            --message "PR #${PR} ${GITHUB_SHA::7}" \
+            --var "BETTER_AUTH_URL:${ORIGIN}" \
+            --var "CORS_ORIGINS:${ORIGIN}"
+          echo "url=${ORIGIN}/dashboard/" >> "$GITHUB_OUTPUT"
+
+      - name: Comentar link en el PR
+        if: steps.upload.outputs.url
+        uses: actions/github-script@v9
+        env:
+          URL: ${{ steps.upload.outputs.url }}
+        with:
+          script: |
+            const marker = "<!-- preview-link -->";
+            const body = `${marker}\n**Preview:** ${process.env.URL}\n\nUsuario demo: \`demo@example.com\` / \`demo1234\` (base de prueba, no la de producción).\nVersión: ${context.sha.slice(0, 7)}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const prev = comments.find((c) => c.body?.includes(marker));
+            if (prev) await github.rest.issues.updateComment({ owner, repo, comment_id: prev.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body });

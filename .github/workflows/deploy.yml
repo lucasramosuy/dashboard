@@ -60,7 +60,17 @@ jobs:
             TURSO_DATABASE_URL
             TURSO_AUTH_TOKEN
             BETTER_AUTH_SECRET
+            ADMIN_EMAILS
+            TELEGRAM_BOT_TOKEN
+            TELEGRAM_CHAT_ID
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      # Si algo quedó roto después de publicar, el run queda en rojo y GitHub avisa por mail
+      - name: Smoke test contra producción
+        run: bash scripts/smoke.sh https://lucasramos.uy/dashboard

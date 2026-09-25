@@ -73,6 +73,31 @@ Web (`apps/web/.env`, todo opcional en dev; las variables del runtime de Workers
 | `SENTRY_AUTH_TOKEN` | Subida de source maps a Sentry en el build              |
 | `PUBLIC_AGENTATION` | `true` para mostrar el overlay de Agentation (solo dev) |
 
+## Panel de administración
+
+`/dashboard/admin`, solo para los emails de `ADMIN_EMAILS` (el acceso aparece en **Mi Perfil**). Desde ahí se puede:
+
+- Crear invitaciones de un solo uso (el código se ve solo en pantalla, con botón copiar) y anular las que no se usaron.
+- Ver los usuarios: alta, última sesión y si la contraseña sigue en el formato viejo.
+- Resetear la contraseña de un usuario: genera una temporal que se muestra una sola vez y le cierra las sesiones. Después la cambia desde **Mi Perfil → Contraseña**.
+
+Como el repo es público, nada de esto pasa por GitHub Actions ni por logs.
+
+## Backup
+
+`.github/workflows/backup.yml` corre los domingos a las 03:00 (Montevideo) y también se puede lanzar a mano desde Actions. Hace un dump SQL de Turso (`bun run backup` en `apps/api`), lo comprime, lo cifra con AES-256 usando el secret `BACKUP_PASSPHRASE` y lo guarda como artifact por 90 días. Como el repo es público, el archivo sin la clave no sirve para nada. La clave también está en el vault.
+
+Para restaurar:
+
+```bash
+# 1. Bajar el artifact desde Actions → Backup → la corrida que quieras
+unzip dashboard-backup-AAAA-MM-DD.zip
+# 2. Descifrar (pide la clave)
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dashboard-backup.sql.gz.enc | gunzip > dump.sql
+# 3. Cargarlo (con las variables de Turso apunta a producción y REEMPLAZA las tablas)
+cd apps/api && TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... bun run restore ../../dump.sql
+```
+
 ## Registro con invitación
 
 El registro es **solo con código de invitación** de un solo uso (`POST /api/auth/register`). El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado y devuelve 403.
@@ -85,13 +110,17 @@ cd apps/api && bun run invites
 
 ### Contraseñas
 
-Las contraseñas se guardan con **PBKDF2-SHA256** (WebCrypto, 30.000 iteraciones, salt aleatoria) en `apps/api/src/lib/password.ts`, en lugar del scrypt por defecto de Better Auth: scrypt usa 70-160 ms de CPU y el plan gratuito de Cloudflare Workers da 10 ms por request. Los hashes scrypt viejos se siguen aceptando.
+Las contraseñas se guardan con **PBKDF2-SHA256** (WebCrypto, 30.000 iteraciones, salt aleatoria) en `apps/api/src/lib/password.ts`, en lugar del scrypt por defecto de Better Auth: scrypt usa 70-160 ms de CPU y el plan gratuito de Cloudflare Workers da 10 ms por request. Los hashes scrypt viejos se siguen aceptando y se re-guardan solos en PBKDF2 en el primer login correcto.
 
 Para cambiarle la contraseña a un usuario (pide la contraseña nueva por la terminal; con las variables de Turso apunta a producción):
 
 ```bash
 cd apps/api && bun run set-password <email>
 ```
+
+## App en el celu (PWA)
+
+El dashboard se puede instalar como app: en Android (Chrome) "Instalar app" o "Agregar a pantalla principal"; en iPhone (Safari) Compartir → "Agregar a inicio". Abre a pantalla completa con su ícono. Archivos: `apps/web/public/manifest.webmanifest` y los íconos `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` y `apple-touch-icon.png` (generados desde `favicon.svg`). No hay service worker: la app necesita conexión, igual que la web.
 
 ## Schoology (iCal)
 
@@ -108,11 +137,20 @@ cd apps/api && bun run set-password <email>
 | `bun run dev`     | API + web en paralelo                          |
 | `bun run dev:api` | Solo la API                                    |
 | `bun run dev:web` | Solo la web                                    |
-| `bun run build`   | Build de producción (API + web)                |
+| `bun run build`   | Build del Worker (web + API)                   |
 | `bun run test`    | Tests de la API (`bun test`)                   |
 | `bun run lint`    | ESLint                                         |
 | `bun run check`   | Lint + tsc de la API + `astro check` de la web |
 | `bun run format`  | Prettier                                       |
+
+## Avisos por Telegram
+
+El Worker le manda avisos a Lucas con el bot que ya existe (@claudionormativo_bot):
+
+- **Resumen diario a las 07:00** (Montevideo): lo que vence hoy y mañana, los eventos de Schoology del día y cuántas tareas hay atrasadas. Si no hay nada, no manda mensaje.
+- **Novedades de Schoology**: cuando el sync de medianoche trae eventos nuevos, manda la lista en un mensaje silencioso (sin sonido).
+
+Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
 
 ## Ramas y PRs
 
@@ -129,7 +167,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 - `apps/web/src/worker.ts` es la entrada. `/dashboard/api/*` va a la app de Hono (`apps/api/src/app.ts`); el resto lo sirve Astro (`@astrojs/cloudflare`, `base: "/dashboard"`).
 - La ruta `lucasramos.uy/dashboard*` (en `apps/web/wrangler.jsonc`) es más específica que la del Worker proxy del dominio, así que Cloudflare la resuelve primero.
 - Base: **Turso** (plan free). `bun run migrate` en `apps/api` crea o actualiza las tablas.
-- Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo).
+- Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo). Resumen de Telegram: 10:00 UTC (07:00 de Montevideo).
 - Errores: `@sentry/cloudflare`.
 - Límite a tener en cuenta: 10 ms de CPU por request en el plan free. Por eso las contraseñas usan PBKDF2 y el iCal un parser propio.
 
@@ -137,14 +175,34 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 `.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
 
-| Secret                  | Para qué                                  |
-| ----------------------- | ----------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Publicar el Worker                        |
-| `CLOUDFLARE_ACCOUNT_ID` | Cuenta de Cloudflare                      |
-| `TURSO_DATABASE_URL`    | Base (se sube como secret del Worker)     |
-| `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)     |
-| `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker) |
-| `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                      |
+| Secret                       | Para qué                                                   |
+| ---------------------------- | ---------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                         |
+| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                       |
+| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                      |
+| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                      |
+| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)                  |
+| `ADMIN_EMAILS`               | Emails con acceso a `/dashboard/admin` (secret del Worker) |
+| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal                |
+| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)                |
+| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)              |
+| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                       |
+| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)         |
+| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                          |
+
+### Preview por PR
+
+`.github/workflows/preview.yml` publica cada PR contra `dev` como una versión del Worker `dashboard-preview` (en `workers.dev`) y comenta el link en el PR: `https://pr-<número>-dashboard-preview.lucas-space.workers.dev/dashboard/`. Sirve para ver los cambios desde el celu antes de mergear.
+
+- Usa su propia base de Turso (`TURSO_PREVIEW_*`) con datos demo, nunca la de producción. Usuario demo: `demo@example.com` / `demo1234`.
+- Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/dashboard/`). Los PRs suben versiones con alias y no la tocan.
+- La primera vez (o para reiniciar los datos demo): Actions → Preview → Run workflow, con "Cargar datos demo" marcado.
+- Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
+- La config del Worker de preview está en `env.preview` de `apps/web/wrangler.jsonc` (sin ruta ni cron). Todo dentro del plan free.
+
+### Smoke test
+
+`scripts/smoke.sh` revisa un deploy sin tocar datos: health de la API, redirect al login sin sesión, página de login y su CSS, y que un login inválido dé 401 (Better Auth leyendo Turso). Corre solo como último paso de `deploy.yml`: si algo falla, el run queda en rojo y GitHub avisa por mail. También se puede correr a mano (Actions → Smoke test) o local: `bash scripts/smoke.sh https://lucasramos.uy/dashboard`.
 
 ### Desarrollo local con el runtime de Workers
 

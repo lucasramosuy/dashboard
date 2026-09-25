@@ -8,7 +8,8 @@ import { verifyPassword as verifyScrypt } from "better-auth/crypto";
 //
 // Formato guardado: pbkdf2$sha256$<iteraciones>$<salt b64>$<hash b64>
 // Los hashes viejos (scrypt, "salt:hash") se siguen verificando para no dejar
-// afuera a nadie; se reemplazan al cambiar la contraseña (scripts/set-password.ts).
+// afuera a nadie; se reemplazan solos por PBKDF2 en el primer login correcto
+// (hook en lib/auth.better.ts) o al cambiar la contraseña (set-password.ts).
 
 const ITERATIONS = 30_000;
 const PREFIX = "pbkdf2$sha256$";
