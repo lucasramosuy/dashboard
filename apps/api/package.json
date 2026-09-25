@@ -13,6 +13,7 @@
     "set-password": "bun src/set-password.ts",
     "backup": "bun src/backup.ts",
     "restore": "bun src/restore.ts",
+    "restore-check": "bun src/restore-check.ts",
     "check": "tsc -p tsconfig.json"
   },
   "devDependencies": {
