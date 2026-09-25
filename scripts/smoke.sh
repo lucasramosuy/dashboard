@@ -11,8 +11,9 @@ FAIL=0
 
 # En Actions, Cloudflare le muestra el desafío anti-bots a las IPs de datacenter. Si está
 # SMOKE_KEY, se manda en el header x-smoke-key y una regla de Cloudflare deja pasar el request.
+# Solo contra lucasramos.uy, para no mandar la clave a otros hosts.
 CURL=(curl -s)
-if [ -n "${SMOKE_KEY:-}" ]; then CURL+=(-H "x-smoke-key: $SMOKE_KEY"); fi
+if [ -n "${SMOKE_KEY:-}" ] && [ "$ORIGIN" = "https://lucasramos.uy" ]; then CURL+=(-H "x-smoke-key: $SMOKE_KEY"); fi
 
 check() {
   local name="$1" expected="$2" got="$3"
