@@ -1,0 +1,62 @@
+name: Reset demo
+
+# Todas las noches vuelve a cargar los datos demo en la base del preview (nunca en la de
+# producción). Si alguien entró con el usuario demo y borró cosas o le cambió la clave,
+# a la mañana siguiente está todo como nuevo. También se puede correr a mano.
+on:
+  schedule:
+    - cron: "0 6 * * *" # 03:00 de Montevideo
+  workflow_dispatch:
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  reset:
+    name: Recargar datos demo del preview
+    runs-on: ubuntu-latest
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_PREVIEW_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_AUTH_TOKEN }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+    steps:
+      # El seed borra todas las cuentas y sesiones: jamás puede correr contra prod
+      - name: Verificar que la base es la del preview
+        env:
+          PROD_URL: ${{ secrets.TURSO_DATABASE_URL }}
+        run: |
+          if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
+            echo "Faltan TURSO_PREVIEW_DATABASE_URL / TURSO_PREVIEW_AUTH_TOKEN."
+            exit 1
+          fi
+          if [ "$TURSO_DATABASE_URL" = "$PROD_URL" ]; then
+            echo "La base del preview es la misma que la de producción: no se hace nada."
+            exit 1
+          fi
+          case "$TURSO_DATABASE_URL" in
+            *prod-dashboard*) echo "La URL apunta a la base de producción: no se hace nada."; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Migrar base del preview
+        working-directory: apps/api
+        run: bun run migrate
+
+      - name: Datos demo
+        working-directory: apps/api
+        run: bun run seed
