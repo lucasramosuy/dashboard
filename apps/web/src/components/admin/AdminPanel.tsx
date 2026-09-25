@@ -4,6 +4,7 @@ import { api, type AdminInvite, type AdminUser } from "../../lib/api";
 import { ProfileSkeleton } from "../ui/Skeleton";
 import { Button } from "../ui/Button";
 import { url } from "../../lib/utils";
+import { PasskeyCard, PasskeyGate } from "./PasskeyCard";
 
 const card =
   "bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm flex flex-col gap-4";
@@ -30,7 +31,9 @@ function CopyButton({ text }: { text: string }) {
 }
 
 const Panel: React.FC = () => {
-  const [state, setState] = useState<"loading" | "forbidden" | "ready" | "error">("loading");
+  const [state, setState] = useState<"loading" | "forbidden" | "passkey" | "ready" | "error">(
+    "loading",
+  );
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [busy, setBusy] = useState(false);
@@ -42,8 +45,9 @@ const Panel: React.FC = () => {
 
   const load = useCallback(async () => {
     try {
-      const { admin } = await api.adminMe();
-      if (!admin) return setState("forbidden");
+      const me = await api.adminMe();
+      if (!me.admin) return setState("forbidden");
+      if (me.passkeyRequired) return setState("passkey");
       const [u, i] = await Promise.all([api.adminUsers(), api.adminInvites()]);
       setUsers(u);
       setInvites(i);
@@ -92,6 +96,16 @@ const Panel: React.FC = () => {
   };
 
   if (state === "loading") return <ProfileSkeleton />;
+  if (state === "passkey") {
+    return (
+      <PasskeyGate
+        onVerified={() => {
+          setState("loading");
+          load();
+        }}
+      />
+    );
+  }
   if (state === "forbidden" || state === "error") {
     return (
       <div className={card}>
@@ -121,6 +135,8 @@ const Panel: React.FC = () => {
           {error}
         </div>
       )}
+
+      <PasskeyCard />
 
       <section className={card}>
         <div className="flex items-center justify-between gap-3">
