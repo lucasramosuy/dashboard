@@ -25,6 +25,14 @@ export type AdminUser = {
 };
 
 export type AdminInvite = { id: string; code: string; createdAt: Date };
+export type AdminLogEntry = {
+  id: string;
+  createdAt: string;
+  actorEmail: string;
+  action: "reset_password" | "invite_create" | "invite_delete";
+  target: string | null;
+  ip: string | null;
+};
 
 /**
  * Helper para convertir strings de fecha a objetos Date en respuestas JSON
@@ -325,5 +333,10 @@ export const api = {
   async adminDeleteInvite(id: string): Promise<void> {
     const response = await apiFetch(`${API_BASE}/admin/invites/${id}`, { method: "DELETE" });
     await handleResponse(response);
+  },
+
+  async adminLog(limit = 50): Promise<AdminLogEntry[]> {
+    const response = await apiFetch(`${API_BASE}/admin/log?limit=${limit}`);
+    return handleResponse<AdminLogEntry[]>(response);
   },
 };
