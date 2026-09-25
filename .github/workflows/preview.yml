@@ -28,6 +28,9 @@ env:
   BUN_VERSION: "1.4.2"
   WRANGLER_VERSION: "4.139.0"
   PREVIEW_HOST: dashboard-preview.lucas-space.workers.dev
+  # Todos los comandos de wrangler llevan --name explícito: `wrangler secret` no lee la
+  # config generada por el build y sin --name apunta al Worker de producción ("dashboard").
+  PREVIEW_WORKER: dashboard-preview
 
 jobs:
   preview:
@@ -89,17 +92,26 @@ jobs:
           CLOUDFLARE_ENV: preview
         run: bun run build
 
+      # Freno de seguridad: si la config generada no es la del preview, no se publica nada
+      - name: Verificar que el destino es el Worker del preview
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: apps/web
+        run: |
+          name="$(jq -r .name dist/server/wrangler.json)"
+          echo "Worker de destino: $name"
+          test "$name" = "$PREVIEW_WORKER" || { echo "El build no es del preview ($name): se corta."; exit 1; }
+
       # Push a dev (o manual): despliega la versión base y sube los secrets del preview
       - name: Deploy base del preview
         if: steps.gate.outputs.ok == 'true' && github.event_name != 'pull_request'
         working-directory: apps/web
         run: |
           set -euo pipefail
-          bun x wrangler@${WRANGLER_VERSION} deploy
+          bun x wrangler@${WRANGLER_VERSION} deploy --name "$PREVIEW_WORKER"
           printf '{"TURSO_DATABASE_URL":%s,"TURSO_AUTH_TOKEN":%s,"BETTER_AUTH_SECRET":%s}' \
             "$(jq -Rn 'env.TURSO_DATABASE_URL')" "$(jq -Rn 'env.TURSO_AUTH_TOKEN')" \
             "$(jq -Rn 'env.BETTER_AUTH_SECRET')" > "$RUNNER_TEMP/secrets.json"
-          bun x wrangler@${WRANGLER_VERSION} secret bulk "$RUNNER_TEMP/secrets.json"
+          bun x wrangler@${WRANGLER_VERSION} secret bulk "$RUNNER_TEMP/secrets.json" --name "$PREVIEW_WORKER"
           rm -f "$RUNNER_TEMP/secrets.json"
           echo "Preview base: https://${PREVIEW_HOST}/dashboard/"
 
@@ -114,6 +126,7 @@ jobs:
           set -euo pipefail
           ORIGIN="https://pr-${PR}-${PREVIEW_HOST}"
           bun x wrangler@${WRANGLER_VERSION} versions upload \
+            --name "$PREVIEW_WORKER" \
             --preview-alias "pr-${PR}" \
             --message "PR #${PR} ${GITHUB_SHA::7}" \
             --var "BETTER_AUTH_URL:${ORIGIN}" \
