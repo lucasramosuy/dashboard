@@ -19,4 +19,5 @@ jobs:
       - name: Smoke test
         env:
           URL: ${{ inputs.url }}
+          SMOKE_KEY: ${{ secrets.SMOKE_KEY }}
         run: bash scripts/smoke.sh "$URL"

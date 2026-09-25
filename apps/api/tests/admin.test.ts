@@ -99,4 +99,22 @@ describe("Panel admin", () => {
     await expect(login(USER)).rejects.toThrow();
     await login(USER, password);
   });
+
+  it("no deja resetear la propia cuenta", async () => {
+    const adminCookie = await login(ADMIN);
+    const adminId = (
+      await db.execute({ sql: "SELECT id FROM user WHERE email = ?", args: [ADMIN] })
+    ).rows[0].id as string;
+    const res = await req(`/api/admin/users/${adminId}/reset-password`, adminCookie, "POST");
+    expect(res.status).toBe(400);
+    const session = await app.request("/api/auth/get-session", {
+      headers: { Cookie: adminCookie },
+    });
+    expect(await session.json()).not.toBeNull();
+    const users = (await (await req("/api/admin/users", adminCookie)).json()) as {
+      email: string;
+      self: boolean;
+    }[];
+    expect(users.find((u) => u.email === ADMIN)?.self).toBe(true);
+  });
 });
