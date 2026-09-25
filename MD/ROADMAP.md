@@ -513,4 +513,4 @@ Fase B (pendiente):
 - [x] Backup semanal cifrado de Turso (Action + `bun run backup` / `restore`).
 - [x] Preview por PR en `workers.dev` con base demo propia (`.github/workflows/preview.yml`).
 - [x] Smoke test después de cada deploy (`scripts/smoke.sh`).
-- [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
+- [x] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).

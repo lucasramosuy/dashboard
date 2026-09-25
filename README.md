@@ -143,6 +143,15 @@ El dashboard se puede instalar como app: en Android (Chrome) "Instalar app" o "A
 | `bun run check`   | Lint + tsc de la API + `astro check` de la web |
 | `bun run format`  | Prettier                                       |
 
+## Avisos por Telegram
+
+El Worker le manda avisos a Lucas con el bot que ya existe (@claudionormativo_bot):
+
+- **Resumen diario a las 07:00** (Montevideo): lo que vence hoy y mañana, los eventos de Schoology del día y cuántas tareas hay atrasadas. Si no hay nada, no manda mensaje.
+- **Novedades de Schoology**: cuando el sync de medianoche trae eventos nuevos, manda la lista en un mensaje silencioso (sin sonido).
+
+Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
+
 ## Ramas y PRs
 
 - `dev` es la rama por defecto. `prod` es lo que está publicado.
@@ -158,7 +167,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 - `apps/web/src/worker.ts` es la entrada. `/dashboard/api/*` va a la app de Hono (`apps/api/src/app.ts`); el resto lo sirve Astro (`@astrojs/cloudflare`, `base: "/dashboard"`).
 - La ruta `lucasramos.uy/dashboard*` (en `apps/web/wrangler.jsonc`) es más específica que la del Worker proxy del dominio, así que Cloudflare la resuelve primero.
 - Base: **Turso** (plan free). `bun run migrate` en `apps/api` crea o actualiza las tablas.
-- Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo).
+- Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo). Resumen de Telegram: 10:00 UTC (07:00 de Montevideo).
 - Errores: `@sentry/cloudflare`.
 - Límite a tener en cuenta: 10 ms de CPU por request en el plan free. Por eso las contraseñas usan PBKDF2 y el iCal un parser propio.
 
@@ -175,6 +184,8 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 | `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)                  |
 | `ADMIN_EMAILS`               | Emails con acceso a `/dashboard/admin` (secret del Worker) |
 | `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal                |
+| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)                |
+| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)              |
 | `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                       |
 | `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)         |
 | `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                          |
