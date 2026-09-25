@@ -76,3 +76,18 @@ jobs:
         env:
           SMOKE_KEY: ${{ secrets.SMOKE_KEY }}
         run: bash scripts/smoke.sh https://lucasramos.uy/dashboard
+
+      # Aviso por Telegram si cualquier paso anterior falló (no depende del checkout)
+      - name: Avisar por Telegram
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WHAT: el deploy a producción
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          curl -s -o /dev/null --max-time 15 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=❌ Falló ${WHAT} en el dashboard: ${RUN_URL}" \
+            -d disable_web_page_preview=true || true
