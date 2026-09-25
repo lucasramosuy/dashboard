@@ -1,1 +1,22 @@
-placeholder
+name: Smoke test
+
+# Corre scripts/smoke.sh a mano contra producción (o la URL que se indique).
+# Después de cada deploy ya corre solo, como último paso de deploy.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL base (sin barra final)"
+        default: "https://lucasramos.uy/dashboard"
+        required: true
+
+jobs:
+  smoke:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Smoke test
+        env:
+          URL: ${{ inputs.url }}
+        run: bash scripts/smoke.sh "$URL"
