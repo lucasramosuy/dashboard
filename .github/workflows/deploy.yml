@@ -66,3 +66,7 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
+
+      # Si algo quedó roto después de publicar, el run queda en rojo y GitHub avisa por mail
+      - name: Smoke test contra producción
+        run: bash scripts/smoke.sh https://lucasramos.uy/dashboard

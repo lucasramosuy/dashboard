@@ -189,6 +189,10 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 - Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
 - La config del Worker de preview está en `env.preview` de `apps/web/wrangler.jsonc` (sin ruta ni cron). Todo dentro del plan free.
 
+### Smoke test
+
+`scripts/smoke.sh` revisa un deploy sin tocar datos: health de la API, redirect al login sin sesión, página de login y su CSS, y que un login inválido dé 401 (Better Auth leyendo Turso). Corre solo como último paso de `deploy.yml`: si algo falla, el run queda en rojo y GitHub avisa por mail. También se puede correr a mano (Actions → Smoke test) o local: `bash scripts/smoke.sh https://lucasramos.uy/dashboard`.
+
 ### Desarrollo local con el runtime de Workers
 
 `bun run dev` sigue siendo la forma normal (API en Bun + Astro). Para probar el Worker tal como corre en producción:
