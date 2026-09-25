@@ -46,10 +46,27 @@ export const icalService = {
         }
       }
 
-      // 3. Update the DB — atomic batch replace (ARCH-8)
+      // 3. Eventos futuros que no estaban en el sync anterior (para el aviso por Telegram).
+      // Los ids se regeneran en cada sync, así que se compara por título + fecha.
+      // Si antes no había nada (primer sync), no se marca nada como nuevo.
+      const prev = await db.execute({
+        sql: "SELECT title, start_date FROM ical_events WHERE user_id = ?",
+        args: [userId],
+      });
+      const key = (title: string, start: string) => `${title}|${start}`;
+      const known = new Set(prev.rows.map((r) => key(r.title as string, r.start_date as string)));
+      const newEvents =
+        prev.rows.length === 0
+          ? []
+          : eventsToInsert
+              .filter((e) => new Date(e.start_date).getTime() >= now.getTime())
+              .map((e) => ({ title: e.title, start_date: new Date(e.start_date).toISOString() }))
+              .filter((e) => !known.has(key(e.title, e.start_date)));
+
+      // 4. Update the DB — atomic batch replace (ARCH-8)
       await dbService.icalEvents.replaceByUser(userId, eventsToInsert);
 
-      // 4. Update user last sync
+      // 5. Update user last sync
       await db.execute({
         sql: "UPDATE user SET last_ical_sync = ? WHERE id = ?",
         args: [now.toISOString(), userId],
@@ -58,6 +75,7 @@ export const icalService = {
       return {
         success: true,
         syncedCount: eventsToInsert.length,
+        newEvents,
       };
     } catch (error) {
       logger.error("[icalService] Error al sincronizar iCal:", error);
