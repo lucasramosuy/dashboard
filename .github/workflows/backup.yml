@@ -1,1 +1,55 @@
-placeholder
+name: Backup
+
+# Copia semanal de la base de producción (Turso). El repo es público, así que el dump
+# se cifra con BACKUP_PASSPHRASE antes de subirlo como artifact: sin la clave no sirve.
+# Restaurar: ver README, sección "Backup".
+on:
+  schedule:
+    - cron: "0 6 * * 0" # domingos 06:00 UTC = 03:00 Montevideo
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  backup:
+    name: Dump cifrado de Turso
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Dump y cifrado
+        working-directory: apps/api
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_PASSPHRASE" || { echo "Falta el secret BACKUP_PASSPHRASE"; exit 1; }
+          umask 077
+          bun run backup | gzip -9 > "$RUNNER_TEMP/dump.sql.gz"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -pass env:BACKUP_PASSPHRASE \
+            -in "$RUNNER_TEMP/dump.sql.gz" -out "$GITHUB_WORKSPACE/dashboard-backup.sql.gz.enc"
+          rm -f "$RUNNER_TEMP/dump.sql.gz"
+          echo "DATE=$(date -u +%F)" >> "$GITHUB_ENV"
+
+      - name: Guardar artifact (90 días)
+        uses: actions/upload-artifact@v7
+        with:
+          name: dashboard-backup-${{ env.DATE }}
+          path: dashboard-backup.sql.gz.enc
+          retention-days: 90
+          if-no-files-found: error
