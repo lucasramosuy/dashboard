@@ -122,6 +122,22 @@ export async function initDB() {
       createdAt TEXT,
       updatedAt TEXT
     )`,
+      `CREATE TABLE IF NOT EXISTS passkey (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      publicKey TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      credentialID TEXT NOT NULL,
+      counter INTEGER NOT NULL,
+      deviceType TEXT NOT NULL,
+      backedUp INTEGER NOT NULL,
+      transports TEXT,
+      createdAt TEXT,
+      aaguid TEXT,
+      FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+    )`,
+      "CREATE INDEX IF NOT EXISTS idx_passkey_user ON passkey(userId)",
+      "CREATE INDEX IF NOT EXISTS idx_passkey_credential ON passkey(credentialID)",
       `CREATE TABLE IF NOT EXISTS rateLimit (
       id TEXT PRIMARY KEY,
       key TEXT NOT NULL UNIQUE,
@@ -195,6 +211,10 @@ export async function initDB() {
   }
   if (!(await columnExists("user", "last_ical_sync"))) {
     await db.execute("ALTER TABLE user ADD COLUMN last_ical_sync TEXT");
+  }
+  // Cuándo se inició la sesión con passkey (panel de admin, ver lib/admin-passkey.ts)
+  if (!(await columnExists("session", "passkey_at"))) {
+    await db.execute("ALTER TABLE session ADD COLUMN passkey_at TEXT");
   }
 
   // Fase 9: nuevas columnas en subjects (track, duration_weeks) + slug
