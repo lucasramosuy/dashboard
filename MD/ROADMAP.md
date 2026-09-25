@@ -511,5 +511,6 @@ Fase B (pendiente):
 - [x] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
 - [x] Panel `/dashboard/admin` (invitaciones, usuarios, reset de contraseña) y cambio de contraseña en Mi Perfil.
 - [x] Backup semanal cifrado de Turso (Action + `bun run backup` / `restore`).
+- [x] Preview por PR en `workers.dev` con base demo propia (`.github/workflows/preview.yml`).
 - [x] Smoke test después de cada deploy (`scripts/smoke.sh`).
 - [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).
