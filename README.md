@@ -166,16 +166,28 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 `.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
 
-| Secret                  | Para qué                                                   |
-| ----------------------- | ---------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Publicar el Worker                                         |
-| `CLOUDFLARE_ACCOUNT_ID` | Cuenta de Cloudflare                                       |
-| `TURSO_DATABASE_URL`    | Base (se sube como secret del Worker)                      |
-| `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)                      |
-| `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker)                  |
-| `ADMIN_EMAILS`          | Emails con acceso a `/dashboard/admin` (secret del Worker) |
-| `BACKUP_PASSPHRASE`     | Clave con la que se cifra el backup semanal                |
-| `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                                       |
+| Secret                       | Para qué                                                   |
+| ---------------------------- | ---------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                         |
+| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                       |
+| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                      |
+| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                      |
+| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)                  |
+| `ADMIN_EMAILS`               | Emails con acceso a `/dashboard/admin` (secret del Worker) |
+| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal                |
+| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                       |
+| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)         |
+| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                          |
+
+### Preview por PR
+
+`.github/workflows/preview.yml` publica cada PR contra `dev` como una versión del Worker `dashboard-preview` (en `workers.dev`) y comenta el link en el PR: `https://pr-<número>-dashboard-preview.lucas-space.workers.dev/dashboard/`. Sirve para ver los cambios desde el celu antes de mergear.
+
+- Usa su propia base de Turso (`TURSO_PREVIEW_*`) con datos demo, nunca la de producción. Usuario demo: `demo@example.com` / `demo1234`.
+- Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/dashboard/`). Los PRs suben versiones con alias y no la tocan.
+- La primera vez (o para reiniciar los datos demo): Actions → Preview → Run workflow, con "Cargar datos demo" marcado.
+- Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
+- La config del Worker de preview está en `env.preview` de `apps/web/wrangler.jsonc` (sin ruta ni cron). Todo dentro del plan free.
 
 ### Desarrollo local con el runtime de Workers
 
