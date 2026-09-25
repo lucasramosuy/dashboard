@@ -6,5 +6,8 @@ declare module "bun" {
     TURSO_AUTH_TOKEN?: string;
     BETTER_AUTH_URL?: string;
     CORS_ORIGINS?: string;
+    ADMIN_EMAILS?: string;
+    TELEGRAM_BOT_TOKEN?: string;
+    TELEGRAM_CHAT_ID?: string;
   }
 }
