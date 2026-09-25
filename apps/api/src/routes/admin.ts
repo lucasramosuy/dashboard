@@ -4,22 +4,23 @@ import { db, dbService } from "../lib/db";
 import { hashPassword, isLegacyHash } from "../lib/password";
 import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 import { listAdminLog, logAdminAction, type AdminAction } from "../lib/admin-log";
+import { adminEmails, checkAdminPasskey, countPasskeys, isAdminEmail } from "../lib/admin-passkey";
 
 // Panel de administración (/dashboard/admin). Solo para los emails de ADMIN_EMAILS
 // (secret del Worker, separados por coma). Todo lo sensible (códigos de invitación,
 // contraseñas temporales) se ve solo en pantalla: nada pasa por logs.
 
-export function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export const isAdminEmail = (email: string) => adminEmails().includes(email.toLowerCase());
+export { adminEmails, isAdminEmail };
 
 const adminOnly = async (c: Context<AuthEnv>, next: Next) => {
-  if (!isAdminEmail(c.get("user").email)) return c.json({ error: "Forbidden" }, 403);
+  const gate = await checkAdminPasskey(c.get("user"), c.get("session").id);
+  if (gate === "not-admin") return c.json({ error: "Forbidden" }, 403);
+  if (gate === "passkey-required") {
+    return c.json(
+      { error: "Entrá con tu passkey para abrir el panel", code: "PASSKEY_REQUIRED" },
+      403,
+    );
+  }
   await next();
 };
 
@@ -43,7 +44,17 @@ const adminRouter = new Hono<AuthEnv>();
 adminRouter.use("*", authMiddleware);
 
 // GET /api/admin/me: la web lo usa para mostrar u ocultar el acceso al panel
-adminRouter.get("/me", (c) => c.json({ admin: isAdminEmail(c.get("user").email) }));
+// passkeys: cuántas tiene el admin; passkeySession: si esta sesión se abrió con passkey
+adminRouter.get("/me", async (c) => {
+  const user = c.get("user");
+  if (!isAdminEmail(user.email)) return c.json({ admin: false });
+  const gate = await checkAdminPasskey(user, c.get("session").id);
+  return c.json({
+    admin: true,
+    passkeys: await countPasskeys(user.id),
+    passkeyRequired: gate === "passkey-required",
+  });
+});
 
 adminRouter.use("*", adminOnly);
 
