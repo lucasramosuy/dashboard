@@ -1,1 +1,84 @@
-placeholder
+name: Prueba de restore
+
+# Una vez por mes baja el último backup cifrado, lo descifra y lo restaura en una base
+# SQLite temporal del runner para confirmar que el backup sirve. No toca Turso.
+# El repo es público: el dump descifrado nunca sale del runner y solo se imprimen cantidades.
+on:
+  schedule:
+    - cron: "0 7 1 * *" # día 1 de cada mes, 07:00 UTC = 04:00 Montevideo
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: restore-test
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: "1.4.2"
+
+jobs:
+  restore-test:
+    name: Restaurar el último backup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Bajar el último backup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          art=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.expired | not) | select(.name | startswith("dashboard-backup-"))] | sort_by(.created_at) | last')
+          test -n "$art" && test "$art" != "null" || { echo "No hay ningún backup disponible"; exit 1; }
+          id=$(jq -r .id <<<"$art"); name=$(jq -r .name <<<"$art"); created=$(jq -r .created_at <<<"$art")
+          age=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 86400 ))
+          echo "Último backup: $name (hace $age días)"
+          # El backup es semanal: si el último tiene más de 8 días, el backup dejó de correr
+          [ "$age" -le 8 ] || { echo "El último backup tiene $age días"; exit 1; }
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}/zip" > "$RUNNER_TEMP/backup.zip"
+          unzip -q -o "$RUNNER_TEMP/backup.zip" -d "$RUNNER_TEMP"
+          rm -f "$RUNNER_TEMP/backup.zip"
+          test -s "$RUNNER_TEMP/dashboard-backup.sql.gz.enc"
+
+      - name: Descifrar y restaurar en una base temporal
+        working-directory: apps/api
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_PASSPHRASE" || { echo "Falta el secret BACKUP_PASSPHRASE"; exit 1; }
+          umask 077
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -pass env:BACKUP_PASSPHRASE \
+            -in "$RUNNER_TEMP/dashboard-backup.sql.gz.enc" | gunzip > "$RUNNER_TEMP/dump.sql"
+          bun run restore-check "$RUNNER_TEMP/dump.sql"
+
+      - name: Borrar archivos temporales
+        if: always()
+        run: rm -f "$RUNNER_TEMP/dump.sql" "$RUNNER_TEMP/dashboard-backup.sql.gz.enc"
+
+      # Aviso por Telegram si cualquier paso anterior falló
+      - name: Avisar por Telegram
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WHAT: la prueba mensual de restore del backup
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || exit 0
+          curl -s -o /dev/null --max-time 15 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=❌ Falló ${WHAT} en el dashboard: ${RUN_URL}" \
+            -d disable_web_page_preview=true || true
