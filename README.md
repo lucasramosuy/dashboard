@@ -197,6 +197,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 - Usa su propia base de Turso (`TURSO_PREVIEW_*`) con datos demo, nunca la de producción. Usuario demo: `demo@example.com` / `demo1234`.
 - Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/dashboard/`). Los PRs suben versiones con alias y no la tocan.
 - La primera vez (o para reiniciar los datos demo): Actions → Preview → Run workflow, con "Cargar datos demo" marcado.
+- Todas las noches (03:00 de Montevideo) `.github/workflows/demo-reset.yml` vuelve a cargar los datos demo, así que cualquier cambio hecho con el usuario demo dura como mucho un día. También se puede correr a mano desde Actions → Reset demo.
 - Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
 - La config del Worker de preview está en `env.preview` de `apps/web/wrangler.jsonc` (sin ruta ni cron). Todo dentro del plan free.
 
