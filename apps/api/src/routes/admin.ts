@@ -3,22 +3,24 @@ import type { Context, Next } from "hono";
 import { db, dbService } from "../lib/db";
 import { hashPassword, isLegacyHash } from "../lib/password";
 import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
+import { listAdminLog, logAdminAction, type AdminAction } from "../lib/admin-log";
+import { adminEmails, checkAdminPasskey, countPasskeys, isAdminEmail } from "../lib/admin-passkey";
 
 // Panel de administración (/dashboard/admin). Solo para los emails de ADMIN_EMAILS
 // (secret del Worker, separados por coma). Todo lo sensible (códigos de invitación,
 // contraseñas temporales) se ve solo en pantalla: nada pasa por logs.
 
-export function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export const isAdminEmail = (email: string) => adminEmails().includes(email.toLowerCase());
+export { adminEmails, isAdminEmail };
 
 const adminOnly = async (c: Context<AuthEnv>, next: Next) => {
-  if (!isAdminEmail(c.get("user").email)) return c.json({ error: "Forbidden" }, 403);
+  const gate = await checkAdminPasskey(c.get("user"), c.get("session").id);
+  if (gate === "not-admin") return c.json({ error: "Forbidden" }, 403);
+  if (gate === "passkey-required") {
+    return c.json(
+      { error: "Entrá con tu passkey para abrir el panel", code: "PASSKEY_REQUIRED" },
+      403,
+    );
+  }
   await next();
 };
 
@@ -29,11 +31,30 @@ export function randomToken(length: number): string {
   return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("");
 }
 
+const log = (c: Context<AuthEnv>, action: AdminAction, target?: string | null) =>
+  logAdminAction({
+    actorId: c.get("user").id,
+    actorEmail: c.get("user").email,
+    action,
+    target,
+    ip: c.req.header("cf-connecting-ip") ?? null,
+  });
+
 const adminRouter = new Hono<AuthEnv>();
 adminRouter.use("*", authMiddleware);
 
 // GET /api/admin/me: la web lo usa para mostrar u ocultar el acceso al panel
-adminRouter.get("/me", (c) => c.json({ admin: isAdminEmail(c.get("user").email) }));
+// passkeys: cuántas tiene el admin; passkeySession: si esta sesión se abrió con passkey
+adminRouter.get("/me", async (c) => {
+  const user = c.get("user");
+  if (!isAdminEmail(user.email)) return c.json({ admin: false });
+  const gate = await checkAdminPasskey(user, c.get("session").id);
+  return c.json({
+    admin: true,
+    passkeys: await countPasskeys(user.id),
+    passkeyRequired: gate === "passkey-required",
+  });
+});
 
 adminRouter.use("*", adminOnly);
 
@@ -79,6 +100,8 @@ adminRouter.post("/users/:id/reset-password", async (c) => {
   });
   if (res.rowsAffected === 0) return c.json({ error: "Usuario sin contraseña o inexistente" }, 404);
   await db.execute({ sql: "DELETE FROM session WHERE userId = ?", args: [userId] });
+  const target = await db.execute({ sql: "SELECT email FROM user WHERE id = ?", args: [userId] });
+  await log(c, "reset_password", (target.rows[0]?.email as string | undefined) ?? userId);
   return c.json({ password });
 });
 
@@ -107,6 +130,7 @@ adminRouter.post("/invites", async (c) => {
     };
     try {
       await dbService.invites.create(invite);
+      await log(c, "invite_create");
       return c.json(
         { id: invite.id, code: invite.code, createdAt: invite.created_at.toISOString() },
         201,
@@ -125,7 +149,14 @@ adminRouter.delete("/invites/:id", async (c) => {
     args: [c.req.param("id")],
   });
   if (res.rowsAffected === 0) return c.json({ error: "Not found" }, 404);
+  await log(c, "invite_delete");
   return c.json({ success: true });
+});
+
+// GET /api/admin/log: últimas acciones del panel (quién, qué, cuándo)
+adminRouter.get("/log", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 50) || 50;
+  return c.json(await listAdminLog(limit));
 });
 
 export { adminRouter };

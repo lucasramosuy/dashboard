@@ -4,6 +4,7 @@ import { logger } from "./lib/logger";
 // y el Worker de Cloudflare (apps/web/src/worker.ts), que la monta en /dashboard/api.
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { bodyLimit } from "hono/body-limit";
 import { authRouter } from "./routes/auth";
 import { subjectsRouter } from "./routes/subjects";
 import { tasksRouter } from "./routes/tasks";
@@ -13,6 +14,7 @@ import { icalRouter } from "./routes/ical";
 import { sentryTunnelRouter } from "./routes/sentry_tunnel";
 import { adminRouter } from "./routes/admin";
 import { auth } from "./lib/auth.better";
+import { checkCaptcha } from "./lib/turnstile";
 import { z } from "zod";
 
 export const app = new Hono();
@@ -75,6 +77,32 @@ app.use(
     credentials: true,
   }),
 );
+
+// Límite de tamaño del body: sin esto un usuario logueado podía mandar textos de hasta
+// 100 MB (el máximo de Workers) y llenar el storage de Turso, que en el plan free bloquea
+// todas las bases de la cuenta. Los envelopes de Sentry pueden ser más grandes.
+const API_BODY_LIMIT = 64 * 1024;
+const SENTRY_BODY_LIMIT = 1024 * 1024;
+const tooLarge = bodyLimit({
+  maxSize: API_BODY_LIMIT,
+  onError: (c) => c.json({ error: "Payload too large" }, 413),
+});
+const sentryTooLarge = bodyLimit({
+  maxSize: SENTRY_BODY_LIMIT,
+  onError: (c) => c.json({ error: "Payload too large" }, 413),
+});
+app.use("/api/*", (c, next) =>
+  c.req.path.startsWith("/api/sentry-tunnel") ? sentryTooLarge(c, next) : tooLarge(c, next),
+);
+
+// Turnstile (anti-bots) en el login y el registro. Va antes del handler de Better Auth.
+const CAPTCHA_PATHS = new Set(["/api/auth/sign-in/email", "/api/auth/register"]);
+app.use("/api/auth/*", async (c, next) => {
+  if (c.req.method !== "POST" || !CAPTCHA_PATHS.has(c.req.path)) return next();
+  const result = await checkCaptcha(c.req.raw.headers);
+  if (!result.ok) return c.json({ error: result.error, message: result.error }, 403);
+  return next();
+});
 
 // Better Auth handler — captura todas las rutas de /api/auth/* EXCEPTO /register
 // que es una ruta custom con validación de invite code.

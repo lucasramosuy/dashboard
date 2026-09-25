@@ -98,6 +98,10 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dashboard-backup.sql.gz.enc
 cd apps/api && TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... bun run restore ../../dump.sql
 ```
 
+### Prueba de restore
+
+`.github/workflows/restore-test.yml` corre el día 1 de cada mes (y a mano desde Actions). Baja el último backup, lo descifra y lo restaura en una base SQLite temporal del runner (`bun run restore-check`): chequea integridad, que estén todas las tablas y filas del dump y que las migraciones corran encima. No toca Turso. Si falla, o si el último backup tiene más de 8 días, avisa por Telegram.
+
 ## Registro con invitación
 
 El registro es **solo con código de invitación** de un solo uso (`POST /api/auth/register`). El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado y devuelve 403.
@@ -150,7 +154,7 @@ El Worker le manda avisos a Lucas con el bot que ya existe (@claudionormativo_bo
 - **Resumen diario a las 07:00** (Montevideo): lo que vence hoy y mañana, los eventos de Schoology del día y cuántas tareas hay atrasadas. Si no hay nada, no manda mensaje.
 - **Novedades de Schoology**: cuando el sync de medianoche trae eventos nuevos, manda la lista en un mensaje silencioso (sin sonido).
 
-Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
+Si falla el deploy a producción, el backup semanal o el sync de iCal de algún usuario, el bot también avisa (con el link al run o a Sentry). Los avisos son para el primer email de `ADMIN_EMAILS`. Necesita los secrets `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`; si faltan (preview, tests, local) no se manda nada. El código está en `apps/api/src/services/notifyService.ts`.
 
 ## Ramas y PRs
 
@@ -197,6 +201,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 - Usa su propia base de Turso (`TURSO_PREVIEW_*`) con datos demo, nunca la de producción. Usuario demo: `demo@example.com` / `demo1234`.
 - Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/dashboard/`). Los PRs suben versiones con alias y no la tocan.
 - La primera vez (o para reiniciar los datos demo): Actions → Preview → Run workflow, con "Cargar datos demo" marcado.
+- Todas las noches (03:00 de Montevideo) `.github/workflows/demo-reset.yml` vuelve a cargar los datos demo, así que cualquier cambio hecho con el usuario demo dura como mucho un día. También se puede correr a mano desde Actions → Reset demo.
 - Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
 - La config del Worker de preview está en `env.preview` de `apps/web/wrangler.jsonc` (sin ruta ni cron). Todo dentro del plan free.
 

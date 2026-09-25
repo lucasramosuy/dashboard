@@ -41,7 +41,7 @@ describe("Panel admin", () => {
 
   it("el admin lista usuarios sin exponer hashes", async () => {
     const cookie = await login(ADMIN);
-    expect(await (await req("/api/admin/me", cookie)).json()).toEqual({ admin: true });
+    expect(await (await req("/api/admin/me", cookie)).json()).toEqual({ admin: true, passkeys: 0, passkeyRequired: false });
     const users = (await (await req("/api/admin/users", cookie)).json()) as Record<
       string,
       unknown
@@ -116,5 +116,48 @@ describe("Panel admin", () => {
       self: boolean;
     }[];
     expect(users.find((u) => u.email === ADMIN)?.self).toBe(true);
+  });
+});
+
+describe("Registro de acciones del admin", () => {
+  beforeEach(async () => {
+    process.env.ADMIN_EMAILS = ADMIN;
+    await db.execute("DELETE FROM admin_log");
+    await auth.api.signUpEmail({ body: { email: ADMIN, password: PASS, name: "Admin" } });
+    await auth.api.signUpEmail({ body: { email: USER, password: PASS, name: "User" } });
+  });
+
+  it("registra reset, alta y baja de invitación sin guardar secretos", async () => {
+    const cookie = await login(ADMIN);
+    const users = (await (await req("/api/admin/users", cookie)).json()) as {
+      id: string;
+      email: string;
+    }[];
+    const target = users.find((u) => u.email === USER)!;
+    const reset = (await (
+      await req(`/api/admin/users/${target.id}/reset-password`, cookie, "POST")
+    ).json()) as { password: string };
+    const invite = (await (await req("/api/admin/invites", cookie, "POST")).json()) as {
+      id: string;
+      code: string;
+    };
+    await req(`/api/admin/invites/${invite.id}`, cookie, "DELETE");
+
+    const log = (await (await req("/api/admin/log", cookie)).json()) as {
+      action: string;
+      target: string | null;
+      actorEmail: string;
+    }[];
+    expect(log.map((e) => e.action)).toEqual(["invite_delete", "invite_create", "reset_password"]);
+    expect(log[2]!.target).toBe(USER);
+    expect(log.every((e) => e.actorEmail === ADMIN)).toBe(true);
+    const raw = JSON.stringify(log);
+    expect(raw).not.toContain(reset.password);
+    expect(raw).not.toContain(invite.code);
+  });
+
+  it("un usuario común no ve el registro", async () => {
+    const cookie = await login(USER);
+    expect((await req("/api/admin/log", cookie)).status).toBe(403);
   });
 });

@@ -17,7 +17,8 @@
     "CORS_ORIGINS": "https://lucasramos.uy",
   },
   // Secrets (wrangler secret put / GitHub Actions): TURSO_DATABASE_URL, TURSO_AUTH_TOKEN,
-  // BETTER_AUTH_SECRET, ADMIN_EMAILS, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID y opcional SENTRY_DSN.
+  // BETTER_AUTH_SECRET, ADMIN_EMAILS, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TURNSTILE_SECRET_KEY,
+  // SMOKE_KEY y opcional SENTRY_DSN.
   "observability": { "enabled": true },
   // Preview por PR (ver .github/workflows/preview.yml): Worker aparte con su propia base
   // de Turso (demo), sin rutas ni cron. Cada PR sube una versión con alias pr-<número>.

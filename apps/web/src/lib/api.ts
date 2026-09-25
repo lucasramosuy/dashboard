@@ -2,6 +2,7 @@ import type { Subject, Task, Absence, PracticeJournal, IcalEvent } from "@dashbo
 import { authClient } from "./auth-client";
 import { url } from "./utils";
 import * as Sentry from "@sentry/astro";
+import { captchaHeaders } from "./captcha";
 
 /**
  * Cliente de API para el dashboard académico.
@@ -24,6 +25,14 @@ export type AdminUser = {
 };
 
 export type AdminInvite = { id: string; code: string; createdAt: Date };
+export type AdminLogEntry = {
+  id: string;
+  createdAt: string;
+  actorEmail: string;
+  action: "reset_password" | "invite_create" | "invite_delete";
+  target: string | null;
+  ip: string | null;
+};
 
 /**
  * Helper para convertir strings de fecha a objetos Date en respuestas JSON
@@ -95,6 +104,7 @@ export const api = {
     const { error } = await authClient.signIn.email({
       email,
       password,
+      fetchOptions: { headers: captchaHeaders() },
     });
     if (error) {
       throw new Error(error.message || "Error al iniciar sesión");
@@ -109,7 +119,7 @@ export const api = {
   }): Promise<void> {
     const response = await apiFetch(`${API_BASE}/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...captchaHeaders() },
       body: JSON.stringify(data),
     });
     await handleResponse(response);
@@ -293,7 +303,7 @@ export const api = {
   },
 
   // --- Admin (solo ADMIN_EMAILS) ---
-  async adminMe(): Promise<{ admin: boolean }> {
+  async adminMe(): Promise<{ admin: boolean; passkeys?: number; passkeyRequired?: boolean }> {
     const response = await apiFetch(`${API_BASE}/admin/me`);
     return handleResponse(response);
   },
@@ -323,5 +333,10 @@ export const api = {
   async adminDeleteInvite(id: string): Promise<void> {
     const response = await apiFetch(`${API_BASE}/admin/invites/${id}`, { method: "DELETE" });
     await handleResponse(response);
+  },
+
+  async adminLog(limit = 50): Promise<AdminLogEntry[]> {
+    const response = await apiFetch(`${API_BASE}/admin/log?limit=${limit}`);
+    return handleResponse<AdminLogEntry[]>(response);
   },
 };
