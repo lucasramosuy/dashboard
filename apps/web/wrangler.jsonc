@@ -18,4 +18,21 @@
   // Secrets (wrangler secret put / GitHub Actions): TURSO_DATABASE_URL, TURSO_AUTH_TOKEN,
   // BETTER_AUTH_SECRET y opcional SENTRY_DSN.
   "observability": { "enabled": true },
+  // Preview por PR (ver .github/workflows/preview.yml): Worker aparte con su propia base
+  // de Turso (demo), sin rutas ni cron. Cada PR sube una versión con alias pr-<número>.
+  "env": {
+    "preview": {
+      "name": "dashboard-preview",
+      "routes": [],
+      "workers_dev": true,
+      "preview_urls": true,
+      "triggers": { "crons": [] },
+      "vars": {
+        "NODE_ENV": "production",
+        "BETTER_AUTH_URL": "https://dashboard-preview.lucas-space.workers.dev",
+        "CORS_ORIGINS": "https://dashboard-preview.lucas-space.workers.dev",
+      },
+      "observability": { "enabled": true },
+    },
+  },
 }
