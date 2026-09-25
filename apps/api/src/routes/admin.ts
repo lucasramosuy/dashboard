@@ -39,6 +39,7 @@ adminRouter.use("*", adminOnly);
 
 // GET /api/admin/users
 adminRouter.get("/users", async (c) => {
+  const me = c.get("user").id;
   const r = await db.execute(
     `SELECT u.id, u.name, u.email, u.createdAt, a.password AS hash,
             (SELECT MAX(s.updatedAt) FROM session s WHERE s.userId = u.id) AS lastSeen
@@ -56,6 +57,7 @@ adminRouter.get("/users", async (c) => {
       hasPassword: Boolean(row.hash),
       legacyHash: row.hash ? isLegacyHash(row.hash as string) : false,
       admin: isAdminEmail(row.email as string),
+      self: row.id === me,
     })),
   );
 });
@@ -65,6 +67,11 @@ adminRouter.get("/users", async (c) => {
 // La contraseña se devuelve una sola vez; el usuario la cambia desde su perfil.
 adminRouter.post("/users/:id/reset-password", async (c) => {
   const userId = c.req.param("id");
+  // La propia cuenta no: el reset cierra todas las sesiones (incluida la actual) y la
+  // temporal se pierde al salir. Para eso está "Cambiar contraseña" en Mi Perfil.
+  if (userId === c.get("user").id) {
+    return c.json({ error: "Para tu cuenta usá Cambiar contraseña en Mi Perfil" }, 400);
+  }
   const password = randomToken(12);
   const res = await db.execute({
     sql: "UPDATE account SET password = ?, updatedAt = ? WHERE userId = ? AND providerId = 'credential'",

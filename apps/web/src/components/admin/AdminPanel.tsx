@@ -3,6 +3,7 @@ import { AppShell } from "../layout/AppShell";
 import { api, type AdminInvite, type AdminUser } from "../../lib/api";
 import { ProfileSkeleton } from "../ui/Skeleton";
 import { Button } from "../ui/Button";
+import { url } from "../../lib/utils";
 
 const card =
   "bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm flex flex-col gap-4";
@@ -206,16 +207,25 @@ const Panel: React.FC = () => {
                   {u.legacyHash && " · clave en formato viejo (se actualiza al entrar)"}
                 </span>
               </div>
-              {u.hasPassword && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => resetPassword(u)}
-                  disabled={busy}
+              {u.self ? (
+                <a
+                  href={url("/profile")}
+                  className="text-sm font-medium text-theme-primary hover:underline shrink-0"
                 >
-                  Resetear contraseña
-                </Button>
+                  Cambiar en Mi Perfil
+                </a>
+              ) : (
+                u.hasPassword && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => resetPassword(u)}
+                    disabled={busy}
+                  >
+                    Resetear contraseña
+                  </Button>
+                )
               )}
             </li>
           ))}

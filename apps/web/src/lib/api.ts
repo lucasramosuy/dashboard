@@ -20,6 +20,7 @@ export type AdminUser = {
   hasPassword: boolean;
   legacyHash: boolean;
   admin: boolean;
+  self: boolean;
 };
 
 export type AdminInvite = { id: string; code: string; createdAt: Date };

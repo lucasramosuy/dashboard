@@ -21,6 +21,17 @@ interface AuthContextType {
   refreshMe: () => Promise<void>;
 }
 
+// Exportada aparte: los botones de la barra lateral son islas de Astro sin
+// <AuthProvider>, así que no pueden depender del contexto para cerrar sesión.
+export const signOutAndRedirect = async () => {
+  try {
+    await authClient.signOut();
+  } catch (err: unknown) {
+    logger.error("[Auth Error] Error al cerrar sesión:", toError(err));
+  }
+  window.location.replace(url("/login"));
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -66,17 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
-    try {
-      await authClient.signOut();
-      window.location.replace(url("/login"));
-    } catch (err: unknown) {
-      const error = toError(err);
-      logger.error("[Auth Error] Error al cerrar sesión:", error);
-      // Fallback seguro por si la sesión de red falla pero necesitamos limpiar UI
-      window.location.replace(url("/login"));
-    }
-  };
+  const logout = signOutAndRedirect;
 
   const refreshMe = async () => {
     await refetch();
