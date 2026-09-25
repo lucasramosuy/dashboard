@@ -4,6 +4,7 @@ import { logger } from "./lib/logger";
 // y el Worker de Cloudflare (apps/web/src/worker.ts), que la monta en /dashboard/api.
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { bodyLimit } from "hono/body-limit";
 import { authRouter } from "./routes/auth";
 import { subjectsRouter } from "./routes/subjects";
 import { tasksRouter } from "./routes/tasks";
@@ -74,6 +75,23 @@ app.use(
     maxAge: 600,
     credentials: true,
   }),
+);
+
+// Límite de tamaño del body: sin esto un usuario logueado podía mandar textos de hasta
+// 100 MB (el máximo de Workers) y llenar el storage de Turso, que en el plan free bloquea
+// todas las bases de la cuenta. Los envelopes de Sentry pueden ser más grandes.
+const API_BODY_LIMIT = 64 * 1024;
+const SENTRY_BODY_LIMIT = 1024 * 1024;
+const tooLarge = bodyLimit({
+  maxSize: API_BODY_LIMIT,
+  onError: (c) => c.json({ error: "Payload too large" }, 413),
+});
+const sentryTooLarge = bodyLimit({
+  maxSize: SENTRY_BODY_LIMIT,
+  onError: (c) => c.json({ error: "Payload too large" }, 413),
+});
+app.use("/api/*", (c, next) =>
+  c.req.path.startsWith("/api/sentry-tunnel") ? sentryTooLarge(c, next) : tooLarge(c, next),
 );
 
 // Better Auth handler — captura todas las rutas de /api/auth/* EXCEPTO /register
