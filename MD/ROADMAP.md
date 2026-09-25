@@ -510,4 +510,5 @@ Fase B (pendiente):
 - [x] Deploy con GitHub Actions (wrangler) desde `prod`.
 - [x] Borrar lo que queda de Render: proxy de auth, cookies cross-domain, parche de UA de bots, Dockerfiles, `render.yaml`, `docker-compose.yml`.
 - [x] Panel `/dashboard/admin` (invitaciones, usuarios, reset de contraseña) y cambio de contraseña en Mi Perfil.
+- [x] Backup semanal cifrado de Turso (Action + `bun run backup` / `restore`).
 - [ ] Bot de avisos por Telegram (resumen diario y tareas nuevas de Schoology).

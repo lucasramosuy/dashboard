@@ -11,6 +11,8 @@
     "migrate": "bun src/migrate.ts",
     "invites": "bun src/invites.ts",
     "set-password": "bun src/set-password.ts",
+    "backup": "bun src/backup.ts",
+    "restore": "bun src/restore.ts",
     "check": "tsc -p tsconfig.json"
   },
   "devDependencies": {

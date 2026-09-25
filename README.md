@@ -83,6 +83,21 @@ Web (`apps/web/.env`, todo opcional en dev; las variables del runtime de Workers
 
 Como el repo es público, nada de esto pasa por GitHub Actions ni por logs.
 
+## Backup
+
+`.github/workflows/backup.yml` corre los domingos a las 03:00 (Montevideo) y también se puede lanzar a mano desde Actions. Hace un dump SQL de Turso (`bun run backup` en `apps/api`), lo comprime, lo cifra con AES-256 usando el secret `BACKUP_PASSPHRASE` y lo guarda como artifact por 90 días. Como el repo es público, el archivo sin la clave no sirve para nada. La clave también está en el vault.
+
+Para restaurar:
+
+```bash
+# 1. Bajar el artifact desde Actions → Backup → la corrida que quieras
+unzip dashboard-backup-AAAA-MM-DD.zip
+# 2. Descifrar (pide la clave)
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dashboard-backup.sql.gz.enc | gunzip > dump.sql
+# 3. Cargarlo (con las variables de Turso apunta a producción y REEMPLAZA las tablas)
+cd apps/api && TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... bun run restore ../../dump.sql
+```
+
 ## Registro con invitación
 
 El registro es **solo con código de invitación** de un solo uso (`POST /api/auth/register`). El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado y devuelve 403.
@@ -159,6 +174,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 | `TURSO_AUTH_TOKEN`      | Base (se sube como secret del Worker)                      |
 | `BETTER_AUTH_SECRET`    | Sesiones (se sube como secret del Worker)                  |
 | `ADMIN_EMAILS`          | Emails con acceso a `/dashboard/admin` (secret del Worker) |
+| `BACKUP_PASSPHRASE`     | Clave con la que se cifra el backup semanal                |
 | `SENTRY_AUTH_TOKEN`     | Opcional, sourcemaps                                       |
 
 ### Desarrollo local con el runtime de Workers
