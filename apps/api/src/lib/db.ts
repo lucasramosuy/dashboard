@@ -122,6 +122,16 @@ export async function initDB() {
       createdAt TEXT,
       updatedAt TEXT
     )`,
+      `CREATE TABLE IF NOT EXISTS admin_log (
+      id TEXT PRIMARY KEY,
+      created_at TEXT NOT NULL,
+      actor_id TEXT NOT NULL,
+      actor_email TEXT NOT NULL,
+      action TEXT NOT NULL,
+      target TEXT,
+      ip TEXT
+    )`,
+      "CREATE INDEX IF NOT EXISTS idx_admin_log_created ON admin_log(created_at)",
       `CREATE TABLE IF NOT EXISTS passkey (
       id TEXT PRIMARY KEY,
       name TEXT,
