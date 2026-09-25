@@ -98,6 +98,10 @@ openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dashboard-backup.sql.gz.enc
 cd apps/api && TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... bun run restore ../../dump.sql
 ```
 
+### Prueba de restore
+
+`.github/workflows/restore-test.yml` corre el día 1 de cada mes (y a mano desde Actions). Baja el último backup, lo descifra y lo restaura en una base SQLite temporal del runner (`bun run restore-check`): chequea integridad, que estén todas las tablas y filas del dump y que las migraciones corran encima. No toca Turso. Si falla, o si el último backup tiene más de 8 días, avisa por Telegram.
+
 ## Registro con invitación
 
 El registro es **solo con código de invitación** de un solo uso (`POST /api/auth/register`). El sign-up público de Better Auth (`/api/auth/sign-up/*`) está bloqueado y devuelve 403.
