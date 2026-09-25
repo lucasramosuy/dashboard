@@ -4,6 +4,7 @@ import { api, type AdminInvite, type AdminUser } from "../../lib/api";
 import { ProfileSkeleton } from "../ui/Skeleton";
 import { Button } from "../ui/Button";
 import { url } from "../../lib/utils";
+import { AdminLogCard } from "./AdminLogCard";
 
 const card =
   "bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm flex flex-col gap-4";
@@ -57,11 +58,15 @@ const Panel: React.FC = () => {
     load();
   }, [load]);
 
+  // Cambia después de cada acción para que el registro se recargue
+  const [logKey, setLogKey] = useState(0);
+
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     setError(null);
     try {
       await fn();
+      setLogKey((k) => k + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Algo salió mal");
     } finally {
@@ -231,6 +236,8 @@ const Panel: React.FC = () => {
           ))}
         </ul>
       </section>
+
+      <AdminLogCard refreshKey={logKey} />
     </div>
   );
 };
