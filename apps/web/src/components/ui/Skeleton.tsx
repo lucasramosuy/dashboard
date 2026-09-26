@@ -46,16 +46,10 @@ export function ListItemSkeleton() {
 }
 
 export function ChartSkeleton() {
+  // Bloque neutro: no simula barras/datos para no confundir carga con contenido real
   return (
-    <div className="w-full h-75 flex items-end justify-between pt-4 gap-2">
-      {[40, 70, 45, 90, 65, 30].map((h, i) => (
-        <Skeleton
-          key={i}
-          variant="rectangular"
-          className="flex-1 rounded-sm"
-          style={{ height: `${h}%` }}
-        />
-      ))}
+    <div className="w-full h-75 pt-4">
+      <Skeleton variant="rectangular" className="w-full h-full" />
     </div>
   );
 }
@@ -221,7 +215,7 @@ export function PlannerSkeleton() {
   );
 }
 
-/** Simula la vista de analíticas con 2 gráficos */
+/** Simula la vista de analíticas: 4 métricas + 2 gráficos + 1 ancho (mismo layout que cargada) */
 export function AnalyticsSkeleton() {
   return (
     <div>
@@ -230,17 +224,33 @@ export function AnalyticsSkeleton() {
         <Skeleton variant="text" className="w-64 h-8 mb-2" />
         <Skeleton variant="text" className="w-80 h-4" />
       </div>
+      {/* Métricas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm"
+          >
+            <Skeleton variant="text" className="w-20 h-3 mb-3" />
+            <Skeleton variant="text" className="w-16 h-7" />
+          </div>
+        ))}
+      </div>
       {/* Grid de gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {[1, 2].map((i) => (
           <div
             key={i}
             className="bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm"
           >
-            <Skeleton variant="text" className="w-48 h-6 mx-auto mb-6" />
+            <Skeleton variant="text" className="w-48 h-6 mb-6" />
             <ChartSkeleton />
           </div>
         ))}
+        <div className="lg:col-span-2 bg-theme-card-bg border border-theme-border rounded-xl p-6 shadow-sm">
+          <Skeleton variant="text" className="w-48 h-6 mb-6" />
+          <ChartSkeleton />
+        </div>
       </div>
     </div>
   );

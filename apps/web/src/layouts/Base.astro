@@ -32,6 +32,16 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-jetbrains-mono" preload />
     <link rel="canonical" href={`https://lucasramos.uy${Astro.url.pathname}`} />
+    {/* Open Graph / Twitter: preview básica al compartir el enlace */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mi Panel" />
+    <meta property="og:title" content={title} />
+    <meta
+      property="og:description"
+      content="Un panel académico personal para organizar tus unidades curriculares, tareas, inasistencias y prácticas docentes."
+    />
+    <meta property="og:url" content={`https://lucasramos.uy${Astro.url.pathname}`} />
+    <meta name="twitter:card" content="summary" />
 
     <script is:inline>
       const saved = localStorage.getItem("dash_theme");

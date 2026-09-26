@@ -101,7 +101,13 @@ export const AnalyticsDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card title="Asistencia por UC">
-          <div className="h-64" aria-label="Gráfico de asistencia por UC">
+          {attendanceData.length === 0 ? (
+            <p className="m-0 text-sm text-theme-text-muted">
+              Agregá tus UC para seguir la asistencia. Debajo de 75% quedás libre (reglamento CFE).
+            </p>
+          ) : (
+            <>
+              <div className="h-64" aria-label="Gráfico de asistencia por UC">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={attendanceData} layout="vertical" margin={{ left: 8, right: 16 }}>
                 <CartesianGrid horizontal={false} stroke={theme.gridColor} />
@@ -116,8 +122,12 @@ export const AnalyticsDashboard: React.FC = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-          <p className="m-0 mt-2 text-xs text-theme-text-muted">Debajo de 75% quedás libre (reglamento CFE).</p>
+              </div>
+              <p className="m-0 mt-2 text-xs text-theme-text-muted">
+                Debajo de 75% quedás libre (reglamento CFE).
+              </p>
+            </>
+          )}
         </Card>
 
         <Card title="Promedio por UC">

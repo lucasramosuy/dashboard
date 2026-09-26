@@ -76,7 +76,7 @@
     --theme-danger-light: #fdf3f2;
     --theme-success: #1a7a52;
     --theme-success-light: #f2faf6;
-    --theme-warning: #b37400;
+    --theme-warning: #9a6200; /* AA: 5.1:1 sobre blanco (antes #b37400, 3.88:1) */
     --theme-warning-light: #fff8e1;
     --theme-info: #1d5fa8;
     --theme-info-light: #eef5fd;
