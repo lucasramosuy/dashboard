@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getChartTheme } from "../../lib/chart-theme";
 import { useSubjects, useTasks, useAllAbsences } from "../../hooks/useDashboardQueries";
@@ -18,6 +18,16 @@ import {
   Legend,
 } from "recharts";
 
+function subscribeToReducedMotion(onChange: () => void): () => void {
+  const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function mondayOf(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const day = x.getDay() || 7;
@@ -31,6 +41,11 @@ export const AnalyticsDashboard: React.FC = () => {
   const { data: tasks = [], isLoading: l2 } = useTasks();
   const { data: absences = [], isLoading: l3 } = useAllAbsences();
   const [isDark, setIsDark] = useState(false);
+  const reducedMotion = useSyncExternalStore(
+    subscribeToReducedMotion,
+    prefersReducedMotion,
+    () => false,
+  );
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.dataset.theme === "dark");
@@ -115,7 +130,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <YAxis type="category" dataKey="name" width={120} tick={axis} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} formatter={(v) => [`${v}%`, "Asistencia"]} />
                 <ReferenceLine x={75} stroke={theme.data.warning} strokeDasharray="4 4" label={{ value: "75%", fill: theme.data.warning, fontSize: 11, position: "top" }} />
-                <Bar dataKey="asistencia" radius={[0, 6, 6, 0]} barSize={18}>
+                <Bar isAnimationActive={!reducedMotion} dataKey="asistencia" radius={[0, 6, 6, 0]} barSize={18}>
                   {attendanceData.map((d) => (
                     <Cell key={d.name} fill={d.status === "danger" ? "#dc2626" : d.status === "warning" ? theme.data.warning : theme.data.success} />
                   ))}
@@ -141,7 +156,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   <XAxis dataKey="name" tick={axis} axisLine={false} tickLine={false} interval={0} />
                   <YAxis domain={[0, 12]} ticks={[0, 3, 6, 9, 12]} tick={axis} axisLine={false} tickLine={false} width={28} />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
-                  <Bar dataKey="promedio" fill={theme.colors[0]} radius={[6, 6, 0, 0]} barSize={36} />
+                  <Bar isAnimationActive={!reducedMotion} dataKey="promedio" fill={theme.colors[0]} radius={[6, 6, 0, 0]} barSize={36} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -157,8 +172,8 @@ export const AnalyticsDashboard: React.FC = () => {
                 <YAxis allowDecimals={false} tick={axis} axisLine={false} tickLine={false} width={24} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Hechas" stackId="a" fill={theme.data.success} />
-                <Bar dataKey="Pendientes" stackId="a" fill={theme.data.warning} radius={[6, 6, 0, 0]} />
+                <Bar isAnimationActive={!reducedMotion} dataKey="Hechas" stackId="a" fill={theme.data.success} />
+                <Bar isAnimationActive={!reducedMotion} dataKey="Pendientes" stackId="a" fill={theme.data.warning} radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
