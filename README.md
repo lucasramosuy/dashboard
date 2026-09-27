@@ -227,3 +227,7 @@ Con `API_PROXY_URL` en `.dev.vars` la API se reenvía al server de Bun local. Oj
 - **Auth:** [Better Auth](https://www.better-auth.com/), con sesiones en cookies HTTP-only
 - **Tipografía:** Inter y JetBrains Mono, servidas desde el propio sitio vía Fontsource
 - **Errores:** Sentry
+
+## Accesibilidad
+
+La interfaz respeta `prefers-reduced-motion`: elimina las transiciones y animaciones CSS y muestra los gráficos de Analíticas sin animación. Sigue la preferencia del sistema, sin ajuste propio.
