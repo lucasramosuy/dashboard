@@ -8,6 +8,7 @@ import "./PlannerBoard.css";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useIcalEvents } from "../../hooks/useDashboardQueries";
 import { dayKey, todayKey as localTodayKey } from "../../lib/format";
+import { preparePlannerMove } from "../../lib/planner";
 
 export function PlannerBoard() {
   const queryClient = useQueryClient();
@@ -45,9 +46,9 @@ export function PlannerBoard() {
 
   // ----- MUTACIONES -----
   const updateTaskDateMutation = useMutation({
-    mutationFn: ({ id, date }: { id: string; date: string }) =>
-      api.updateTask(id, { due_date: new Date(`${date}T12:00:00Z`) }),
-    onMutate: async ({ id, date }) => {
+    mutationFn: ({ id, dueDate }: ReturnType<typeof preparePlannerMove>) =>
+      api.updateTask(id, { due_date: dueDate }),
+    onMutate: async ({ id, date, dueDate }) => {
       await queryClient.cancelQueries({ queryKey: ["plannerTasks", weekStartIso, weekEndIso] });
       const previousTasks = queryClient.getQueryData(["plannerTasks", weekStartIso, weekEndIso]);
       queryClient.setQueryData(["plannerTasks", weekStartIso, weekEndIso], (old: any) => {
@@ -65,7 +66,7 @@ export function PlannerBoard() {
         }
         if (taskToMove) {
           if (!newGrouped[date]) newGrouped[date] = [];
-          newGrouped[date].push({ ...taskToMove, due_date: new Date(`${date}T12:00:00Z`) });
+          newGrouped[date].push({ ...taskToMove, due_date: dueDate });
         }
         return newGrouped;
       });
@@ -77,7 +78,8 @@ export function PlannerBoard() {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["plannerTasks", weekStartIso, weekEndIso] });
+      queryClient.invalidateQueries({ queryKey: ["plannerTasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 
@@ -119,7 +121,7 @@ export function PlannerBoard() {
   const handleDrop = (e: React.DragEvent, dateKey: string) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
-    if (taskId) updateTaskDateMutation.mutate({ id: taskId, date: `${dateKey}T12:00:00.000Z` });
+    if (taskId) updateTaskDateMutation.mutate(preparePlannerMove(taskId, dateKey));
   };
 
   // ----- NAVEGACIÓN -----
@@ -231,6 +233,11 @@ export function PlannerBoard() {
           </div>
           {updateTaskDateMutation.isPending && (
             <span className="text-theme-text-muted text-xs">Guardando...</span>
+          )}
+          {updateTaskDateMutation.isError && (
+            <span role="alert" className="text-theme-danger text-sm">
+              No se pudo mover la tarea. Se restauró la fecha anterior.
+            </span>
           )}
         </header>
 
