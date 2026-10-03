@@ -61,7 +61,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
         <span className="text-sm text-theme-text-muted truncate mx-3">{currentLabel}</span>
         <button
           ref={buttonRef}
-          className="w-10 h-10 -mr-2 rounded-lg flex items-center justify-center text-theme-text hover:bg-theme-card-bg cursor-pointer bg-transparent border-none"
+          className="w-10 h-10 -mr-2 rounded-lg flex items-center justify-center text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg cursor-pointer bg-transparent border-none"
           onClick={() => setIsOpen(true)}
           aria-label="Abrir menú de navegación"
           aria-expanded={isOpen}
@@ -80,7 +80,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
           {/* Diálogo */}
           <div
             id="mobile-menu-dialog"
-            className="w-[80%] max-w-75 h-full bg-theme-bg/95 backdrop-blur-md shadow-[-8px_0_32px_rgba(0,0,0,0.15)] flex flex-col animate-[slide-in-right_0.3s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-l border-theme-border/50"
+            className="mobile-menu-dialog w-[80%] max-w-75 h-full bg-theme-bg/95 backdrop-blur-md shadow-[-8px_0_32px_rgba(0,0,0,0.15)] flex flex-col animate-[slide-in-right_0.3s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-l border-theme-border/50"
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
@@ -93,7 +93,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
                 <span className="text-lg font-bold tracking-tight text-theme-text">Mi Panel</span>
               </div>
               <button
-                className="w-10 h-10 flex items-center justify-center rounded-full text-theme-text-muted hover:text-theme-text hover:bg-theme-card-bg transition-all duration-200 cursor-pointer"
+                className="w-10 h-10 flex items-center justify-center rounded-full text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg transition-all duration-200 cursor-pointer"
                 onClick={() => setIsOpen(false)}
                 aria-label="Cerrar menú"
               >
@@ -110,16 +110,16 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
                     href={url(item.href)}
                     className={`group relative flex items-center gap-4 p-3.5 rounded-xl no-underline transition-all duration-200 ${
                       isActive
-                        ? "bg-theme-primary text-theme-bg shadow-md"
-                        : "text-theme-text-muted hover:text-theme-text hover:bg-theme-card-bg"
+                        ? "mobile-menu-active-link text-theme-text"
+                        : "text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
                     {isActive && (
-                      <span className="absolute left-0 w-1 h-1/2 bg-theme-bg rounded-r-full"></span>
+                      <span className="absolute left-0 w-1 h-1/2 bg-theme-text-muted rounded-r-full"></span>
                     )}
                     <span
-                      className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-theme-bg" : ""}`}
+                      className="transition-transform duration-200 [@media(hover:hover)]:group-hover:scale-110"
                     >
                       <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                     </span>
@@ -135,10 +135,10 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
               [&_button]:flex [&_button]:items-center [&_button]:gap-4 [&_button]:p-3.5 [&_button]:rounded-xl [&_button]:bg-transparent [&_button]:justify-start [&_button]:text-base [&_button]:font-medium [&_button]:w-full [&_button]:transition-all [&_button]:cursor-pointer
               [&_a]:flex [&_a]:items-center [&_a]:gap-4 [&_a]:p-3.5 [&_a]:rounded-xl [&_a]:bg-transparent [&_a]:justify-start [&_a]:text-base [&_a]:font-medium [&_a]:w-full [&_a]:transition-all [&_a]:no-underline
 
-              /* Context specific colors and hovers */
-              [&_.profile-btn]:text-theme-text [&_.profile-btn:hover]:bg-theme-card-bg
-              [&_.theme-toggle-btn]:text-theme-text [&_.theme-toggle-btn:hover]:bg-theme-card-bg
-              [&_.logout-btn]:text-theme-danger [&_.logout-btn:hover]:bg-theme-danger/8
+              /* Context specific colors */
+              [&_.profile-btn]:text-theme-text
+              [&_.theme-toggle-btn]:text-theme-text
+              [&_.logout-btn]:text-theme-danger
 
               /* Icon and Label resets */
               [&_.sidebar-label]:block! [&_.sidebar-label]:opacity-100! [&_.sidebar-label]:max-w-none! [&_.sidebar-label]:ml-0!
@@ -149,6 +149,28 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
           </div>
         </div>
       )}
+      <style>{`
+        .mobile-menu-active-link {
+          background: color-mix(in srgb, var(--theme-text) 8%, var(--theme-bg));
+          color: var(--theme-text);
+        }
+
+        .mobile-menu-dialog,
+        .mobile-menu-dialog * {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (hover: hover) {
+          .mobile-menu-dialog .profile-btn:hover,
+          .mobile-menu-dialog .theme-toggle-btn:hover {
+            background: var(--theme-card-bg);
+          }
+
+          .mobile-menu-dialog .logout-btn:hover {
+            background: color-mix(in srgb, var(--theme-danger) 8%, transparent);
+          }
+        }
+      `}</style>
     </>
   );
 };
