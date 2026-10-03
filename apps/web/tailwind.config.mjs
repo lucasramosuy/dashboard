@@ -1,26 +1,8 @@
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
-  darkMode: ["selector", '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Fondos
-        surface: {
-          DEFAULT: "#ffffff",
-          secondary: "#fafafa",
-          tertiary: "#f4f4f5",
-          dark: "#09090b",
-          "dark-secondary": "#18181b",
-          "dark-tertiary": "#27272a",
-        },
-        // Contenido
-        content: {
-          DEFAULT: "#18181b", // zinc-900
-          secondary: "#71717a", // zinc-500
-          tertiary: "#a1a1aa", // zinc-400
-          dark: "#fafafa", // zinc-50
-          "dark-secondary": "#a1a1aa", // zinc-400
-        },
         // Estados de interacción
         interactive: {
           DEFAULT: "#18181b",
