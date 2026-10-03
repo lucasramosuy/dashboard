@@ -97,8 +97,10 @@ const pathname =
     z-index: 40;
   }
 
-  .app-sidebar:hover {
-    width: 220px;
+  @media (hover: hover) {
+    .app-sidebar:hover {
+      width: 220px;
+    }
   }
 
   /* Brand */
@@ -141,10 +143,16 @@ const pathname =
       color 0.15s;
   }
 
-  .app-nav-link:hover,
   .app-nav-link.active {
     background: var(--theme-bg);
     color: var(--theme-text);
+  }
+
+  @media (hover: hover) {
+    .app-nav-link:hover {
+      background: var(--theme-bg);
+      color: var(--theme-text);
+    }
   }
 
   .app-nav-link.active {
@@ -173,10 +181,12 @@ const pathname =
       margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .app-sidebar:hover .sidebar-label {
-    max-width: 200px;
-    opacity: 1;
-    margin-left: 0.75rem;
+  @media (hover: hover) {
+    .app-sidebar:hover .sidebar-label {
+      max-width: 200px;
+      opacity: 1;
+      margin-left: 0.75rem;
+    }
   }
 
   /* Bottom */
@@ -194,9 +204,11 @@ const pathname =
   }
 
   /* Hide labels for toggle and logout in expanded state */
-  .app-sidebar:hover .theme-toggle-btn .sidebar-label,
-  .app-sidebar:hover .logout-btn .sidebar-label {
-    display: none !important;
+  @media (hover: hover) {
+    .app-sidebar:hover .theme-toggle-btn .sidebar-label,
+    .app-sidebar:hover .logout-btn .sidebar-label {
+      display: none !important;
+    }
   }
 
   /* Sidebar Actions internal button consistency */
@@ -219,15 +231,17 @@ const pathname =
     border: none;
   }
 
-  .profile-btn:hover,
-  .logout-btn:hover,
-  .theme-toggle-btn:hover {
-    background: var(--theme-bg);
-    color: var(--theme-text);
-  }
+  @media (hover: hover) {
+    .profile-btn:hover,
+    .logout-btn:hover,
+    .theme-toggle-btn:hover {
+      background: var(--theme-bg);
+      color: var(--theme-text);
+    }
 
-  .logout-btn:hover {
-    color: var(--theme-danger, #ef4444);
+    .logout-btn:hover {
+      color: var(--theme-danger, #ef4444);
+    }
   }
 
   /* ===== MAIN ===== */

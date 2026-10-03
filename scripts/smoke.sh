@@ -46,7 +46,14 @@ fi
 
 asset="$(printf '%s' "$login" | grep -oE '/dashboard/_astro/[^"]+\.css' | head -1)"
 if [ -n "$asset" ]; then
-  check "CSS $asset" "200" "$("${CURL[@]}" -o /dev/null --max-time 10 -w '%{http_code}' "$ORIGIN$asset")"
+  # El HTML y los assets pueden propagarse en momentos distintos tras publicar el Worker.
+  asset_code=""
+  for _ in 1 2 3 4 5 6; do
+    asset_code="$("${CURL[@]}" -o /dev/null --max-time 10 -w '%{http_code}' "$ORIGIN$asset" || true)"
+    [ "$asset_code" = "200" ] && break
+    sleep 5
+  done
+  check "CSS $asset" "200" "$asset_code"
 else
   echo "FALLA no se encontró el CSS en /login"
   FAIL=1
