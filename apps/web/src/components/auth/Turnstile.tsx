@@ -1,3 +1,5 @@
+import { useStore } from "@nanostores/react";
+import { themeStore } from "../../stores/theme";
 import React, { useEffect, useRef } from "react";
 import { TURNSTILE_SITE_KEY, registerCaptchaReset, setCaptchaToken } from "../../lib/captcha";
 
@@ -34,6 +36,7 @@ function loadScript(): Promise<TurnstileApi> {
 
 // Widget anti-bots de Cloudflare. En modo "gestionado" casi siempre pasa solo, sin clics.
 export const Turnstile: React.FC = () => {
+  const theme = useStore(themeStore);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export const Turnstile: React.FC = () => {
         if (cancelled || !ref.current) return;
         widgetId = ts.render(ref.current, {
           sitekey: TURNSTILE_SITE_KEY,
-          theme: "auto",
+          theme,
           language: "es",
           callback: (t: string) => setCaptchaToken(t),
           "expired-callback": () => setCaptchaToken(null),
@@ -62,7 +65,7 @@ export const Turnstile: React.FC = () => {
       setCaptchaToken(null);
       if (widgetId) window.turnstile?.remove(widgetId);
     };
-  }, []);
+  }, [theme]);
 
   if (!TURNSTILE_SITE_KEY) return null;
   return <div ref={ref} className="flex justify-center mt-2" />;

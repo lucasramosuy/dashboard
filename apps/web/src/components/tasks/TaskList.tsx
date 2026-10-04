@@ -1,3 +1,5 @@
+import { QueryState } from "../ui/QueryState";
+import { readState } from "../../lib/query-state";
 import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Modal } from "../ui/Modal";
@@ -44,8 +46,10 @@ const TYPE_LABELS: Record<NonNullable<Task["type"]>, string> = {
 
 export const TaskList: React.FC = () => {
   const { loading: authLoading } = useAuth();
-  const { data: unorderedTasks = [], isLoading: loadingTasks } = useTasks();
-  const { data: subjects = [], isLoading: loadingSubjects } = useSubjects();
+  const tasksQuery = useTasks();
+  const { data: unorderedTasks = [], isLoading: loadingTasks } = tasksQuery;
+  const subjectsQuery = useSubjects();
+  const { data: subjects = [], isLoading: loadingSubjects } = subjectsQuery;
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
@@ -99,11 +103,22 @@ export const TaskList: React.FC = () => {
     });
   };
 
+  const reads = [tasksQuery, subjectsQuery];
+  if (readState(reads) === "error")
+    return (
+      <QueryState queries={reads} loading={<TableSkeleton />}>
+        {null}
+      </QueryState>
+    );
   if (authLoading || loading) {
     return <TableSkeleton rows={5} cols={6} />;
   }
 
   const openNew = () => {
+    if (!subjects.length) {
+      window.location.assign(url("/subjects"));
+      return;
+    }
     setEditingTask(undefined);
     setModalOpen(true);
   };
@@ -185,210 +200,209 @@ export const TaskList: React.FC = () => {
   ];
 
   return (
-    <>
-      <div>
-        <PageHeader
-          eyebrow="02 / Tareas"
-          title={
+    <QueryState queries={reads} loading={<TableSkeleton />}>
+      <>
+        <div>
+          <PageHeader
+            eyebrow="02 / Tareas"
+            title={
+              <>
+                Lo que <em>falta</em>.
+              </>
+            }
+            actions={
+              <Button onClick={openNew} aria-label={subjects.length ? "Nueva tarea" : "Crear UC"}>
+                <Plus size={16} className="mr-2" /> {subjects.length ? "Nueva tarea" : "Crear UC"}
+              </Button>
+            }
+          />
+
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar tareas">
+              {chips.map((c) => (
+                <button
+                  key={c.key}
+                  role="tab"
+                  aria-selected={filter === c.key}
+                  onClick={() => setFilter(c.key)}
+                  className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-medium whitespace-nowrap border cursor-pointer transition-colors ${
+                    filter === c.key
+                      ? "bg-theme-info-light text-theme-accent border-transparent"
+                      : "bg-theme-card-bg text-theme-text-muted border-theme-border [@media(hover:hover)]:hover:text-theme-text"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`w-1.5 h-1.5 rounded-full bg-current ${c.key === "overdue" && c.n && filter !== c.key ? "text-theme-danger" : ""}`}
+                  />
+                  {c.label} · {c.n}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 sm:ml-auto min-w-0">
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar..."
+                aria-label="Buscar tareas"
+                className="h-10 px-3.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm flex-1 min-w-0 sm:w-44 focus:outline-none focus:ring-2 focus:ring-theme-accent/15"
+              />
+              <Select
+                value={subjectFilter}
+                onChange={setSubjectFilter}
+                ariaLabel="Filtrar por UC"
+                className="w-40 min-w-0 shrink-0"
+                options={[
+                  { value: "", label: "Todas las UC" },
+                  ...subjects.map((s) => ({ value: s.id, label: s.name })),
+                ]}
+              />
+            </div>
+          </div>
+
+          {tasks.length === 0 ? (
+            <div className={`${cardCls} p-6`}>
+              <EmptyState
+                title={subjects.length ? "Sin tareas pendientes" : "Primero, creá una UC"}
+                description="Empezá sumando tareas vinculadas a tus UC para tener tu agenda al día."
+                actionLabel={subjects.length ? "+ Crear nueva tarea" : "Crear UC"}
+                onAction={openNew}
+                icon={<CheckSquare className="w-8 h-8 opacity-50" strokeWidth={1.5} />}
+              />
+            </div>
+          ) : visible.length === 0 ? (
+            <div className={`${cardCls} p-8 text-center text-sm text-theme-text-muted`}>
+              No hay tareas con este filtro.
+            </div>
+          ) : (
             <>
-              Lo que <em>falta</em>.
-            </>
-          }
-          actions={
-            <Button onClick={openNew} aria-label="Nueva Tarea">
-              <Plus size={16} className="mr-2" /> Nueva tarea
-            </Button>
-          }
-        />
-
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar tareas">
-            {chips.map((c) => (
-              <button
-                key={c.key}
-                role="tab"
-                aria-selected={filter === c.key}
-                onClick={() => setFilter(c.key)}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-medium whitespace-nowrap border cursor-pointer transition-colors ${
-                  filter === c.key
-                    ? "bg-theme-info-light text-theme-accent border-transparent"
-                    : "bg-theme-card-bg text-theme-text-muted border-theme-border [@media(hover:hover)]:hover:text-theme-text"
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`w-1.5 h-1.5 rounded-full bg-current ${c.key === "overdue" && c.n && filter !== c.key ? "text-theme-danger" : ""}`}
-                />
-                {c.label} · {c.n}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2 sm:ml-auto min-w-0">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar..."
-              aria-label="Buscar tareas"
-              className="h-10 px-3.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm flex-1 min-w-0 sm:w-44 focus:outline-none focus:ring-2 focus:ring-theme-accent/15"
-            />
-            <Select
-              value={subjectFilter}
-              onChange={setSubjectFilter}
-              ariaLabel="Filtrar por UC"
-              className="w-40 min-w-0 shrink-0"
-              options={[
-                { value: "", label: "Todas las UC" },
-                ...subjects.map((s) => ({ value: s.id, label: s.name })),
-              ]}
-            />
-          </div>
-        </div>
-
-        {tasks.length === 0 ? (
-          <div className={`${cardCls} p-6`}>
-            <EmptyState
-              title="Sin tareas pendientes"
-              description="Empezá sumando tareas vinculadas a tus UC para tener tu agenda al día."
-              actionLabel="+ Crear nueva tarea"
-              onAction={openNew}
-              icon={<CheckSquare className="w-8 h-8 opacity-50" strokeWidth={1.5} />}
-            />
-          </div>
-        ) : visible.length === 0 ? (
-          <div className={`${cardCls} p-8 text-center text-sm text-theme-text-muted`}>
-            No hay tareas con este filtro.
-          </div>
-        ) : (
-          <>
-            {/* Desktop: tabla */}
-            <div className={`${cardCls} hidden md:block overflow-hidden`}>
-              <table className="w-full border-collapse" aria-label="Lista de tareas">
-                <thead>
-                  <tr>
-                    <th className="w-12 pl-6 pr-2 py-4" aria-label="Hecha" />
-                    {["Tarea", "Vence", "Tipo", "Estado", "Nota"].map((h) => (
-                      <th
-                        key={h}
-                        className="eyebrow text-left px-3 py-4 font-normal"
+              {/* Desktop: tabla */}
+              <div className={`${cardCls} hidden md:block overflow-hidden`}>
+                <table className="w-full border-collapse" aria-label="Lista de tareas">
+                  <thead>
+                    <tr>
+                      <th className="w-12 pl-6 pr-2 py-4" aria-label="Hecha" />
+                      {["Tarea", "Vence", "Tipo", "Estado", "Nota"].map((h) => (
+                        <th key={h} className="eyebrow text-left px-3 py-4 font-normal">
+                          {h}
+                        </th>
+                      ))}
+                      <th className="w-24" aria-label="Acciones" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((t) => (
+                      <tr
+                        key={t.id}
+                        className="border-t border-theme-border [@media(hover:hover)]:hover:bg-theme-bg/60 transition-colors"
                       >
-                        {h}
-                      </th>
+                        <td className="pl-6 pr-2 py-4">
+                          <Check t={t} />
+                        </td>
+                        <td className="px-3 py-4">
+                          <a
+                            href={url(`/tasks/${t.slug || t.id}`)}
+                            className={`font-medium no-underline [@media(hover:hover)]:hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
+                          >
+                            {t.title}
+                          </a>
+                          {subjectName(t.subject_id) && (
+                            <span className="block text-xs text-theme-text-muted">
+                              {subjectName(t.subject_id)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-4">
+                          <DueCell t={t} />
+                        </td>
+                        <td className="px-3 py-4 text-sm text-theme-text-muted">
+                          {t.type ? TYPE_LABELS[t.type] : "—"}
+                        </td>
+                        <td className="px-3 py-4">
+                          <StatusBadge variant={STATUS_VARIANTS[t.status]}>
+                            {STATUS_LABELS[t.status]}
+                          </StatusBadge>
+                        </td>
+                        <td className="px-3 py-4 text-sm font-semibold">
+                          {t.grade != null ? t.grade : "—"}
+                        </td>
+                        <td className="pr-4 py-4">
+                          <Actions t={t} />
+                        </td>
+                      </tr>
                     ))}
-                    <th className="w-24" aria-label="Acciones" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {visible.map((t) => (
-                    <tr
-                      key={t.id}
-                      className="border-t border-theme-border [@media(hover:hover)]:hover:bg-theme-bg/60 transition-colors"
-                    >
-                      <td className="pl-6 pr-2 py-4">
-                        <Check t={t} />
-                      </td>
-                      <td className="px-3 py-4">
-                        <a
-                          href={url(`/tasks/${t.slug || t.id}`)}
-                          className={`font-medium no-underline [@media(hover:hover)]:hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
-                        >
-                          {t.title}
-                        </a>
-                        {subjectName(t.subject_id) && (
-                          <span className="block text-xs text-theme-text-muted">
-                            {subjectName(t.subject_id)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-4">
-                        <DueCell t={t} />
-                      </td>
-                      <td className="px-3 py-4 text-sm text-theme-text-muted">
-                        {t.type ? TYPE_LABELS[t.type] : "—"}
-                      </td>
-                      <td className="px-3 py-4">
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile: tarjetas */}
+              <ul
+                className="md:hidden list-none m-0 p-0 flex flex-col gap-3"
+                aria-label="Lista de tareas"
+              >
+                {visible.map((t) => (
+                  <li key={t.id} className={`${cardCls} p-5 flex items-start gap-4`}>
+                    <div className="pt-0.5">
+                      <Check t={t} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={url(`/tasks/${t.slug || t.id}`)}
+                        className={`block font-medium no-underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
+                      >
+                        {t.title}
+                      </a>
+                      <span className="block text-xs text-theme-text-muted mt-1 mb-3">
+                        {[
+                          subjectName(t.subject_id),
+                          t.type ? TYPE_LABELS[t.type] : null,
+                          t.grade != null ? `Nota ${t.grade}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <StatusBadge variant={STATUS_VARIANTS[t.status]}>
                           {STATUS_LABELS[t.status]}
                         </StatusBadge>
-                      </td>
-                      <td className="px-3 py-4 text-sm font-semibold">
-                        {t.grade != null ? t.grade : "—"}
-                      </td>
-                      <td className="pr-4 py-4">
-                        <Actions t={t} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile: tarjetas */}
-            <ul
-              className="md:hidden list-none m-0 p-0 flex flex-col gap-3"
-              aria-label="Lista de tareas"
-            >
-              {visible.map((t) => (
-                <li key={t.id} className={`${cardCls} p-5 flex items-start gap-4`}>
-                  <div className="pt-0.5">
-                    <Check t={t} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <a
-                      href={url(`/tasks/${t.slug || t.id}`)}
-                      className={`block font-medium no-underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
-                    >
-                      {t.title}
-                    </a>
-                    <span className="block text-xs text-theme-text-muted mt-1 mb-3">
-                      {[
-                        subjectName(t.subject_id),
-                        t.type ? TYPE_LABELS[t.type] : null,
-                        t.grade != null ? `Nota ${t.grade}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <StatusBadge variant={STATUS_VARIANTS[t.status]}>
-                        {STATUS_LABELS[t.status]}
-                      </StatusBadge>
-                      <DueCell t={t} />
+                        <DueCell t={t} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="-mr-2 -mt-1">
-                    <Actions t={t} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-        <Modal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title={editingTask ? "Editar Tarea" : "Nueva Tarea"}
-        >
-          <TaskForm
-            initialData={editingTask}
-            subjects={subjects}
-            onSubmit={handleSubmit}
-            onCancel={() => setModalOpen(false)}
-            loading={createTask.isPending || updateTask.isPending}
-          />
-        </Modal>
-      </div>
+                    <div className="-mr-2 -mt-1">
+                      <Actions t={t} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <Modal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            title={editingTask ? "Editar Tarea" : "Nueva Tarea"}
+          >
+            <TaskForm
+              initialData={editingTask}
+              subjects={subjects}
+              onSubmit={handleSubmit}
+              onCancel={() => setModalOpen(false)}
+              loading={createTask.isPending || updateTask.isPending}
+            />
+          </Modal>
+        </div>
 
-      <ConfirmModal
-        isOpen={!!deletingId}
-        title="Eliminar Tarea"
-        description="¿Estás seguro de que deseas eliminar esta tarea de forma permanente? Esta acción no se puede deshacer."
-        confirmText="Sí, eliminar tarea"
-        onConfirm={handleDelete}
-        onCancel={() => setDeletingId(null)}
-        isLoading={deleteTask.isPending}
-      />
-      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-    </>
+        <ConfirmModal
+          isOpen={!!deletingId}
+          title="Eliminar Tarea"
+          description="¿Estás seguro de que deseas eliminar esta tarea de forma permanente? Esta acción no se puede deshacer."
+          confirmText="Sí, eliminar tarea"
+          onConfirm={handleDelete}
+          onCancel={() => setDeletingId(null)}
+          isLoading={deleteTask.isPending}
+        />
+        {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
+      </>
+    </QueryState>
   );
 };
