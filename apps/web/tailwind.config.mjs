@@ -1,25 +1,9 @@
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
-  darkMode: ["selector", '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Papel + tinta (brand kit: panel.)
-        surface: {
-          DEFAULT: "#fcfbf8",
-          secondary: "#f6f5f1",
-          tertiary: "#efede6",
-          dark: "#0f1214",
-          "dark-secondary": "#161a1d",
-          "dark-tertiary": "#1f2529",
-        },
-        content: {
-          DEFAULT: "#1b1f24",
-          secondary: "#666b70",
-          tertiary: "#8a8f94",
-          dark: "#eceae4",
-          "dark-secondary": "#9a9ea1",
-        },
+        // Estados de interacción (papel + tinta)
         interactive: {
           DEFAULT: "#1b1f24",
           hover: "#2c3238",

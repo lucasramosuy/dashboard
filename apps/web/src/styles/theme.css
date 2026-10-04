@@ -5,7 +5,20 @@
    panel. — sistema de diseño (brand kit lucasramos.uy)
    Papel + tinta + un acento (pizarra). Space Grotesk + DM Mono.
    ============================================================ */
-@theme {
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme static {
+  --color-surface: #fcfbf8;
+  --color-surface-secondary: #f6f5f1;
+  --color-surface-tertiary: #efede6;
+  --color-surface-dark: #0f1214;
+  --color-surface-dark-secondary: #161a1d;
+  --color-surface-dark-tertiary: #1f2529;
+  --color-content: #1b1f24;
+  --color-content-secondary: #666b70;
+  --color-content-tertiary: #8a8f94;
+  --color-content-dark: #eceae4;
+  --color-content-dark-secondary: #9a9ea1;
   /* Neutros cálidos: reemplazan la escala zinc de Tailwind en todo el producto */
   --color-zinc-50: #f6f5f1;
   --color-zinc-100: #eceae4;
@@ -19,6 +32,9 @@
   --color-zinc-900: #161a1d;
   --color-zinc-950: #0f1214;
 
+}
+
+@theme inline {
   /* Mapeo de tokens a clases Tailwind v4 */
   --color-theme-bg: var(--theme-bg);
   --color-theme-card-bg: var(--theme-card-bg);
@@ -37,6 +53,9 @@
   --color-theme-info: var(--theme-info);
   --color-theme-info-light: var(--theme-info-light);
 
+}
+
+@theme {
   @keyframes fade-in {
     0% {
       opacity: 0;
@@ -67,6 +86,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Transiciones globales */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -79,6 +99,7 @@
 
     /* Claro: papel + tinta + pizarra */
     --theme-bg: #f6f5f1;
+    --dash-bg: var(--theme-bg);
     --theme-card-bg: #fcfbf8;
     --theme-soft: #e9ecee;
     --theme-text: #1b1f24;
@@ -97,7 +118,9 @@
   }
 
   [data-theme="dark"] {
+    color-scheme: dark;
     --theme-bg: #0f1214;
+    --dash-bg: var(--theme-bg);
     --theme-card-bg: #161a1d;
     --theme-soft: #1f2529;
     --theme-text: #eceae4;
