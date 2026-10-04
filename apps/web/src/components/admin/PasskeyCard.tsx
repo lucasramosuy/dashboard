@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { KeyRound } from "lucide-react";
 import { authClient } from "../../lib/auth-client";
 import { Button } from "../ui/Button";
+import { ConfirmModal } from "../ui/ConfirmModal";
 
 const card =
   "bg-theme-card-bg border border-theme-border rounded-xl p-5 sm:p-6 shadow-sm flex flex-col gap-4";
@@ -52,6 +53,7 @@ export const PasskeyCard: React.FC = () => {
   const [keys, setKeys] = useState<PasskeyRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await authClient.passkey.listUserPasskeys();
@@ -71,8 +73,15 @@ export const PasskeyCard: React.FC = () => {
     setBusy(null);
   };
 
-  const remove = async (id: string) => {
-    if (keys && keys.length === 1 && !confirm("Es tu única passkey. ¿Borrarla igual?")) return;
+  const remove = (id: string) => {
+    if (keys && keys.length === 1) {
+      setPendingDelete(id);
+      return;
+    }
+    void doRemove(id);
+  };
+
+  const doRemove = async (id: string) => {
     setBusy(id);
     setError(null);
     const res = await authClient.passkey.deletePasskey({ id });
@@ -82,62 +91,76 @@ export const PasskeyCard: React.FC = () => {
   };
 
   return (
-    <section className={card}>
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="text-xl font-bold m-0 text-theme-text">Passkeys</h2>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={add}
-          isLoading={busy === "add"}
-        >
-          Agregar passkey
-        </Button>
-      </div>
-      {keys !== null && keys.length === 0 && (
-        <div className="px-4 py-3 rounded-lg text-sm border bg-theme-danger-light text-theme-danger border-theme-danger">
-          Todavía no tenés passkey. Creá una: desde ese momento el panel solo abre con ella, aunque
-          alguien tenga tu contraseña.
+    <>
+      <section className={card}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-xl font-bold m-0 text-theme-text">Passkeys</h2>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={add}
+            isLoading={busy === "add"}
+          >
+            Agregar passkey
+          </Button>
         </div>
-      )}
-      {keys !== null && keys.length > 0 && (
-        <p className="m-0 text-sm text-theme-text-muted">
-          El panel solo abre con una de estas passkeys. Conviene tener dos (por ejemplo, celular y
-          computadora) por si perdés una.
-        </p>
-      )}
-      {error && <p className="m-0 text-sm text-theme-danger">{error}</p>}
-      {keys && keys.length > 0 && (
-        <ul className="m-0 p-0 list-none flex flex-col gap-2">
-          {keys.map((k) => (
-            <li
-              key={k.id}
-              className="flex items-center justify-between gap-3 border border-theme-border rounded-lg px-3 py-2"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <KeyRound className="w-4 h-4 shrink-0 text-theme-text-muted" aria-hidden />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium text-theme-text truncate">
-                    {k.name || "Passkey"}
-                  </span>
-                  <span className="text-xs text-theme-text-muted">Creada {fmt(k.createdAt)}</span>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => remove(k.id)}
-                isLoading={busy === k.id}
-                disabled={busy !== null}
+        {keys !== null && keys.length === 0 && (
+          <div className="px-4 py-3 rounded-lg text-sm border bg-theme-danger-light text-theme-danger border-theme-danger">
+            Todavía no tenés passkey. Creá una: desde ese momento el panel solo abre con ella, aunque
+            alguien tenga tu contraseña.
+          </div>
+        )}
+        {keys !== null && keys.length > 0 && (
+          <p className="m-0 text-sm text-theme-text-muted">
+            El panel solo abre con una de estas passkeys. Conviene tener dos (por ejemplo, celular y
+            computadora) por si perdés una.
+          </p>
+        )}
+        {error && <p className="m-0 text-sm text-theme-danger">{error}</p>}
+        {keys && keys.length > 0 && (
+          <ul className="m-0 p-0 list-none flex flex-col gap-2">
+            {keys.map((k) => (
+              <li
+                key={k.id}
+                className="flex items-center justify-between gap-3 border border-theme-border rounded-lg px-3 py-2"
               >
-                Borrar
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+                <div className="flex items-center gap-3 min-w-0">
+                  <KeyRound className="w-4 h-4 shrink-0 text-theme-text-muted" aria-hidden />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-theme-text truncate">
+                      {k.name || "Passkey"}
+                    </span>
+                    <span className="text-xs text-theme-text-muted">Creada {fmt(k.createdAt)}</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => remove(k.id)}
+                  isLoading={busy === k.id}
+                  disabled={busy !== null}
+                >
+                  Borrar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        title="Borrar tu única passkey"
+        description="Es tu única passkey. ¿Borrarla igual?"
+        confirmText="Borrar"
+        onConfirm={() => {
+          const id = pendingDelete;
+          setPendingDelete(null);
+          if (id) void doRemove(id);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
+    </>
   );
 };
