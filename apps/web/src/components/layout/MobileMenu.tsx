@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { SidebarActions } from "../layout/SidebarActions";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { Wordmark } from "./Wordmark";
+import { ThemeToggle } from "./ThemeToggle";
 
 import { navItems } from "../../config/nav";
 import { url } from "@/lib/utils";
@@ -12,9 +14,6 @@ interface Props {
 export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const currentLabel =
-    navItems.find((i) => (i.href === "/" ? currentPath === "/" : currentPath.startsWith(i.href)))
-      ?.label ?? "";
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Focus trap y body scroll lock
@@ -52,76 +51,72 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
 
   return (
     <>
-      {/* Barra superior móvil: no tapa contenido como el botón flotante */}
-      <div className="md:hidden sticky top-0 z-50 flex items-center justify-between h-14 px-4 bg-theme-bg/90 backdrop-blur border-b border-theme-border">
-        <a href={url("/")} className="flex items-center gap-2 no-underline text-theme-text">
-          <BookOpen size={20} />
-          <span className="font-bold text-base">Mi Panel</span>
-        </a>
-        <span className="text-sm text-theme-text-muted truncate mx-3">{currentLabel}</span>
+      {/* Barra superior móvil: menú a la izquierda, wordmark centrado, tema a la derecha */}
+      <div className="md:hidden sticky top-0 z-50 grid grid-cols-[2.5rem_1fr_2.5rem] items-center h-16 px-4 bg-theme-bg border-b border-theme-border">
         <button
           ref={buttonRef}
-          className="w-10 h-10 -mr-2 rounded-lg flex items-center justify-center text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg cursor-pointer bg-transparent border-none"
+          className="w-10 h-10 -ml-2 rounded-lg flex items-center justify-center text-theme-text [@media(hover:hover)]:hover:bg-theme-soft cursor-pointer bg-transparent border-none"
           onClick={() => setIsOpen(true)}
           aria-label="Abrir menú de navegación"
           aria-expanded={isOpen}
           aria-controls="mobile-menu-dialog"
         >
-          <Menu size={22} />
+          <Menu size={20} strokeWidth={1.75} />
         </button>
+        <a href={url("/")} className="justify-self-center no-underline text-xl" aria-label="panel. — inicio">
+          <Wordmark />
+        </a>
+        <div className="justify-self-end -mr-2">
+          <ThemeToggle />
+        </div>
       </div>
       {/* Modal / Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex justify-end animate-[fade-in_0.2s_ease-out]"
+          className="fixed inset-0 bg-black/40 z-100 flex justify-start animate-[fade-in_0.2s_ease-out]"
           onClick={handleBackdropClick}
           role="presentation"
         >
           {/* Diálogo */}
           <div
             id="mobile-menu-dialog"
-            className="mobile-menu-dialog w-[80%] max-w-75 h-full bg-theme-bg/95 backdrop-blur-md shadow-[-8px_0_32px_rgba(0,0,0,0.15)] flex flex-col animate-[slide-in-right_0.3s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-l border-theme-border/50"
+            className="mobile-menu-dialog w-[84%] max-w-80 h-full bg-theme-bg flex flex-col animate-[slide-in_0.25s_cubic-bezier(0.16,1,0.3,1)] focus:outline-none border-r border-theme-border"
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Menú de Navegación"
             tabIndex={-1}
           >
-            <div className="flex justify-between items-center p-5 border-b border-theme-border/50">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-theme-primary animate-pulse"></span>
-                <span className="text-lg font-bold tracking-tight text-theme-text">Mi Panel</span>
-              </div>
+            <div className="flex justify-between items-center p-5 border-b border-theme-border">
+              <span className="text-2xl">
+                <Wordmark />
+              </span>
               <button
-                className="w-10 h-10 flex items-center justify-center rounded-full text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg transition-all duration-200 cursor-pointer"
+                className="w-10 h-10 flex items-center justify-center rounded-lg text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-soft transition-all duration-200 cursor-pointer"
                 onClick={() => setIsOpen(false)}
                 aria-label="Cerrar menú"
               >
-                <X size={20} />
+                <X size={20} strokeWidth={1.75} />
               </button>
             </div>
 
             <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1.5 custom-scrollbar">
               {navItems.map((item) => {
-                const isActive = item.href === currentPath;
+                const isActive =
+                  item.href === "/" ? currentPath === "/" : currentPath.startsWith(item.href);
                 return (
                   <a
                     key={item.href}
                     href={url(item.href)}
-                    className={`group relative flex items-center gap-4 p-3.5 rounded-xl no-underline transition-all duration-200 ${
+                    className={`group relative flex items-center gap-3.5 px-3.5 py-3 rounded-lg no-underline transition-colors duration-200 ${
                       isActive
                         ? "mobile-menu-active-link text-theme-text"
-                        : "text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-card-bg"
+                        : "text-theme-text-muted [@media(hover:hover)]:hover:text-theme-text [@media(hover:hover)]:hover:bg-theme-soft"
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
-                    {isActive && (
-                      <span className="absolute left-0 w-1 h-1/2 bg-theme-text-muted rounded-r-full"></span>
-                    )}
-                    <span
-                      className="transition-transform duration-200 [@media(hover:hover)]:group-hover:scale-110"
-                    >
-                      <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                    <span>
+                      <item.icon size={20} strokeWidth={1.75} />
                     </span>
                     <span className="text-base font-medium leading-none">{item.label}</span>
                   </a>
@@ -130,10 +125,10 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
             </nav>
 
             <div
-              className="p-4 pt-2 border-t border-theme-border/50 flex flex-col gap-2
+              className="p-4 pt-2 border-t border-theme-border flex flex-col gap-2
               /* Common button styles */
-              [&_button]:flex [&_button]:items-center [&_button]:gap-4 [&_button]:p-3.5 [&_button]:rounded-xl [&_button]:bg-transparent [&_button]:justify-start [&_button]:text-base [&_button]:font-medium [&_button]:w-full [&_button]:transition-all [&_button]:cursor-pointer
-              [&_a]:flex [&_a]:items-center [&_a]:gap-4 [&_a]:p-3.5 [&_a]:rounded-xl [&_a]:bg-transparent [&_a]:justify-start [&_a]:text-base [&_a]:font-medium [&_a]:w-full [&_a]:transition-all [&_a]:no-underline
+              [&_button]:flex [&_button]:items-center [&_button]:gap-3.5 [&_button]:px-3.5 [&_button]:py-3 [&_button]:rounded-lg [&_button]:bg-transparent [&_button]:justify-start [&_button]:text-base [&_button]:font-medium [&_button]:w-full [&_button]:transition-all [&_button]:cursor-pointer
+              [&_a]:flex [&_a]:items-center [&_a]:gap-3.5 [&_a]:px-3.5 [&_a]:py-3 [&_a]:rounded-lg [&_a]:bg-transparent [&_a]:justify-start [&_a]:text-base [&_a]:font-medium [&_a]:w-full [&_a]:transition-all [&_a]:no-underline
 
               /* Context specific colors */
               [&_.profile-btn]:text-theme-text
@@ -163,7 +158,7 @@ export const MobileMenu: React.FC<Props> = ({ currentPath }) => {
         @media (hover: hover) {
           .mobile-menu-dialog .profile-btn:hover,
           .mobile-menu-dialog .theme-toggle-btn:hover {
-            background: var(--theme-card-bg);
+            background: color-mix(in srgb, var(--theme-text) 5%, var(--theme-bg));
           }
 
           .mobile-menu-dialog .logout-btn:hover {

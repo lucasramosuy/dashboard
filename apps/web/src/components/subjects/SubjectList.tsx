@@ -7,8 +7,8 @@ import { SubjectForm } from "../subjects/SubjectForm";
 import { Toast } from "../ui/Toast";
 import { Button } from "../ui/Button";
 import { TableSkeleton } from "../ui/Skeleton";
-import { BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
-import { PageHeader, cardCls, ProgressBar } from "../ui/PageHeader";
+import { BookOpen, Plus, Pencil, Trash2, ArrowRight } from "lucide-react";
+import { PageHeader, cardCls, ProgressBar, TextLink } from "../ui/PageHeader";
 import { IconButton } from "../ui/IconButton";
 import { attendanceInfo, remainingLabel, average } from "../../lib/format";
 import { useToast } from "../../hooks/useToast";
@@ -24,9 +24,9 @@ import {
 import { url } from "@/lib/utils";
 
 const Mini: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
-  <div className="rounded-lg bg-theme-bg py-2">
+  <div className="rounded-lg bg-theme-soft px-3 py-3">
     <span className="block text-base font-semibold text-theme-text">{value}</span>
-    <span className="block text-2xs uppercase tracking-wide text-theme-text-muted">{label}</span>
+    <span className="eyebrow block mt-1 text-[0.625rem]">{label}</span>
   </div>
 );
 
@@ -92,11 +92,16 @@ export const SubjectList: React.FC = () => {
     <>
       <div>
         <PageHeader
-          title="Unidades Curriculares"
+          eyebrow="02 / UC"
+          title={
+            <>
+              Unidades <em>curriculares</em>.
+            </>
+          }
           subtitle={`${subjects.length} UC · mínimo 75% de asistencia (reglamento CFE)`}
           actions={
             <Button onClick={openNew} aria-label="Nueva UC">
-              <Plus size={16} className="mr-1.5" /> Nueva UC
+              <Plus size={16} className="mr-2" /> Nueva UC
             </Button>
           }
         />
@@ -112,7 +117,7 @@ export const SubjectList: React.FC = () => {
           </div>
         ) : (
           <ul
-            className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 gap-4"
+            className="list-none m-0 p-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
             aria-label="Lista de UC"
           >
             {subjects.map((s) => {
@@ -126,16 +131,16 @@ export const SubjectList: React.FC = () => {
                 subjectTasks.map((t) => t.grade).filter((g): g is number => g != null),
               );
               return (
-                <li key={s.id} className={`${cardCls} p-5 flex flex-col gap-4`}>
+                <li key={s.id} className={`${cardCls} p-5 sm:p-6 flex flex-col gap-5`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <a
                         href={url(`/subjects/${s.slug || s.id}`)}
-                        className="block text-lg font-semibold text-theme-text no-underline hover:underline truncate"
+                        className="block text-lg font-semibold text-theme-text no-underline [@media(hover:hover)]:hover:underline truncate"
                       >
                         {s.name}
                       </a>
-                      <span className="text-xs text-theme-text-muted">
+                      <span className="eyebrow block mb-2">
                         {s.track ? (s.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} ·{" "}
                         {s.total_classes} clases
                       </span>
@@ -188,10 +193,15 @@ export const SubjectList: React.FC = () => {
                       label={`Faltas usadas en ${s.name}`}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="grid grid-cols-3 gap-3 text-left">
                     <Mini label="Asistencia" value={`${info.percentage}%`} />
                     <Mini label="Promedio" value={avg ?? "—"} />
                     <Mini label="Pendientes" value={pendingCount} />
+                  </div>
+                  <div>
+                    <TextLink href={url(`/subjects/${s.slug || s.id}`)}>
+                      Abrir <ArrowRight size={14} />
+                    </TextLink>
                   </div>
                 </li>
               );
