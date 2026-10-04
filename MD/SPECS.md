@@ -7,7 +7,7 @@ Migrar el proyecto Dashboard desde Zo.space a una arquitectura basada en:
 - Repositorio en GitHub (monorepo).
 - Backend con Bun + Hono (APIs REST).
 - Frontend con Astro + React + Tailwind CSS (UI personalizable mediante utilidades, build vía Vite).
-- Hosting gratis: un Cloudflare Worker en `lucasramos.uy/dashboard` (web + API en el mismo origen) con Turso (ver sección 3).
+- Hosting gratis: un Cloudflare Worker en `lucasramos.uy/panel` (web + API en el mismo origen) con Turso (ver sección 3).
 - Uso de un AI coding assistant en CLI (Gemini Code Assist / Gemini CLI) para apoyar el desarrollo con una capa gratuita generosa.
 
 La meta es tener un entorno reproducible, documentado y sin dependencias en configuraciones internas de Zo.
@@ -255,11 +255,11 @@ Se publica dentro del monorepo (import local) y se utiliza tanto en apps/api com
 
 ## 3. Hosting y despliegue
 
-Un solo Cloudflare Worker (plan free) en `https://lucasramos.uy/dashboard`:
+Un solo Cloudflare Worker (plan free) en `https://lucasramos.uy/panel`:
 
-- Entrada: `apps/web/src/worker.ts`. `/dashboard/api/*` va a Hono (`apps/api/src/app.ts`, se le saca el prefijo `/dashboard`); el resto lo sirve Astro con `@astrojs/cloudflare` y `base: "/dashboard"`.
+- Entrada: `apps/web/src/worker.ts`. `/panel/api/*` va a Hono (`apps/api/src/app.ts`, se le saca el prefijo `/panel`); el resto lo sirve Astro con `@astrojs/cloudflare` y `base: "/panel"`.
 - Mismo origen: sin CORS ni cookies cross-domain. El middleware SSR valida la sesión llamando a la API en proceso.
-- Ruta `lucasramos.uy/dashboard*` en `apps/web/wrangler.jsonc`, más específica que la del Worker proxy del dominio.
+- Ruta `lucasramos.uy/panel*` en `apps/web/wrangler.jsonc`, más específica que la del Worker proxy del dominio.
 - Base: Turso. Variables del Worker: `NODE_ENV`, `BETTER_AUTH_URL=https://lucasramos.uy`, `CORS_ORIGINS=https://lucasramos.uy` (en `wrangler.jsonc`); secrets `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, opcional `SENTRY_DSN`.
 - Cron Trigger `0 3 * * *` (00:00 Montevideo): sync del iCal de todos los usuarios, de a uno.
 - Límite free: 10 ms de CPU por request. PBKDF2 30k (4-12 ms medido) y parser iCal propio.
@@ -296,14 +296,14 @@ apps/api
 
 Config en el frontend:
 
-- La API se llama siempre en el mismo origen, en `/dashboard/api` (helper `url()` de `lib/utils`).
+- La API se llama siempre en el mismo origen, en `/panel/api` (helper `url()` de `lib/utils`).
 - En desarrollo, con `API_PROXY_URL` (en `apps/web/.dev.vars`) las llamadas a la API se reenvían al server de Bun (`http://localhost:8787`).
 
 ### 4.2. Deploy
 
 1. PR `dev` → `prod`.
 2. Al mergear, GitHub Actions migra Turso, hace el build y publica el Worker.
-3. Verificar login y dashboard en `https://lucasramos.uy/dashboard`.
+3. Verificar login y dashboard en `https://lucasramos.uy/panel`.
 
 ---
 
