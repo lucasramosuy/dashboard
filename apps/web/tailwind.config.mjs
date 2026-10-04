@@ -3,28 +3,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Estados de interacción
+        // Estados de interacción (papel + tinta)
         interactive: {
-          DEFAULT: "#18181b",
-          hover: "#27272a",
-          active: "#09090b",
-          dark: "#fafafa",
-          "dark-hover": "#e4e4e7",
+          DEFAULT: "#1b1f24",
+          hover: "#2c3238",
+          active: "#0f1214",
+          dark: "#eceae4",
+          "dark-hover": "#ffffff",
         },
         success: {
-          DEFAULT: "#1a7a52",
-          light: "#f2faf6",
-          dark: "#0a2218",
+          DEFAULT: "#2f6f55",
+          light: "#e6efe9",
+          dark: "#7fc3a2",
         },
         warning: {
-          DEFAULT: "#b37400",
-          light: "#fff8e1",
-          dark: "#2d2200",
+          DEFAULT: "#946017",
+          light: "#f2eadb",
+          dark: "#e0b068",
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "monospace"],
+        sans: ["var(--font-space-grotesk)", "sans-serif"],
+        mono: ["var(--font-dm-mono)", "monospace"],
       },
       fontSize: {
         "2xs": ["0.625rem", { lineHeight: "0.875rem" }], // 10px
@@ -43,7 +43,7 @@ export default {
       borderRadius: {
         button: "0.5rem", // 8px
         card: "0.75rem", // 12px
-        bento: "1rem", // 16px
+        bento: "0.75rem", // 12px
         full: "9999px",
       },
       boxShadow: {
