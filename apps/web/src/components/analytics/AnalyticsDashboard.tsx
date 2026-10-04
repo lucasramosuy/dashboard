@@ -1,3 +1,6 @@
+import { url } from "@/lib/utils";
+import { QueryState } from "../ui/QueryState";
+import { readState } from "../../lib/query-state";
 import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getChartTheme } from "../../lib/chart-theme";
@@ -37,9 +40,12 @@ function mondayOf(d: Date): Date {
 
 export const AnalyticsDashboard: React.FC = () => {
   const { loading: authLoading } = useAuth();
-  const { data: subjects = [], isLoading: l1 } = useSubjects();
-  const { data: tasks = [], isLoading: l2 } = useTasks();
-  const { data: absences = [], isLoading: l3 } = useAllAbsences();
+  const subjectsQuery = useSubjects();
+  const { data: subjects = [], isLoading: l1 } = subjectsQuery;
+  const tasksQuery = useTasks();
+  const { data: tasks = [], isLoading: l2 } = tasksQuery;
+  const absencesQuery = useAllAbsences();
+  const { data: absences = [], isLoading: l3 } = absencesQuery;
   const [isDark, setIsDark] = useState(false);
   const reducedMotion = useSyncExternalStore(
     subscribeToReducedMotion,
@@ -56,6 +62,13 @@ export const AnalyticsDashboard: React.FC = () => {
   }, []);
 
   const theme = getChartTheme(isDark);
+  const reads = [subjectsQuery, tasksQuery, absencesQuery];
+  if (readState(reads) === "error")
+    return (
+      <QueryState queries={reads} loading={<AnalyticsSkeleton />}>
+        {null}
+      </QueryState>
+    );
   if (authLoading || l1 || l2 || l3) return <AnalyticsSkeleton />;
 
   const tooltipStyle = {
@@ -68,7 +81,9 @@ export const AnalyticsDashboard: React.FC = () => {
   const axis = { fill: theme.textColor, fontSize: 12 };
 
   const attendanceData = subjects.map((s) => {
-    const v = absences.filter((a) => a.subject_id === s.id).reduce((sum, a) => sum + (a.calculated_value || 0), 0);
+    const v = absences
+      .filter((a) => a.subject_id === s.id)
+      .reduce((sum, a) => sum + (a.calculated_value || 0), 0);
     const info = attendanceInfo(s.total_classes, v);
     return { name: s.name, asistencia: info.percentage, status: info.status };
   });
@@ -76,7 +91,9 @@ export const AnalyticsDashboard: React.FC = () => {
   const gradesData = subjects
     .map((s) => ({
       name: s.name,
-      promedio: average(tasks.filter((t) => t.subject_id === s.id && t.grade != null).map((t) => t.grade as number)),
+      promedio: average(
+        tasks.filter((t) => t.subject_id === s.id && t.grade != null).map((t) => t.grade as number),
+      ),
     }))
     .filter((d) => d.promedio != null);
 
@@ -101,85 +118,206 @@ export const AnalyticsDashboard: React.FC = () => {
   const done = tasks.filter((t) => t.status === "done").length;
   const overdue = tasks.filter((t) => t.status !== "done" && daysUntil(t.due_date) < 0).length;
   const allGrades = tasks.map((t) => t.grade).filter((g): g is number => g != null);
-  const avgAttendance = attendanceData.length ? Math.round(attendanceData.reduce((s, d) => s + d.asistencia, 0) / attendanceData.length) : null;
+  const avgAttendance = attendanceData.length
+    ? Math.round(attendanceData.reduce((s, d) => s + d.asistencia, 0) / attendanceData.length)
+    : null;
 
   return (
-    <div>
-      <PageHeader eyebrow="Analíticas" title={<>Tu <em>progreso</em>.</>} subtitle="Notas y asistencia" />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        <StatTile label="Completadas" value={`${done}/${tasks.length}`} hint={tasks.length ? `${Math.round((done / tasks.length) * 100)}% del total` : undefined} />
-        <StatTile label="Vencidas" value={overdue} tone={overdue ? "danger" : "default"} />
-        <StatTile label="Promedio general" value={average(allGrades) ?? "—"} hint={`${allGrades.length} notas`} />
-        <StatTile label="Asistencia media" value={avgAttendance != null ? `${avgAttendance}%` : "—"} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card title="Asistencia por UC">
-          {attendanceData.length === 0 ? (
-            <p className="m-0 text-sm text-theme-text-muted">
-              Agregá tus UC para seguir la asistencia. Debajo de 75% quedás libre (reglamento CFE).
-            </p>
-          ) : (
+    <QueryState queries={reads} loading={<AnalyticsSkeleton />}>
+      <div>
+        <PageHeader
+          eyebrow="Analíticas"
+          title={
             <>
-              <div className="h-64" aria-label="Gráfico de asistencia por UC">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <BarChart data={attendanceData} layout="vertical" margin={{ left: 8, right: 16 }}>
-                <CartesianGrid horizontal={false} stroke={theme.gridColor} />
-                <XAxis type="number" domain={[0, 100]} tick={axis} axisLine={false} tickLine={false} unit="%" />
-                <YAxis type="category" dataKey="name" width={120} tick={axis} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} formatter={(v) => [`${v}%`, "Asistencia"]} />
-                <ReferenceLine x={75} stroke={theme.data.warning} strokeDasharray="4 4" label={{ value: "75%", fill: theme.data.warning, fontSize: 11, position: "top" }} />
-                <Bar isAnimationActive={!reducedMotion} dataKey="asistencia" radius={[0, 6, 6, 0]} barSize={18}>
-                  {attendanceData.map((d) => (
-                    <Cell key={d.name} fill={d.status === "danger" ? theme.data.danger : d.status === "warning" ? theme.data.warning : theme.data.success} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-              </div>
-              <p className="m-0 mt-2 text-xs text-theme-text-muted">
-                Debajo de 75% quedás libre (reglamento CFE).
-              </p>
+              Tu <em>progreso</em>.
             </>
-          )}
-        </Card>
+          }
+          subtitle="Notas y asistencia"
+        />
 
-        <Card title="Promedio por UC">
-          {gradesData.length === 0 ? (
-            <p className="m-0 text-sm text-theme-text-muted">Cargá notas en tus tareas para ver promedios.</p>
-          ) : (
-            <div className="h-64" aria-label="Gráfico de promedio por UC">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={gradesData} margin={{ right: 8 }}>
-                  <CartesianGrid vertical={false} stroke={theme.gridColor} />
-                  <XAxis dataKey="name" tick={axis} axisLine={false} tickLine={false} interval={0} />
-                  <YAxis domain={[0, 12]} ticks={[0, 3, 6, 9, 12]} tick={axis} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
-                  <Bar isAnimationActive={!reducedMotion} dataKey="promedio" fill={theme.colors[0]} radius={[6, 6, 0, 0]} barSize={36} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </Card>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <StatTile
+            label="Completadas"
+            value={tasks.length ? `${done}/${tasks.length}` : "Sin tareas"}
+            hint={
+              tasks.length ? `${Math.round((done / tasks.length) * 100)}% del total` : undefined
+            }
+          />
+          <StatTile label="Vencidas" value={overdue} tone={overdue ? "danger" : "default"} />
+          <StatTile
+            label="Promedio general"
+            value={average(allGrades) ?? "—"}
+            hint={`${allGrades.length} notas`}
+          />
+          <StatTile
+            label="Asistencia media"
+            value={avgAttendance != null ? `${avgAttendance}%` : "—"}
+          />
+        </div>
 
-        <Card title="Entregas por semana" className="lg:col-span-2">
-          <div className="h-60" aria-label="Gráfico de entregas por semana">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <BarChart data={weeks}>
-                <CartesianGrid vertical={false} stroke={theme.gridColor} />
-                <XAxis dataKey="name" tick={axis} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={axis} axisLine={false} tickLine={false} width={24} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar isAnimationActive={!reducedMotion} dataKey="Hechas" stackId="a" fill={theme.data.success} />
-                <Bar isAnimationActive={!reducedMotion} dataKey="Pendientes" stackId="a" fill={theme.data.warning} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="m-0 mt-2 text-xs text-theme-text-muted">Semanas desde el lunes; incluye las 4 anteriores y las 4 que vienen.</p>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card title="Asistencia por UC">
+            {attendanceData.length === 0 ? (
+              <p className="m-0 text-sm text-theme-text-muted">
+                Agregá tus UC para seguir la asistencia. Debajo de 75% quedás libre (reglamento
+                CFE).
+              </p>
+            ) : (
+              <>
+                <div className="h-64" aria-label="Gráfico de asistencia por UC">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                    <BarChart
+                      data={attendanceData}
+                      layout="vertical"
+                      margin={{ left: 8, right: 16 }}
+                    >
+                      <CartesianGrid horizontal={false} stroke={theme.gridColor} />
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        tick={axis}
+                        axisLine={false}
+                        tickLine={false}
+                        unit="%"
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={120}
+                        tick={axis}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        cursor={{ fill: theme.gridColor }}
+                        formatter={(v) => [`${v}%`, "Asistencia"]}
+                      />
+                      <ReferenceLine
+                        x={75}
+                        stroke={theme.data.warning}
+                        strokeDasharray="4 4"
+                        label={{
+                          value: "75%",
+                          fill: theme.data.warning,
+                          fontSize: 11,
+                          position: "top",
+                        }}
+                      />
+                      <Bar
+                        isAnimationActive={!reducedMotion}
+                        dataKey="asistencia"
+                        radius={[0, 6, 6, 0]}
+                        barSize={18}
+                      >
+                        {attendanceData.map((d) => (
+                          <Cell
+                            key={d.name}
+                            fill={
+                              d.status === "danger"
+                                ? theme.data.danger
+                                : d.status === "warning"
+                                  ? theme.data.warning
+                                  : theme.data.success
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="m-0 mt-2 text-xs text-theme-text-muted">
+                  Debajo de 75% quedás libre (reglamento CFE).
+                </p>
+              </>
+            )}
+          </Card>
+
+          <Card title="Promedio por UC">
+            {gradesData.length === 0 ? (
+              <p className="m-0 text-sm text-theme-text-muted">
+                Cargá notas en tus tareas para ver promedios.
+              </p>
+            ) : (
+              <div className="h-64" aria-label="Gráfico de promedio por UC">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <BarChart data={gradesData} margin={{ right: 8 }}>
+                    <CartesianGrid vertical={false} stroke={theme.gridColor} />
+                    <XAxis
+                      dataKey="name"
+                      tick={axis}
+                      axisLine={false}
+                      tickLine={false}
+                      interval={0}
+                    />
+                    <YAxis
+                      domain={[0, 12]}
+                      ticks={[0, 3, 6, 9, 12]}
+                      tick={axis}
+                      axisLine={false}
+                      tickLine={false}
+                      width={28}
+                    />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
+                    <Bar
+                      isAnimationActive={!reducedMotion}
+                      dataKey="promedio"
+                      fill={theme.colors[0]}
+                      radius={[6, 6, 0, 0]}
+                      barSize={36}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+
+          <Card title="Entregas por semana" className="lg:col-span-2">
+            {weeks.some((w) => w.Hechas || w.Pendientes) ? (
+              <div className="h-60" aria-label="Gráfico de entregas por semana">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <BarChart data={weeks}>
+                    <CartesianGrid vertical={false} stroke={theme.gridColor} />
+                    <XAxis dataKey="name" tick={axis} axisLine={false} tickLine={false} />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={axis}
+                      axisLine={false}
+                      tickLine={false}
+                      width={24}
+                    />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: theme.gridColor }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar
+                      isAnimationActive={!reducedMotion}
+                      dataKey="Hechas"
+                      stackId="a"
+                      fill={theme.data.success}
+                    />
+                    <Bar
+                      isAnimationActive={!reducedMotion}
+                      dataKey="Pendientes"
+                      stackId="a"
+                      fill={theme.data.warning}
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="m-0 text-sm text-theme-text-muted">
+                No hay entregas en estas semanas.{" "}
+                <a className="text-theme-accent" href={url("/tasks")}>
+                  Agregar tarea
+                </a>
+              </p>
+            )}
+            <p className="m-0 mt-2 text-xs text-theme-text-muted">
+              Semanas desde el lunes; incluye las 4 anteriores y las 4 que vienen.
+            </p>
+          </Card>
+        </div>
       </div>
-    </div>
+    </QueryState>
   );
 };
