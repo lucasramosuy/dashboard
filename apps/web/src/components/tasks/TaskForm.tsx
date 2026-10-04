@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { Task, Subject } from "@dashboard/shared-types";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
+import { Select } from "../ui/Select";
 
 interface Props {
   initialData?: Task;
@@ -18,7 +19,7 @@ function toDateInputValue(date?: Date | string): string {
 }
 
 const selectCls =
-  "w-full px-3 py-2.5 rounded-button border border-zinc-200 bg-transparent text-content text-sm transition-colors focus:border-zinc-900 focus:outline-none focus:ring-0 dark:border-zinc-800 dark:text-content-dark dark:focus:border-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed [&>option]:bg-white [&>option]:text-zinc-900 dark:[&>option]:bg-zinc-900 dark:[&>option]:text-zinc-100";
+  "w-full px-3 py-2.5 rounded-button border border-zinc-200 bg-transparent text-content text-sm transition-colors focus:border-zinc-900 focus:outline-none focus:ring-0 dark:border-zinc-800 dark:text-content-dark dark:focus:border-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed";
 
 export const TaskForm: React.FC<Props> = ({
   initialData,
@@ -69,22 +70,14 @@ export const TaskForm: React.FC<Props> = ({
         <label htmlFor="subject" className="block mb-1 text-sm font-medium text-theme-text-muted">
           UC
         </label>
-        <select
+        <Select
           id="subject"
-          className={selectCls}
           value={subjectId}
-          onChange={(e) => setSubjectId(e.target.value)}
+          onChange={setSubjectId}
           required
-        >
-          <option value="" disabled>
-            Seleccioná una UC
-          </option>
-          {subjects.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+          placeholder="Seleccioná una UC"
+          options={subjects.map((s) => ({ value: s.id, label: s.name }))}
+        />
       </div>
       <div className="mb-4">
         <Input
@@ -113,16 +106,16 @@ export const TaskForm: React.FC<Props> = ({
         >
           Estado
         </label>
-        <select
+        <Select
           id="status"
-          className={selectCls}
           value={status}
-          onChange={(e) => setStatus(e.target.value as Task["status"])}
-        >
-          <option value="todo">Pendiente</option>
-          <option value="in-progress">En proceso</option>
-          <option value="done">Completada</option>
-        </select>
+          onChange={(v) => setStatus(v as Task["status"])}
+          options={[
+            { value: "todo", label: "Pendiente" },
+            { value: "in-progress", label: "En proceso" },
+            { value: "done", label: "Completada" },
+          ]}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
@@ -132,18 +125,18 @@ export const TaskForm: React.FC<Props> = ({
           >
             Tipo de Evaluación
           </label>
-          <select
+          <Select
             id="taskType"
-            className={selectCls}
             value={taskType}
-            onChange={(e) => setTaskType(e.target.value)}
-          >
-            <option value="">Sin especificar</option>
-            <option value="parcial">Parcial</option>
-            <option value="examen">Examen</option>
-            <option value="trabajo">Trabajo</option>
-            <option value="otro">Otro</option>
-          </select>
+            onChange={setTaskType}
+            options={[
+              { value: "", label: "Sin especificar" },
+              { value: "parcial", label: "Parcial" },
+              { value: "examen", label: "Examen" },
+              { value: "trabajo", label: "Trabajo" },
+              { value: "otro", label: "Otro" },
+            ]}
+          />
         </div>
         <div>
           <Input
