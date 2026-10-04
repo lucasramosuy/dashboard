@@ -17,9 +17,9 @@ export default defineConfig({
       },
     }),
   ],
-  // Publicado en lucasramos.uy/dashboard (Worker de Cloudflare, ver wrangler.jsonc)
+  // Publicado en lucasramos.uy/panel (Worker de Cloudflare, ver wrangler.jsonc)
   site: "https://lucasramos.uy",
-  base: "/dashboard",
+  base: "/panel",
   output: "server",
   adapter: cloudflare({ imageService: "passthrough" }),
   // Tipografía del brand kit (Space Grotesk + DM Mono), autoalojada por Astro en el build.
