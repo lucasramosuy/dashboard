@@ -22,6 +22,7 @@ import {
   useDeleteTask,
 } from "../../hooks/useDashboardQueries";
 import { url } from "@/lib/utils";
+import { Select } from "../ui/Select";
 
 const STATUS_LABELS: Record<Task["status"], string> = {
   todo: "Pendiente",
@@ -149,10 +150,10 @@ export const TaskList: React.FC = () => {
           ? `Marcar "${t.title}" como pendiente`
           : `Marcar "${t.title}" como hecha`
       }
-      className={`w-5 h-5 shrink-0 rounded-full border-2 flex items-center justify-center cursor-pointer p-0 ${
+      className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center cursor-pointer p-0 ${
         t.status === "done"
-          ? "border-theme-success bg-theme-success text-white"
-          : "border-theme-border bg-transparent hover:border-theme-success"
+          ? "border-theme-accent bg-theme-accent text-theme-card-bg"
+          : "border-theme-text-muted bg-transparent [@media(hover:hover)]:hover:border-theme-accent"
       }`}
     >
       {t.status === "done" && <CheckIcon size={12} strokeWidth={3} />}
@@ -187,34 +188,38 @@ export const TaskList: React.FC = () => {
     <>
       <div>
         <PageHeader
-          title="Tareas"
-          subtitle={
-            counts.overdue
-              ? `${counts.pending} pendientes · ${counts.overdue} vencidas`
-              : `${counts.pending} pendientes`
+          eyebrow="02 / Tareas"
+          title={
+            <>
+              Lo que <em>falta</em>.
+            </>
           }
           actions={
             <Button onClick={openNew} aria-label="Nueva Tarea">
-              <Plus size={16} className="mr-1.5" /> Nueva tarea
+              <Plus size={16} className="mr-2" /> Nueva tarea
             </Button>
           }
         />
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filtrar tareas">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar tareas">
             {chips.map((c) => (
               <button
                 key={c.key}
                 role="tab"
                 aria-selected={filter === c.key}
                 onClick={() => setFilter(c.key)}
-                className={`h-9 px-3 rounded-full text-sm whitespace-nowrap border cursor-pointer transition-colors ${
+                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm font-medium whitespace-nowrap border cursor-pointer transition-colors ${
                   filter === c.key
-                    ? "bg-theme-primary text-theme-bg border-transparent"
-                    : "bg-theme-card-bg text-theme-text-muted border-theme-border hover:text-theme-text"
-                } ${c.key === "overdue" && c.n ? (filter === c.key ? "" : "text-theme-danger") : ""}`}
+                    ? "bg-theme-info-light text-theme-accent border-transparent"
+                    : "bg-theme-card-bg text-theme-text-muted border-theme-border [@media(hover:hover)]:hover:text-theme-text"
+                }`}
               >
-                {c.label} <span className="opacity-70">{c.n}</span>
+                <span
+                  aria-hidden="true"
+                  className={`w-1.5 h-1.5 rounded-full bg-current ${c.key === "overdue" && c.n && filter !== c.key ? "text-theme-danger" : ""}`}
+                />
+                {c.label} · {c.n}
               </button>
             ))}
           </div>
@@ -225,21 +230,18 @@ export const TaskList: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
               aria-label="Buscar tareas"
-              className="h-9 px-3 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm flex-1 min-w-0 sm:w-44 focus:outline-none focus:ring-2 focus:ring-theme-accent/15"
+              className="h-10 px-3.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm flex-1 min-w-0 sm:w-44 focus:outline-none focus:ring-2 focus:ring-theme-accent/15"
             />
-            <select
+            <Select
               value={subjectFilter}
-              onChange={(e) => setSubjectFilter(e.target.value)}
-              aria-label="Filtrar por UC"
-              className="h-9 px-2 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm max-w-40 min-w-0"
-            >
-              <option value="">Todas las UC</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSubjectFilter}
+              ariaLabel="Filtrar por UC"
+              className="w-40 min-w-0 shrink-0"
+              options={[
+                { value: "", label: "Todas las UC" },
+                ...subjects.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
           </div>
         </div>
 
@@ -263,12 +265,12 @@ export const TaskList: React.FC = () => {
             <div className={`${cardCls} hidden md:block overflow-hidden`}>
               <table className="w-full border-collapse" aria-label="Lista de tareas">
                 <thead>
-                  <tr className="bg-theme-bg">
-                    <th className="w-10 px-4 py-2.5" aria-label="Hecha" />
+                  <tr>
+                    <th className="w-12 pl-6 pr-2 py-4" aria-label="Hecha" />
                     {["Tarea", "Vence", "Tipo", "Estado", "Nota"].map((h) => (
                       <th
                         key={h}
-                        className="text-left px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-theme-text-muted"
+                        className="eyebrow text-left px-3 py-4 font-normal"
                       >
                         {h}
                       </th>
@@ -280,15 +282,15 @@ export const TaskList: React.FC = () => {
                   {visible.map((t) => (
                     <tr
                       key={t.id}
-                      className="border-t border-theme-border hover:bg-theme-bg/60 transition-colors"
+                      className="border-t border-theme-border [@media(hover:hover)]:hover:bg-theme-bg/60 transition-colors"
                     >
-                      <td className="px-4 py-3">
+                      <td className="pl-6 pr-2 py-4">
                         <Check t={t} />
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-4">
                         <a
                           href={url(`/tasks/${t.slug || t.id}`)}
-                          className={`font-medium no-underline hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
+                          className={`font-medium no-underline [@media(hover:hover)]:hover:underline ${t.status === "done" ? "text-theme-text-muted line-through" : "text-theme-text"}`}
                         >
                           {t.title}
                         </a>
@@ -298,21 +300,21 @@ export const TaskList: React.FC = () => {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-4">
                         <DueCell t={t} />
                       </td>
-                      <td className="px-3 py-3 text-sm text-theme-text-muted">
+                      <td className="px-3 py-4 text-sm text-theme-text-muted">
                         {t.type ? TYPE_LABELS[t.type] : "—"}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-4">
                         <StatusBadge variant={STATUS_VARIANTS[t.status]}>
                           {STATUS_LABELS[t.status]}
                         </StatusBadge>
                       </td>
-                      <td className="px-3 py-3 text-sm font-semibold">
+                      <td className="px-3 py-4 text-sm font-semibold">
                         {t.grade != null ? t.grade : "—"}
                       </td>
-                      <td className="px-2 py-3">
+                      <td className="pr-4 py-4">
                         <Actions t={t} />
                       </td>
                     </tr>
@@ -323,11 +325,11 @@ export const TaskList: React.FC = () => {
 
             {/* Mobile: tarjetas */}
             <ul
-              className="md:hidden list-none m-0 p-0 flex flex-col gap-2"
+              className="md:hidden list-none m-0 p-0 flex flex-col gap-3"
               aria-label="Lista de tareas"
             >
               {visible.map((t) => (
-                <li key={t.id} className={`${cardCls} p-4 flex items-start gap-3`}>
+                <li key={t.id} className={`${cardCls} p-5 flex items-start gap-4`}>
                   <div className="pt-0.5">
                     <Check t={t} />
                   </div>
@@ -338,7 +340,7 @@ export const TaskList: React.FC = () => {
                     >
                       {t.title}
                     </a>
-                    <span className="block text-xs text-theme-text-muted mb-2">
+                    <span className="block text-xs text-theme-text-muted mt-1 mb-3">
                       {[
                         subjectName(t.subject_id),
                         t.type ? TYPE_LABELS[t.type] : null,
