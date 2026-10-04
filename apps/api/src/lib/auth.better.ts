@@ -97,7 +97,7 @@ export const auth = betterAuth({
     ? process.env.CORS_ORIGINS.split(",")
     : ["http://localhost:4321"],
 
-  // Web y API comparten origen (lucasramos.uy/dashboard), así que alcanzan las cookies
+  // Web y API comparten origen (lucasramos.uy/panel), así que alcanzan las cookies
   // por defecto de Better Auth (SameSite=Lax, Secure en https). Ya no hacen falta
   // cookies cross-subdomain.
 });
