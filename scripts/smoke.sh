@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Smoke test contra un deploy: health de la API, redirect al login, página de login con
 # sus assets y que Better Auth responda (login inválido => 401, o sea que lee la base).
-# No crea usuarios ni toca datos. Uso: scripts/smoke.sh [https://lucasramos.uy/dashboard]
+# No crea usuarios ni toca datos. Uso: scripts/smoke.sh [https://lucasramos.uy/panel]
 set -uo pipefail
 
-BASE="${1:-https://lucasramos.uy/dashboard}"
+BASE="${1:-https://lucasramos.uy/panel}"
 BASE="${BASE%/}"
 ORIGIN="$(printf '%s' "$BASE" | grep -oE '^https?://[^/]+')"
 FAIL=0
@@ -44,7 +44,7 @@ else
   FAIL=1
 fi
 
-asset="$(printf '%s' "$login" | grep -oE '/dashboard/_astro/[^"]+\.css' | head -1)"
+asset="$(printf '%s' "$login" | grep -oE '/panel/_astro/[^"]+\.css' | head -1)"
 if [ -n "$asset" ]; then
   # El HTML y los assets pueden propagarse en momentos distintos tras publicar el Worker.
   asset_code=""

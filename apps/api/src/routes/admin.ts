@@ -6,7 +6,7 @@ import { authMiddleware, type AuthEnv } from "../middleware/auth-middleware";
 import { listAdminLog, logAdminAction, type AdminAction } from "../lib/admin-log";
 import { adminEmails, checkAdminPasskey, countPasskeys, isAdminEmail } from "../lib/admin-passkey";
 
-// Panel de administración (/dashboard/admin). Solo para los emails de ADMIN_EMAILS
+// Panel de administración (/panel/admin). Solo para los emails de ADMIN_EMAILS
 // (secret del Worker, separados por coma). Todo lo sensible (códigos de invitación,
 // contraseñas temporales) se ve solo en pantalla: nada pasa por logs.
 

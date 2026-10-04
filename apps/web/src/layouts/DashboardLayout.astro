@@ -11,7 +11,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
-// Ruta sin el base ("/dashboard") para marcar el ítem activo del menú
+// Ruta sin el base ("/panel") para marcar el ítem activo del menú
 const pathname =
   Astro.url.pathname.slice(import.meta.env.BASE_URL.replace(/\/$/, "").length) || "/";
 ---

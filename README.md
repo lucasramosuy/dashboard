@@ -75,7 +75,7 @@ Web (`apps/web/.env`, todo opcional en dev; las variables del runtime de Workers
 
 ## Panel de administración
 
-`/dashboard/admin`, solo para los emails de `ADMIN_EMAILS` (el acceso aparece en **Mi Perfil**). Desde ahí se puede:
+`/panel/admin`, solo para los emails de `ADMIN_EMAILS` (el acceso aparece en **Mi Perfil**). Desde ahí se puede:
 
 - Crear invitaciones de un solo uso (el código se ve solo en pantalla, con botón copiar) y anular las que no se usaron.
 - Ver los usuarios: alta, última sesión y si la contraseña sigue en el formato viejo.
@@ -166,10 +166,12 @@ Si falla el deploy a producción, el backup semanal o el sync de iCal de algún 
 
 ## Hosting
 
-Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/dashboard`, en el mismo origen:
+La ruta pública es `/panel`. No se conserva `/dashboard` ni se agrega una redirección: después del despliegue hay que reinstalar la PWA y actualizar los marcadores anteriores. El nombre del repositorio, del Worker y de los backups no cambia.
 
-- `apps/web/src/worker.ts` es la entrada. `/dashboard/api/*` va a la app de Hono (`apps/api/src/app.ts`); el resto lo sirve Astro (`@astrojs/cloudflare`, `base: "/dashboard"`).
-- La ruta `lucasramos.uy/dashboard*` (en `apps/web/wrangler.jsonc`) es más específica que la del Worker proxy del dominio, así que Cloudflare la resuelve primero.
+Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/panel`, en el mismo origen:
+
+- `apps/web/src/worker.ts` es la entrada. `/panel/api/*` va a la app de Hono (`apps/api/src/app.ts`); el resto lo sirve Astro (`@astrojs/cloudflare`, `base: "/panel"`).
+- La ruta `lucasramos.uy/panel*` (en `apps/web/wrangler.jsonc`) es más específica que la del Worker proxy del dominio, así que Cloudflare la resuelve primero.
 - Base: **Turso** (plan free). `bun run migrate` en `apps/api` crea o actualiza las tablas.
 - Sync del iCal: Cron Trigger diario a las 03:00 UTC (00:00 de Montevideo). Resumen de Telegram: 10:00 UTC (07:00 de Montevideo).
 - Errores: `@sentry/cloudflare`.
@@ -179,27 +181,27 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 `.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
 
-| Secret                       | Para qué                                                   |
-| ---------------------------- | ---------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                         |
-| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                       |
-| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                      |
-| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                      |
-| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)                  |
-| `ADMIN_EMAILS`               | Emails con acceso a `/dashboard/admin` (secret del Worker) |
-| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal                |
-| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)                |
-| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)              |
-| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                       |
-| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)         |
-| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                          |
+| Secret                       | Para qué                                               |
+| ---------------------------- | ------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                     |
+| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                   |
+| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                  |
+| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                  |
+| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)              |
+| `ADMIN_EMAILS`               | Emails con acceso a `/panel/admin` (secret del Worker) |
+| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal            |
+| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)            |
+| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)          |
+| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                   |
+| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)     |
+| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                      |
 
 ### Preview por PR
 
-`.github/workflows/preview.yml` publica cada PR contra `dev` como una versión del Worker `dashboard-preview` (en `workers.dev`) y comenta el link en el PR: `https://pr-<número>-dashboard-preview.lucas-space.workers.dev/dashboard/`. Sirve para ver los cambios desde el celu antes de mergear.
+`.github/workflows/preview.yml` publica cada PR contra `dev` como una versión del Worker `dashboard-preview` (en `workers.dev`) y comenta el link en el PR: `https://pr-<número>-dashboard-preview.lucas-space.workers.dev/panel/`. Sirve para ver los cambios desde el celu antes de mergear.
 
 - Usa su propia base de Turso (`TURSO_PREVIEW_*`) con datos demo, nunca la de producción. Usuario demo: `demo@example.com` / `demo1234`.
-- Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/dashboard/`). Los PRs suben versiones con alias y no la tocan.
+- Cada push a `dev` actualiza la versión base (`https://dashboard-preview.lucas-space.workers.dev/panel/`). Los PRs suben versiones con alias y no la tocan.
 - La primera vez (o para reiniciar los datos demo): Actions → Preview → Run workflow, con "Cargar datos demo" marcado.
 - Todas las noches (03:00 de Montevideo) `.github/workflows/demo-reset.yml` vuelve a cargar los datos demo, así que cualquier cambio hecho con el usuario demo dura como mucho un día. También se puede correr a mano desde Actions → Reset demo.
 - Los PRs de forks y de Dependabot se saltean porque no tienen acceso a los secrets. Si faltan los secrets `TURSO_PREVIEW_*`, el workflow no hace nada.
@@ -207,7 +209,7 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 ### Smoke test
 
-`scripts/smoke.sh` revisa un deploy sin tocar datos: health de la API, redirect al login sin sesión, página de login y su CSS, y que un login inválido dé 401 (Better Auth leyendo Turso). Corre solo como último paso de `deploy.yml`: si algo falla, el run queda en rojo y GitHub avisa por mail. También se puede correr a mano (Actions → Smoke test) o local: `bash scripts/smoke.sh https://lucasramos.uy/dashboard`.
+`scripts/smoke.sh` revisa un deploy sin tocar datos: health de la API, redirect al login sin sesión, página de login y su CSS, y que un login inválido dé 401 (Better Auth leyendo Turso). Corre solo como último paso de `deploy.yml`: si algo falla, el run queda en rojo y GitHub avisa por mail. También se puede correr a mano (Actions → Smoke test) o local: `bash scripts/smoke.sh https://lucasramos.uy/panel`.
 
 ### Desarrollo local con el runtime de Workers
 

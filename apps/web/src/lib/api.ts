@@ -7,7 +7,7 @@ import { captchaHeaders } from "./captcha";
 /**
  * Cliente de API para el dashboard académico.
  *
- * La API vive en el mismo origen que la web, bajo /dashboard/api
+ * La API vive en el mismo origen que la web, bajo /panel/api
  * (el Worker la despacha; ver src/worker.ts).
  */
 const API_BASE = url("/api");
