@@ -22,16 +22,23 @@ export default defineConfig({
   base: "/dashboard",
   output: "server",
   adapter: cloudflare({ imageService: "passthrough" }),
+  // Tipografía del brand kit (Space Grotesk + DM Mono), autoalojada por Astro en el build.
   fonts: [
     {
-      name: "Inter",
-      cssVariable: "--font-inter",
+      name: "Space Grotesk",
+      cssVariable: "--font-space-grotesk",
       provider: fontProviders.fontsource(),
+      weights: [400, 500, 600, 700],
+      styles: ["normal"],
+      subsets: ["latin", "latin-ext"],
     },
     {
-      name: "JetBrains Mono",
-      cssVariable: "--font-jetbrains-mono",
+      name: "DM Mono",
+      cssVariable: "--font-dm-mono",
       provider: fontProviders.fontsource(),
+      weights: [400, 500],
+      styles: ["normal"],
+      subsets: ["latin", "latin-ext"],
     },
   ],
   vite: {
