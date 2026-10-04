@@ -3,6 +3,7 @@ import { AppShell } from "../layout/AppShell";
 import { api, type AdminInvite, type AdminUser } from "../../lib/api";
 import { ProfileSkeleton } from "../ui/Skeleton";
 import { Button } from "../ui/Button";
+import { ConfirmModal } from "../ui/ConfirmModal";
 import { url } from "../../lib/utils";
 import { AdminLogCard } from "./AdminLogCard";
 import { PasskeyCard, PasskeyGate } from "./PasskeyCard";
@@ -90,9 +91,14 @@ const Panel: React.FC = () => {
       setInvites((prev) => prev.filter((i) => i.id !== id));
     });
 
-  const resetPassword = (user: AdminUser) => {
-    if (!confirm(`¿Resetear la contraseña de ${user.email}? Se le cierran las sesiones abiertas.`))
-      return;
+  const [resetTarget, setResetTarget] = useState<AdminUser | null>(null);
+
+  const resetPassword = (user: AdminUser) => setResetTarget(user);
+
+  const confirmReset = () => {
+    const user = resetTarget;
+    setResetTarget(null);
+    if (!user) return;
     run(async () => {
       const { password } = await api.adminResetPassword(user.id);
       setTempPassword({ email: user.email, password });
@@ -254,6 +260,15 @@ const Panel: React.FC = () => {
       </section>
 
       <AdminLogCard refreshKey={logKey} />
+
+      <ConfirmModal
+        isOpen={resetTarget !== null}
+        title="Resetear contraseña"
+        description={`¿Resetear la contraseña de ${resetTarget?.email ?? ""}? Se le cierran las sesiones abiertas.`}
+        confirmText="Resetear"
+        onConfirm={confirmReset}
+        onCancel={() => setResetTarget(null)}
+      />
     </div>
   );
 };
