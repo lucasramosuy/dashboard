@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/cloudflare";
 import { url } from "./lib/utils";
 import { handleApi } from "./server/api";
 
-// Rutas relativas al base de Astro ("/dashboard")
+// Rutas relativas al base de Astro ("/panel")
 const PUBLIC_ROUTES = ["/login"];
 const IGNORED_PREFIXES = ["/api", "/_", "/_image"];
 
@@ -46,6 +46,10 @@ async function validateSession(
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { request, redirect } = context;
+  // Fuera de /panel no hay alias ni redirección de la ruta anterior.
+  if (context.url.pathname !== BASE && !context.url.pathname.startsWith(`${BASE}/`)) {
+    return new Response("Not found", { status: 404 });
+  }
   const pathname = appPath(context.url.pathname);
 
   if (IGNORED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
