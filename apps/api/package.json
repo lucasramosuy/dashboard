@@ -23,14 +23,14 @@
   },
   "dependencies": {
     "@better-auth/cli": "^1.4.21",
-    "@better-auth/passkey": "1.7.6",
+    "@better-auth/passkey": "1.7.7",
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.18.0",
     "@libsql/kysely-libsql": "^0.4.1",
     "@sentry/bun": "^10.75.3",
     "@sentry/core": "10.75.3",
-    "better-auth": "^1.7.6",
-    "hono": "^4.13.9",
+    "better-auth": "^1.7.7",
+    "hono": "^4.13.12",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
     "zod": "^4.6.5"
