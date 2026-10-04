@@ -4,7 +4,7 @@ import Base from "./Base.astro";
 import { SidebarActions } from "../components/layout/SidebarActions";
 import { MobileMenu } from "../components/layout/MobileMenu";
 import { navItems } from "../config/nav";
-import { BookOpen } from "lucide-react";
+import { Wordmark } from "../components/layout/Wordmark";
 
 interface Props {
   title: string;
@@ -27,8 +27,9 @@ const pathname =
   <div class="app-shell">
     <aside class="app-sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-icon-item"><BookOpen size={20} /></span>
-        <span class="sidebar-label sidebar-brand-text">Mi Panel</span>
+        <a href={url("/")} class="sidebar-brand-link" aria-label="panel. — inicio">
+          <Wordmark />
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -39,7 +40,7 @@ const pathname =
               class={`app-nav-link${(href === "/" ? pathname === "/" : pathname.startsWith(href)) ? " active" : ""}`}
             >
               <span class="sidebar-icon-item">
-                <Icon size={20} strokeWidth={2.5} />
+                <Icon size={18} strokeWidth={1.75} />
               </span>
               <span class="sidebar-label">{label}</span>
             </a>
@@ -70,53 +71,47 @@ const pathname =
     background: var(--theme-bg);
   }
 
-  /* El rail va fijo: reservar su espacio para que al expandirse no empuje el contenido */
   @media (min-width: 769px) {
     .app-shell {
-      padding-left: 5.5rem; /* 72px de rail + 1rem de margen */
+      padding-left: 15rem; /* 240px: sidebar fijo */
     }
   }
 
-  /* ===== SIDEBAR BENTO ===== */
+  /* ===== SIDEBAR ===== */
   .app-sidebar {
     position: fixed;
-    top: 1rem;
-    left: 1rem;
-    width: 72px;
-    height: calc(100vh - 2rem);
-    background: var(--theme-card-bg);
-    border: 1px solid var(--theme-border);
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 1.25rem 0.75rem;
+    top: 0;
+    left: 0;
+    width: 15rem;
+    height: 100vh;
+    background: var(--theme-bg);
+    border-right: 1px solid var(--theme-border);
+    padding: 1.75rem 1rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    overflow: hidden;
-    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
     z-index: 40;
   }
 
-  @media (hover: hover) {
-    .app-sidebar:hover {
-      width: 220px;
-    }
-  }
-
-  /* Brand */
-  .sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.375rem;
-    margin-bottom: 1rem;
-  }
-
-  .sidebar-brand-text {
-    font-weight: 700;
-    font-size: 0.95rem;
+  .wordmark {
+    font-weight: 600;
+    letter-spacing: -0.03em;
     color: var(--theme-text);
-    white-space: nowrap;
+    line-height: 1;
+  }
+  .wordmark-dot {
+    color: var(--theme-accent);
+  }
+
+  .sidebar-brand {
+    padding: 0 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .sidebar-brand-link {
+    display: inline-block;
+    font-size: 1.5rem;
+    text-decoration: none;
   }
 
   /* Nav */
@@ -130,9 +125,9 @@ const pathname =
   .app-nav-link {
     display: flex;
     align-items: center;
-    gap: 0;
-    padding: 0.75rem 0.5rem;
-    border-radius: 10px;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--theme-text-muted);
     font-weight: 500;
@@ -143,50 +138,29 @@ const pathname =
       color 0.15s;
   }
 
+  /* Ítem activo: pill suave con tinte (sin barra lateral) */
   .app-nav-link.active {
-    background: var(--theme-bg);
+    background: color-mix(in srgb, var(--theme-text) 8%, var(--theme-bg));
     color: var(--theme-text);
   }
 
   @media (hover: hover) {
     .app-nav-link:hover {
-      background: var(--theme-bg);
+      background: color-mix(in srgb, var(--theme-text) 5%, var(--theme-bg));
       color: var(--theme-text);
     }
-  }
-
-  .app-nav-link.active {
-    font-weight: 700;
+    .app-nav-link.active:hover {
+      background: color-mix(in srgb, var(--theme-text) 8%, var(--theme-bg));
+    }
   }
 
   /* Icon */
   .sidebar-icon-item {
-    font-size: 1.25rem;
     flex-shrink: 0;
-    width: 26px;
+    width: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  /* Labels */
-  .sidebar-label {
-    overflow: hidden;
-    max-width: 0;
-    opacity: 0;
-    margin-left: 0;
-    transition:
-      max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-      margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @media (hover: hover) {
-    .app-sidebar:hover .sidebar-label {
-      max-width: 200px;
-      opacity: 1;
-      margin-left: 0.75rem;
-    }
   }
 
   /* Bottom */
@@ -196,51 +170,45 @@ const pathname =
     margin-top: auto;
   }
 
-  /* Acciones siempre en columna: sin cambios de display al expandir (no animables) */
   .sidebar-actions-container {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
 
-  /* Hide labels for toggle and logout in expanded state */
-  @media (hover: hover) {
-    .app-sidebar:hover .theme-toggle-btn .sidebar-label,
-    .app-sidebar:hover .logout-btn .sidebar-label {
-      display: none !important;
-    }
-  }
-
-  /* Sidebar Actions internal button consistency */
   .profile-btn,
   .logout-btn,
   .theme-toggle-btn {
     display: flex;
     align-items: center;
-    gap: 0;
-    padding: 0.75rem 0.5rem;
-    border-radius: 10px;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    border-radius: 8px;
     text-decoration: none;
     color: var(--theme-text-muted);
+    font-family: inherit;
     font-weight: 500;
+    font-size: 0.875rem;
     transition:
       background 0.15s ease,
       color 0.15s ease;
     cursor: pointer;
     background: transparent;
     border: none;
+    text-align: left;
   }
 
   @media (hover: hover) {
     .profile-btn:hover,
     .logout-btn:hover,
     .theme-toggle-btn:hover {
-      background: var(--theme-bg);
+      background: color-mix(in srgb, var(--theme-text) 5%, var(--theme-bg));
       color: var(--theme-text);
     }
 
     .logout-btn:hover {
-      color: var(--theme-danger, #ef4444);
+      color: var(--theme-danger);
     }
   }
 
@@ -249,28 +217,14 @@ const pathname =
     flex: 1;
     min-width: 0;
     width: 100%;
-    max-width: 1160px;
+    /* Llena el ancho en desktop; en pantallas enormes se limita para no estirar el texto */
+    max-width: 1480px;
     margin: 0 auto;
-    padding: 2.5rem 2.5rem 3rem;
+    padding: 3rem 3rem 4rem;
     background: var(--theme-bg);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-  }
-
-  /* ===== MOBILE ACTIONS (theme + logout) ===== */
-  .mobile-actions {
-    position: fixed;
-    right: 1rem;
-    bottom: calc(64px + 1rem); /* Por encima del bottom nav */
-    display: none;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 60;
-  }
-
-  .mobile-theme-btn {
-    display: none;
   }
 
   /* ===== RESPONSIVE ===== */
@@ -283,7 +237,7 @@ const pathname =
       flex-direction: column;
     }
     .app-main {
-      padding: 1.25rem 1rem 2.5rem;
+      padding: 1.5rem 1.25rem 3rem;
     }
   }
 </style>
