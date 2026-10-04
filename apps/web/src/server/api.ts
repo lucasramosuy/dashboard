@@ -1,10 +1,10 @@
 // Puente entre el Worker (o el middleware SSR) y la API de Hono.
-// La web vive en /dashboard y la API en /dashboard/api: se saca el prefijo /dashboard
+// La web vive en /panel y la API en /panel/api: se saca el prefijo /panel
 // y la app de Hono ve las mismas rutas /api/* que en el server de Bun.
 import type { ExecutionContext } from "@cloudflare/workers-types";
 import { app } from "../../../api/src/app";
 
-const BASE = "/dashboard";
+const BASE = "/panel";
 
 export function isApiPath(pathname: string) {
   return pathname === `${BASE}/api` || pathname.startsWith(`${BASE}/api/`);
