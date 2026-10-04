@@ -209,10 +209,10 @@ export function PlannerBoard() {
         {/* Header de navegación */}
         <header className="planner-header">
           <div className="planner-header__title">
-            <h1 className="m-0 text-2xl sm:text-3xl font-bold tracking-tight text-theme-text">
-              Planner
+            <p className="eyebrow m-0 mb-3">04 / Planner</p>
+            <h1 className="m-0 text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.1] text-theme-text">
+              Semana del <em>{weekLabel.replace(/\.$/, "")}</em>.
             </h1>
-            <span className="text-sm text-theme-text-muted">{weekLabel}</span>
           </div>
           <div className="planner-header__nav">
             <button className="planner-icon-btn" onClick={navPrevWeek} aria-label="Semana anterior">

@@ -24,9 +24,11 @@
   border-radius: 8px;
   user-select: none;
 }
-.planner-nav-arrow:hover {
-  color: var(--theme-text);
-  background: var(--theme-card-bg);
+@media (hover: hover) {
+  .planner-nav-arrow:hover {
+    color: var(--theme-text);
+    background: var(--theme-card-bg);
+  }
 }
 
 /* Centro */
@@ -59,9 +61,11 @@
     background 0.15s,
     border-color 0.15s;
 }
-.planner-today-btn:hover {
-  background: var(--theme-card-bg);
-  border-color: var(--theme-text-muted);
+@media (hover: hover) {
+  .planner-today-btn:hover {
+    background: var(--theme-card-bg);
+    border-color: var(--theme-accent);
+  }
 }
 
 /* Grilla de 7 días */
@@ -69,25 +73,22 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0;
+  gap: 1rem;
   overflow: hidden;
-  border: 1px solid var(--theme-border);
-  border-radius: 12px;
-  background: var(--theme-card-bg);
+  align-content: start;
 }
 
 /* Columna del día */
 .planner-col {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--theme-border);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
   overflow: hidden;
   min-width: 0;
   background-color: var(--theme-card-bg);
 }
-.planner-col:last-child {
-  border-right: none;
-}
+
 
 /* Header de columna */
 .planner-col__header {
@@ -108,7 +109,7 @@
   letter-spacing: -0.01em;
 }
 .planner-col__day--today {
-  color: var(--theme-primary);
+  color: var(--theme-accent);
 }
 .planner-col__date {
   display: block;
@@ -119,10 +120,7 @@
   opacity: 0.8;
 }
 .planner-col--today {
-  box-shadow: inset 0 3px 0 var(--theme-primary);
-}
-.planner-col--today .planner-col__header {
-  background: rgba(var(--theme-primary-rgb), 0.05);
+  border-color: var(--theme-accent);
 }
 
 /* Botón agregar (+) */
@@ -156,10 +154,10 @@
 .planner-col__tasks {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
-  background-image: linear-gradient(var(--theme-border) 1px, transparent 1px);
-  background-size: 100% 36px;
-  background-attachment: local;
+  padding: 0.5rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   /* Asegura que el drag and drop detecte toda el área */
   min-height: 100%;
 }
@@ -169,14 +167,17 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 0.75rem;
-  height: 36px; /* Coincide con background-size */
+  padding: 0.625rem 0.75rem;
+  min-height: 40px;
+  border-radius: 8px;
+  background: var(--theme-soft);
   cursor: grab;
   transition: background 0.15s;
-  border-bottom: 1px solid transparent;
 }
-.planner-item:hover {
-  background: rgba(var(--theme-primary-rgb), 0.03);
+@media (hover: hover) {
+  .planner-item:hover {
+    background: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-card-bg));
+  }
 }
 .planner-item.dragging {
   opacity: 0.4;
@@ -377,13 +378,13 @@
 }
 
 /* Mockup UI */
-.planner-header { justify-content: space-between; flex-wrap: wrap; padding: 0 0 1rem; }
+.planner-header { justify-content: space-between; align-items: flex-end; flex-wrap: wrap; padding: 0 0 2rem; gap: 1rem; }
 .planner-header__title { display: flex; flex-direction: column; gap: 0.15rem; }
 .planner-header__nav { display: flex; align-items: center; gap: 0.5rem; }
 .planner-icon-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--theme-border); border-radius: 8px; background: transparent; color: var(--theme-text); cursor: pointer; }
-.planner-icon-btn:hover { background: var(--theme-card-bg); }
+@media (hover: hover) { .planner-icon-btn:hover { background: var(--theme-card-bg); } }
 .planner-nav-arrow { display: none; }
-.planner-event { display: flex; align-items: center; gap: 0.4rem; margin: 4px 6px; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: rgba(37, 99, 235, 0.1); color: #2563eb; min-width: 0; }
+.planner-event { display: flex; align-items: center; gap: 0.4rem; margin: 4px 6px; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; background: var(--theme-info-light); color: var(--theme-accent); min-width: 0; }
 .planner-empty { display: block; padding: 0.75rem; font-size: 0.75rem; color: var(--theme-text-muted); text-align: center; }
 @media (max-width: 768px) {
   .planner-root { height: auto; }
