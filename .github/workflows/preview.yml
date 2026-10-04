@@ -113,7 +113,7 @@ jobs:
             "$(jq -Rn 'env.BETTER_AUTH_SECRET')" > "$RUNNER_TEMP/secrets.json"
           bun x wrangler@${WRANGLER_VERSION} secret bulk "$RUNNER_TEMP/secrets.json" --name "$PREVIEW_WORKER"
           rm -f "$RUNNER_TEMP/secrets.json"
-          echo "Preview base: https://${PREVIEW_HOST}/dashboard/"
+          echo "Preview base: https://${PREVIEW_HOST}/panel/"
 
       # PR: sube una versión con alias pr-<número> (no cambia la versión base)
       - name: Subir versión del PR
@@ -131,7 +131,7 @@ jobs:
             --message "PR #${PR} ${GITHUB_SHA::7}" \
             --var "BETTER_AUTH_URL:${ORIGIN}" \
             --var "CORS_ORIGINS:${ORIGIN}"
-          echo "url=${ORIGIN}/dashboard/" >> "$GITHUB_OUTPUT"
+          echo "url=${ORIGIN}/panel/" >> "$GITHUB_OUTPUT"
 
       - name: Comentar link en el PR
         if: steps.upload.outputs.url
