@@ -4,7 +4,7 @@ import { db } from "../lib/db";
 import { escapeHtml, sendTelegram, telegramConfigured } from "../lib/telegram";
 
 const TZ = "America/Montevideo";
-const APP_URL = "https://lucasramos.uy/dashboard";
+const APP_URL = "https://lucasramos.uy/panel";
 
 // Fecha local (YYYY-MM-DD) en Montevideo
 export function localDate(d: Date): string {

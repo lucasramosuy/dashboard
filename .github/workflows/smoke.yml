@@ -7,7 +7,7 @@ on:
     inputs:
       url:
         description: "URL base (sin barra final)"
-        default: "https://lucasramos.uy/dashboard"
+        default: "https://lucasramos.uy/panel"
         required: true
 
 jobs:
