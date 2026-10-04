@@ -287,7 +287,7 @@ export const DashboardSummary: React.FC = () => {
 
             <Card
               title="Esta semana"
-              eyebrow="Planner"
+              eyebrow="Agenda"
               action={
                 <TextLink href={url("/planner")}>
                   Planner <ArrowRight size={14} />
