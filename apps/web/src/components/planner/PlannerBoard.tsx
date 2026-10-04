@@ -1,3 +1,5 @@
+import { QueryState } from "../ui/QueryState";
+import { PlannerMoveForm } from "./PlannerMoveForm";
 import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
@@ -39,10 +41,12 @@ export function PlannerBoard() {
   }, [currentWeekStart]);
 
   // ----- FETCH DATOS -----
-  const { data: groupedTasks = {}, isLoading } = useQuery({
+  const tasksQuery = useQuery({
     queryKey: ["plannerTasks", weekStartIso, weekEndIso],
     queryFn: () => api.getWeeklyTasks(weekStartIso, weekEndIso),
   });
+
+  const { data: groupedTasks = {}, isLoading } = tasksQuery;
 
   // ----- MUTACIONES -----
   const updateTaskDateMutation = useMutation({
@@ -144,7 +148,8 @@ export function PlannerBoard() {
   };
 
   const todayKey = localTodayKey();
-  const { data: icalEvents = [] } = useIcalEvents();
+  const eventsQuery = useIcalEvents();
+  const { data: icalEvents = [] } = eventsQuery;
   const eventsByDay = icalEvents.reduce<Record<string, typeof icalEvents>>((acc, e) => {
     const k = dayKey(e.start_date);
     (acc[k] ||= []).push(e);
@@ -196,245 +201,293 @@ export function PlannerBoard() {
   }
 
   return (
-    <div className="planner-root">
-      {/* Flecha izquierda */}
-      <button
-        className="planner-nav-arrow planner-nav-arrow--left"
-        onClick={navPrevWeek}
-        title="Semana anterior"
-      >
-        ‹
-      </button>
+    <QueryState queries={[tasksQuery, eventsQuery]} loading={<PlannerSkeleton />}>
+      <div className="planner-root">
+        {/* Flecha izquierda */}
+        <button
+          className="planner-nav-arrow planner-nav-arrow--left"
+          onClick={navPrevWeek}
+          title="Semana anterior"
+        >
+          ‹
+        </button>
 
-      {/* Contenido central */}
-      <div className="planner-center">
-        {/* Header de navegación */}
-        <header className="planner-header">
-          <div className="planner-header__title">
-            <p className="eyebrow m-0 mb-3">04 / Planner</p>
-            <h1 className="m-0 text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.1] text-theme-text">
-              Semana del <em>{weekLabel.replace(/\.$/, "")}</em>.
-            </h1>
-          </div>
-          <div className="planner-header__nav">
-            <button className="planner-icon-btn" onClick={navPrevWeek} aria-label="Semana anterior">
-              <ChevronLeft size={18} />
-            </button>
-            <button className="planner-today-btn" onClick={navCurrentWeek}>
-              Hoy
-            </button>
-            <button
-              className="planner-icon-btn"
-              onClick={navNextWeek}
-              aria-label="Semana siguiente"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-          {updateTaskDateMutation.isPending && (
-            <span className="text-theme-text-muted text-xs">Guardando...</span>
-          )}
-          {updateTaskDateMutation.isError && (
-            <span role="alert" className="text-theme-danger text-sm">
-              No se pudo mover la tarea. Se restauró la fecha anterior.
-            </span>
-          )}
-        </header>
-
-        {/* Grilla de días */}
-        <div className="planner-grid">
-          {daysOfWeek.map((day) => {
-            const dateKey = dayKey(day);
-            const dayTasks = groupedTasks[dateKey] || [];
-            const isToday = dateKey === todayKey;
-
-            return (
-              <div
-                key={dateKey}
-                className={`planner-col ${isToday ? "planner-col--today" : ""}`}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, dateKey)}
+        {/* Contenido central */}
+        <div className="planner-center">
+          {/* Header de navegación */}
+          <header className="planner-header">
+            <div className="planner-header__title">
+              <p className="eyebrow m-0 mb-3">04 / Planner</p>
+              <h1 className="m-0 text-3xl sm:text-4xl font-semibold tracking-tight leading-[1.1] text-theme-text">
+                Semana del <em>{weekLabel.replace(/\.$/, "")}</em>.
+              </h1>
+            </div>
+            <div className="planner-header__nav">
+              <button
+                className="planner-icon-btn"
+                onClick={navPrevWeek}
+                aria-label="Semana anterior"
               >
-                {/* Header del día */}
-                <div className="planner-col__header">
-                  <h3 className={`planner-col__day ${isToday ? "planner-col__day--today" : ""}`}>
-                    {getDayName(day)}
-                  </h3>
-                  <span className="planner-col__date">{getFullDate(day)}</span>
-                  <button
-                    className="planner-col__add"
-                    onClick={() => openNewTaskModal(dateKey)}
-                    title="Agregar tarea"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* Lista de tareas */}
-                <div className="planner-col__tasks">
-                  {(eventsByDay[dateKey] || []).map((ev) => (
-                    <div key={ev.id} className="planner-event" title={ev.description || ev.title}>
-                      <CalendarDays size={12} className="shrink-0" />
-                      <span className="planner-item__title">{ev.title}</span>
-                    </div>
-                  ))}
-                  {dayTasks.length === 0 && !(eventsByDay[dateKey] || []).length && (
-                    <span className="planner-empty">Sin tareas</span>
-                  )}
-                  {dayTasks.map((task) => {
-                    const isDone = task.status === "done";
-                    return (
-                      <div
-                        key={task.id}
-                        className={`planner-item ${isDone ? "planner-item--done" : ""}`}
-                        draggable="true"
-                        onDragStart={(e) => handleDragStart(e, task.id)}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <button
-                          className={`planner-item__check ${isDone ? "planner-item__check--done" : ""}`}
-                          onClick={() =>
-                            toggleTaskStatusMutation.mutate({
-                              id: task.id,
-                              status: isDone ? "todo" : "done",
-                            })
-                          }
-                          aria-label={isDone ? "Marcar como pendiente" : "Marcar como completada"}
-                        >
-                          {isDone && (
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                        <span
-                          className="planner-item__title"
-                          onClick={() => setSelectedTask(task)}
-                          title="Click para ver detalles"
-                        >
-                          {task.title}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Flecha derecha */}
-      <button
-        className="planner-nav-arrow planner-nav-arrow--right"
-        onClick={navNextWeek}
-        title="Semana siguiente"
-      >
-        ›
-      </button>
-
-      {/* Modal nueva tarea */}
-      <Modal isOpen={isTaskModalOpen} onClose={() => setTaskModalOpen(false)} title={`Nueva tarea`}>
-        <form onSubmit={handleCreateTask} className="flex flex-col gap-4 mt-3">
-          <div>
-            <label className="block mb-1 text-sm text-theme-text-muted">Título</label>
-            <input
-              type="text"
-              className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="Ej. Leer capítulo 3"
-              autoFocus
-              required
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
-              onClick={() => setTaskModalOpen(false)}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
-              disabled={createTaskMutation.isPending}
-            >
-              {createTaskMutation.isPending ? "Agregando..." : "Agregar"}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal detalle de tarea */}
-      {selectedTask && (
-        <div className="planner-detail-overlay" onClick={() => setSelectedTask(null)}>
-          <div className="planner-detail" onClick={(e) => e.stopPropagation()}>
-            <div className="planner-detail__header">
-              <span className="planner-detail__date">
-                {selectedTask.due_date
-                  ? new Date(selectedTask.due_date).toLocaleDateString("es-UY", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })
-                  : "—"}
-              </span>
-              <button className="planner-detail__close" onClick={() => setSelectedTask(null)}>
-                ×
+                <ChevronLeft size={18} />
+              </button>
+              <button className="planner-today-btn" onClick={navCurrentWeek}>
+                Hoy
+              </button>
+              <button
+                className="planner-icon-btn"
+                onClick={navNextWeek}
+                aria-label="Semana siguiente"
+              >
+                <ChevronRight size={18} />
               </button>
             </div>
-            <div className="planner-detail__body">
-              <div className="planner-detail__task-row">
-                <button
-                  className={`planner-item__check ${selectedTask.status === "done" ? "planner-item__check--done" : ""}`}
-                  onClick={() => {
-                    const newStatus = selectedTask.status === "done" ? "todo" : "done";
-                    toggleTaskStatusMutation.mutate({ id: selectedTask.id, status: newStatus });
-                    setSelectedTask({ ...selectedTask, status: newStatus });
-                  }}
+            {updateTaskDateMutation.isPending && (
+              <span className="text-theme-text-muted text-xs">Guardando...</span>
+            )}
+            {toggleTaskStatusMutation.isError && (
+              <span role="alert" className="text-theme-danger text-sm">
+                No se pudo cambiar el estado. Se restauró el estado anterior.
+              </span>
+            )}
+            {updateTaskDateMutation.isError && (
+              <span role="alert" className="text-theme-danger text-sm">
+                No se pudo mover la tarea. Se restauró la fecha anterior.
+              </span>
+            )}
+          </header>
+
+          {/* Grilla de días */}
+          <div className="planner-grid">
+            {daysOfWeek.map((day) => {
+              const dateKey = dayKey(day);
+              const dayTasks = groupedTasks[dateKey] || [];
+              const isToday = dateKey === todayKey;
+
+              return (
+                <div
+                  key={dateKey}
+                  className={`planner-col ${isToday ? "planner-col--today" : ""}`}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, dateKey)}
                 >
-                  {selectedTask.status === "done" && (
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  {/* Header del día */}
+                  <div className="planner-col__header">
+                    <h3 className={`planner-col__day ${isToday ? "planner-col__day--today" : ""}`}>
+                      {getDayName(day)}
+                    </h3>
+                    <span className="planner-col__date">{getFullDate(day)}</span>
+                    <button
+                      className="planner-col__add"
+                      onClick={() => openNewTaskModal(dateKey)}
+                      title="Agregar tarea"
                     >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-                <span
-                  className={`planner-detail__title ${selectedTask.status === "done" ? "planner-detail__title--done" : ""}`}
-                >
-                  {selectedTask.title}
-                </span>
-              </div>
-              {selectedTask.description && (
-                <p className="planner-detail__notes">{selectedTask.description}</p>
-              )}
-              {!selectedTask.description && (
-                <p className="planner-detail__notes planner-detail__notes--empty">Sin notas</p>
-              )}
-            </div>
+                      +
+                    </button>
+                  </div>
+
+                  {/* Lista de tareas */}
+                  <div className="planner-col__tasks">
+                    {(eventsByDay[dateKey] || []).map((ev) => (
+                      <div key={ev.id} className="planner-event" title={ev.description || ev.title}>
+                        <CalendarDays size={12} className="shrink-0" />
+                        <span className="planner-item__title">{ev.title}</span>
+                      </div>
+                    ))}
+                    {dayTasks.length === 0 && !(eventsByDay[dateKey] || []).length && (
+                      <span className="planner-empty">Sin tareas</span>
+                    )}
+                    {dayTasks.map((task) => {
+                      const isDone = task.status === "done";
+                      return (
+                        <div
+                          key={task.id}
+                          className={`planner-item ${isDone ? "planner-item--done" : ""}`}
+                          draggable="true"
+                          onDragStart={(e) => handleDragStart(e, task.id)}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <button
+                            className={`planner-item__check ${isDone ? "planner-item__check--done" : ""}`}
+                            onClick={() =>
+                              toggleTaskStatusMutation.mutate({
+                                id: task.id,
+                                status: isDone ? "todo" : "done",
+                              })
+                            }
+                            aria-label={isDone ? "Marcar como pendiente" : "Marcar como completada"}
+                          >
+                            {isDone && (
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="planner-item__title planner-title-button"
+                            onClick={() => setSelectedTask(task)}
+                            title="Click para ver detalles"
+                          >
+                            {task.title}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Flecha derecha */}
+        <button
+          className="planner-nav-arrow planner-nav-arrow--right"
+          onClick={navNextWeek}
+          title="Semana siguiente"
+        >
+          ›
+        </button>
+
+        {/* Modal nueva tarea */}
+        <Modal
+          isOpen={isTaskModalOpen}
+          onClose={() => setTaskModalOpen(false)}
+          title={`Nueva tarea`}
+        >
+          <form onSubmit={handleCreateTask} className="flex flex-col gap-4 mt-3">
+            <div>
+              <label className="block mb-1 text-sm text-theme-text-muted">Título</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm transition-all duration-200 focus:outline-none focus:border-theme-accent focus:ring-2 focus:ring-theme-accent/15 hover:border-theme-accent"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                placeholder="Ej. Leer capítulo 3"
+                autoFocus
+                required
+              />
+            </div>
+            {createTaskMutation.isError && (
+              <p role="alert" className="text-theme-danger text-sm">
+                No se pudo agregar. Tu texto sigue acá; intentá de nuevo.
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="px-5 py-2.5 rounded-lg font-semibold border border-theme-border bg-transparent text-theme-text hover:bg-theme-bg hover:border-theme-accent cursor-pointer transition-all duration-150"
+                onClick={() => setTaskModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2.5 rounded-lg font-semibold border border-transparent bg-theme-primary text-theme-bg hover:bg-theme-accent cursor-pointer transition-all duration-150 disabled:opacity-45 disabled:cursor-not-allowed"
+                disabled={createTaskMutation.isPending}
+              >
+                {createTaskMutation.isPending ? "Agregando..." : "Agregar"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal detalle de tarea */}
+        {selectedTask && (
+          <Modal isOpen={true} onClose={() => setSelectedTask(null)} title="Detalle de tarea">
+            <div>
+              <div className="planner-detail__header">
+                <span className="planner-detail__date">
+                  {selectedTask.due_date
+                    ? new Date(selectedTask.due_date).toLocaleDateString("es-UY", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </span>
+              </div>
+              <div className="planner-detail__body">
+                <div className="planner-detail__task-row">
+                  <button
+                    className={`planner-item__check ${selectedTask.status === "done" ? "planner-item__check--done" : ""}`}
+                    aria-label={
+                      selectedTask.status === "done"
+                        ? "Marcar como pendiente"
+                        : "Marcar como completada"
+                    }
+                    disabled={toggleTaskStatusMutation.isPending}
+                    onClick={() => {
+                      const newStatus = selectedTask.status === "done" ? "todo" : "done";
+                      toggleTaskStatusMutation.mutate(
+                        { id: selectedTask.id, status: newStatus },
+                        {
+                          onSuccess: () => setSelectedTask({ ...selectedTask, status: newStatus }),
+                        },
+                      );
+                    }}
+                  >
+                    {selectedTask.status === "done" && (
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                  <span
+                    className={`planner-detail__title ${selectedTask.status === "done" ? "planner-detail__title--done" : ""}`}
+                  >
+                    {selectedTask.title}
+                  </span>
+                </div>
+                {selectedTask.description && (
+                  <p className="planner-detail__notes">{selectedTask.description}</p>
+                )}
+                {!selectedTask.description && (
+                  <p className="planner-detail__notes planner-detail__notes--empty">Sin notas</p>
+                )}
+              </div>
+              <PlannerMoveForm
+                key={selectedTask.id}
+                date={dayKey(selectedTask.due_date)}
+                pending={updateTaskDateMutation.isPending}
+                onMove={(date) =>
+                  updateTaskDateMutation.mutate(preparePlannerMove(selectedTask.id, date), {
+                    onSuccess: () => setSelectedTask(null),
+                  })
+                }
+              />
+              {updateTaskDateMutation.isError && (
+                <p role="alert" className="text-theme-danger text-sm">
+                  No se pudo mover. La fecha anterior sigue guardada.
+                </p>
+              )}
+              {toggleTaskStatusMutation.isError && (
+                <p role="alert" className="text-theme-danger text-sm">
+                  No se pudo cambiar el estado. Se restauró el estado anterior.
+                </p>
+              )}
+            </div>
+          </Modal>
+        )}
+      </div>
+    </QueryState>
   );
 }
