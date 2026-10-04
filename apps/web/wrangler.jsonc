@@ -4,9 +4,9 @@
   "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
-  // lucasramos.uy/dashboard sirve web + API. La ruta es más específica que la del Worker
+  // lucasramos.uy/panel sirve web + API. La ruta es más específica que la del Worker
   // "proxy" del dominio, así que Cloudflare la resuelve primero.
-  "routes": [{ "pattern": "lucasramos.uy/dashboard*", "zone_name": "lucasramos.uy" }],
+  "routes": [{ "pattern": "lucasramos.uy/panel*", "zone_name": "lucasramos.uy" }],
   "workers_dev": false,
   // Sync diario del iCal: 00:00 de Montevideo = 03:00 UTC.
   // Resumen de Telegram: 07:00 de Montevideo = 10:00 UTC (ver apps/api/src/cron.ts).
