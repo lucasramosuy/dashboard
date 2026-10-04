@@ -181,20 +181,20 @@ Web y API corren en un solo **Cloudflare Worker** (plan free) en `lucasramos.uy/
 
 `.github/workflows/deploy.yml` corre en cada push a `prod` (o a mano desde Actions): migra Turso, hace el build y publica con wrangler. Secrets del repo que necesita:
 
-| Secret                       | Para qué                                                   |
-| ---------------------------- | ---------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                         |
-| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                       |
-| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                      |
-| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                      |
-| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)                  |
+| Secret                       | Para qué                                               |
+| ---------------------------- | ------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`       | Publicar el Worker                                     |
+| `CLOUDFLARE_ACCOUNT_ID`      | Cuenta de Cloudflare                                   |
+| `TURSO_DATABASE_URL`         | Base (se sube como secret del Worker)                  |
+| `TURSO_AUTH_TOKEN`           | Base (se sube como secret del Worker)                  |
+| `BETTER_AUTH_SECRET`         | Sesiones (se sube como secret del Worker)              |
 | `ADMIN_EMAILS`               | Emails con acceso a `/panel/admin` (secret del Worker) |
-| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal                |
-| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)                |
-| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)              |
-| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                       |
-| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)         |
-| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                          |
+| `BACKUP_PASSPHRASE`          | Clave con la que se cifra el backup semanal            |
+| `TELEGRAM_BOT_TOKEN`         | Token del bot de avisos (secret del Worker)            |
+| `TELEGRAM_CHAT_ID`           | Chat de Telegram de Lucas (secret del Worker)          |
+| `SENTRY_AUTH_TOKEN`          | Opcional, sourcemaps                                   |
+| `TURSO_PREVIEW_DATABASE_URL` | Base demo del preview por PR (no la de producción)     |
+| `TURSO_PREVIEW_AUTH_TOKEN`   | Token de la base demo del preview                      |
 
 ### Preview por PR
 
