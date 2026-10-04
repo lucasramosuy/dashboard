@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import { cn, formatDate } from "../src/lib/utils";
+import { cn } from "../src/lib/utils";
+import { formatDate } from "../src/lib/format";
 
 describe("utils", () => {
   describe("cn", () => {
@@ -43,11 +44,9 @@ describe("utils", () => {
       { description: "from a string", input: "2024-03-12T12:00:00Z" },
       { description: "from a Date object", input: new Date("2024-03-12T12:00:00Z") },
     ])("formats date correctly $description", ({ input }) => {
-      // This will use local timezone, so output depends on the timezone.
-      // We will match regex instead of hardcoding text to prevent flakiness.
-      // Output format for es-UY is like "12 mar. 2024" (dd mmm yyyy).
-      const formatted = formatDate(input);
-      expect(formatted).toMatch(/\d{2} [a-z]{3}\.? \d{4}/i);
+      // Mediodía UTC conserva el día tanto en Uruguay como en UTC.
+      // El formato canónico es numérico es-UY, no el antiguo mes abreviado.
+      expect(formatDate(input)).toBe("12/03/2024");
     });
   });
 });
