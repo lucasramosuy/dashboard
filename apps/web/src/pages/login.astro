@@ -2,23 +2,17 @@
 import Base from "../layouts/Base.astro";
 import { LoginPage } from "../components/auth/LoginPage";
 import { ThemeToggle } from "../components/layout/ThemeToggle";
+import { Wordmark } from "../components/layout/Wordmark";
+import "../components/auth/LoginForm.css";
 ---
 
 <Base title="Iniciar Sesión">
-  <div
-    style="
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: var(--dash-bg);
-  "
-  >
-    <div style="width: 100%; max-width: 400px;">
-      <div style="position:fixed; top:1rem; right:1rem; z-index:100;">
-        <ThemeToggle client:only="react" variant="floating" />
-      </div>
-      <LoginPage client:only="react" />
-    </div>
+  <div class="login-page">
+    <header class="login-header">
+      <Wordmark />
+      <div class="login-theme"><ThemeToggle client:only="react" variant="floating" /></div>
+    </header>
+    <main class="login-main"><LoginPage client:only="react" /></main>
+    <footer class="login-footer"><span>UC / TAREAS / PRÁCTICAS</span><span>panel.</span></footer>
   </div>
 </Base>
