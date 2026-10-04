@@ -50,7 +50,7 @@ jobs:
 
       # Sube los secrets del Worker y publica (rutas y cron salen de wrangler.jsonc)
       - name: Deploy a Cloudflare
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
