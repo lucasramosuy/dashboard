@@ -2,14 +2,27 @@
 @config "../../tailwind.config.mjs";
 
 /* ============================================================
-   ZENITH DESIGN SYSTEM — theme.css (Tailwind v4)
-   Paleta: Neutral Warm Slate · Sobria · Contemporánea
-   Fase 1: Estandarización de Fundamentos (Design Tokens)
+   panel. — sistema de diseño (brand kit lucasramos.uy)
+   Papel + tinta + un acento (pizarra). Space Grotesk + DM Mono.
    ============================================================ */
 @theme {
-  /* Mapeo de tokens Zenith a clases Tailwind v4 */
+  /* Neutros cálidos: reemplazan la escala zinc de Tailwind en todo el producto */
+  --color-zinc-50: #f6f5f1;
+  --color-zinc-100: #eceae4;
+  --color-zinc-200: #e3e1da;
+  --color-zinc-300: #d2d0c8;
+  --color-zinc-400: #8a8f94;
+  --color-zinc-500: #666b70;
+  --color-zinc-600: #4d5257;
+  --color-zinc-700: #353b41;
+  --color-zinc-800: #252a2e;
+  --color-zinc-900: #161a1d;
+  --color-zinc-950: #0f1214;
+
+  /* Mapeo de tokens a clases Tailwind v4 */
   --color-theme-bg: var(--theme-bg);
   --color-theme-card-bg: var(--theme-card-bg);
+  --color-theme-soft: var(--theme-soft);
   --color-theme-text: var(--theme-text);
   --color-theme-text-muted: var(--theme-text-muted);
   --color-theme-border: var(--theme-border);
@@ -64,39 +77,42 @@
     --z-modal: 300;
     --z-toast: 400;
 
-    /* Variables CSS para compatibilidad dark mode (v4 bridge) */
-    --theme-bg: var(--color-surface-secondary);
-    --theme-card-bg: var(--color-surface);
-    --theme-text: var(--color-content);
-    --theme-text-muted: var(--color-content-secondary);
-    --theme-border: #e5e5e2;
-    --theme-primary: var(--color-content);
-    --theme-accent: #5c5c56;
-    --theme-danger: #922b21;
-    --theme-danger-light: #fdf3f2;
-    --theme-success: #1a7a52;
-    --theme-success-light: #f2faf6;
-    --theme-warning: #9a6200; /* AA: 5.1:1 sobre blanco (antes #b37400, 3.88:1) */
-    --theme-warning-light: #fff8e1;
-    --theme-info: #1d5fa8;
-    --theme-info-light: #eef5fd;
+    /* Claro: papel + tinta + pizarra */
+    --theme-bg: #f6f5f1;
+    --theme-card-bg: #fcfbf8;
+    --theme-soft: #e9ecee;
+    --theme-text: #1b1f24;
+    --theme-text-muted: #666b70;
+    --theme-border: #e3e1da;
+    --theme-primary: #1b1f24;
+    --theme-accent: #3d6b8e;
+    --theme-success: #2f6f55;
+    --theme-warning: #946017;
+    --theme-danger: #9a3b32;
+    --theme-info: #3d6b8e;
+    --theme-success-light: color-mix(in srgb, var(--theme-success) 12%, var(--theme-card-bg));
+    --theme-warning-light: color-mix(in srgb, var(--theme-warning) 12%, var(--theme-card-bg));
+    --theme-danger-light: color-mix(in srgb, var(--theme-danger) 11%, var(--theme-card-bg));
+    --theme-info-light: color-mix(in srgb, var(--theme-accent) 12%, var(--theme-card-bg));
   }
 
   [data-theme="dark"] {
-    --theme-bg: var(--color-surface-dark);
-    --theme-card-bg: var(--color-surface-dark-secondary);
-    --theme-text: var(--color-content-dark);
-    --theme-text-muted: var(--color-content-dark-secondary);
-    --theme-border: #252522;
-    --theme-primary: var(--color-content-dark);
-    --theme-danger-light: #2d0f0c;
-    --theme-success-light: #0a2218;
-    --theme-warning: #ffb300;
-    --theme-warning-light: #2d2200;
-    --theme-danger: #f87171;
-    --theme-success: #4ade9a;
-    --theme-info: #7db8f7;
-    --theme-info-light: #0c1d33;
+    --theme-bg: #0f1214;
+    --theme-card-bg: #161a1d;
+    --theme-soft: #1f2529;
+    --theme-text: #eceae4;
+    --theme-text-muted: #9a9ea1;
+    --theme-border: #252a2e;
+    --theme-primary: #eceae4;
+    --theme-accent: #8db5d3;
+    --theme-success: #7fc3a2;
+    --theme-warning: #e0b068;
+    --theme-danger: #e08a80;
+    --theme-info: #8db5d3;
+    --theme-success-light: color-mix(in srgb, var(--theme-success) 14%, var(--theme-card-bg));
+    --theme-warning-light: color-mix(in srgb, var(--theme-warning) 14%, var(--theme-card-bg));
+    --theme-danger-light: color-mix(in srgb, var(--theme-danger) 14%, var(--theme-card-bg));
+    --theme-info-light: color-mix(in srgb, var(--theme-accent) 14%, var(--theme-card-bg));
   }
 
   body {
@@ -110,11 +126,44 @@
 
   /* Reset foco visible para accesibilidad */
   :focus-visible {
-    @apply outline-none ring-2 ring-zinc-900 ring-offset-2 dark:ring-zinc-100;
+    outline: 2px solid var(--theme-accent);
+    outline-offset: 2px;
   }
 
   table {
     border-collapse: collapse;
+  }
+}
+
+/* Eyebrow: DM Mono en mayúsculas, con numeración ("01 / PENDIENTES") */
+.eyebrow {
+  font-family: var(--font-dm-mono), monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted);
+}
+
+/* Palabra de acento en titulares: color, sin itálica */
+h1 em,
+h2 em {
+  font-style: normal;
+  color: var(--theme-accent);
+}
+
+/* Enlace secundario: subrayado fino en el acento */
+.link-accent {
+  color: var(--theme-text);
+  text-decoration: underline;
+  text-decoration-color: var(--theme-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+@media (hover: hover) {
+  .link-accent:hover {
+    color: var(--theme-accent);
   }
 }
 
