@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/core";
 import { logger } from "./lib/logger";
 // App de Hono sin dependencias de runtime: la usan el server de Bun (server.ts, dev y tests)
-// y el Worker de Cloudflare (apps/web/src/worker.ts), que la monta en /dashboard/api.
+// y el Worker de Cloudflare (apps/web/src/worker.ts), que la monta en /panel/api.
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
