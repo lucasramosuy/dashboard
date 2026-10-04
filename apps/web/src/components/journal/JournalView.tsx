@@ -64,7 +64,8 @@ export const JournalView: React.FC = () => {
     <>
       <div>
         <PageHeader
-          title="Diario de práctica"
+          eyebrow="Práctica"
+          title={<>Diario de <em>práctica</em>.</>}
           subtitle={`${history.length} entrada${history.length === 1 ? "" : "s"}`}
           actions={
             <input

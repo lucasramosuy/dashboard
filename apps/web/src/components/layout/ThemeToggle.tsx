@@ -14,15 +14,17 @@ export const ThemeToggle = ({ variant = "floating" }: { variant?: "sidebar" | "f
     return (
       <button
         onClick={toggleTheme}
-        aria-label="Toggle theme"
-        className="w-full flex items-center justify-start py-3 px-2 rounded-[10px] cursor-pointer bg-transparent border-none font-medium text-sm text-theme-text-muted hover:bg-theme-bg hover:text-theme-text group transition-colors theme-toggle-btn"
+        aria-label="Cambiar tema"
+        className="theme-toggle-btn"
       >
         <span className="sidebar-icon-item">
-          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+          {theme === "light" ? (
+            <Moon size={18} strokeWidth={1.75} />
+          ) : (
+            <Sun size={18} strokeWidth={1.75} />
+          )}
         </span>
-        <span className="sidebar-label transition-[max-width,opacity,margin] duration-200 overflow-hidden max-w-0 opacity-0 ml-0 group-hover:max-w-200px group-hover:opacity-100 group-hover:ml-3">
-          Cambiar tema
-        </span>
+        <span className="sidebar-label">{theme === "light" ? "Tema oscuro" : "Tema claro"}</span>
       </button>
     );
   }
@@ -30,8 +32,8 @@ export const ThemeToggle = ({ variant = "floating" }: { variant?: "sidebar" | "f
   return (
     <button
       onClick={toggleTheme}
-      aria-label="Toggle theme"
-      className="w-11 h-11 rounded-[10px] bg-theme-card-bg border border-theme-border shadow-[0_4px_12px_rgba(0,0,0,0.12)] flex items-center justify-center cursor-pointer hover:bg-theme-border hover:scale-110 active:scale-95 transition-all duration-200"
+      aria-label="Cambiar tema"
+      className="w-10 h-10 rounded-lg bg-transparent border border-theme-border text-theme-text flex items-center justify-center cursor-pointer active:scale-95 transition-colors [@media(hover:hover)]:hover:border-theme-accent"
     >
       {theme === "light" ? <Moon size={20} strokeWidth={2} /> : <Sun size={20} strokeWidth={2} />}
     </button>

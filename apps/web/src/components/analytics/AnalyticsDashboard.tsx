@@ -105,7 +105,7 @@ export const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div>
-      <PageHeader title="Analíticas" subtitle="Tu progreso, notas y asistencia" />
+      <PageHeader eyebrow="Analíticas" title={<>Tu <em>progreso</em>.</>} subtitle="Notas y asistencia" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <StatTile label="Completadas" value={`${done}/${tasks.length}`} hint={tasks.length ? `${Math.round((done / tasks.length) * 100)}% del total` : undefined} />
@@ -132,7 +132,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 <ReferenceLine x={75} stroke={theme.data.warning} strokeDasharray="4 4" label={{ value: "75%", fill: theme.data.warning, fontSize: 11, position: "top" }} />
                 <Bar isAnimationActive={!reducedMotion} dataKey="asistencia" radius={[0, 6, 6, 0]} barSize={18}>
                   {attendanceData.map((d) => (
-                    <Cell key={d.name} fill={d.status === "danger" ? "#dc2626" : d.status === "warning" ? theme.data.warning : theme.data.success} />
+                    <Cell key={d.name} fill={d.status === "danger" ? theme.data.danger : d.status === "warning" ? theme.data.warning : theme.data.success} />
                   ))}
                 </Bar>
               </BarChart>
