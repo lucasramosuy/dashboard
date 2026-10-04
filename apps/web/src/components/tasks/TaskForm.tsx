@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { Task, Subject } from "@dashboard/shared-types";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
+import { url } from "@/lib/utils";
 import { Select } from "../ui/Select";
 
 interface Props {
@@ -42,6 +43,7 @@ export const TaskForm: React.FC<Props> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!subjects.length || !subjectId) return;
     await onSubmit({
       title,
       subject_id: subjectId,
@@ -56,6 +58,19 @@ export const TaskForm: React.FC<Props> = ({
 
   return (
     <form onSubmit={handleSubmit}>
+      {!subjects.length && (
+        <section role="status" className="mb-4 rounded-lg border border-theme-border p-4">
+          <p className="m-0 mb-3 text-sm text-theme-text-muted">
+            Necesitás una UC para guardar esta tarea. Tu borrador sigue acá.
+          </p>
+          <a
+            className="text-theme-accent inline-flex min-h-11 items-center"
+            href={url("/subjects")}
+          >
+            Crear UC
+          </a>
+        </section>
+      )}
       <div className="mb-4">
         <Input
           id="title"
@@ -184,7 +199,7 @@ export const TaskForm: React.FC<Props> = ({
         <Button variant="ghost" type="button" onClick={onCancel} disabled={loading}>
           Cancelar
         </Button>
-        <Button variant="primary" type="submit" isLoading={loading}>
+        <Button variant="primary" type="submit" isLoading={loading} disabled={!subjects.length}>
           {initialData ? "Actualizar" : "Crear"}
         </Button>
       </div>
