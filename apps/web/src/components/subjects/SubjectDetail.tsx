@@ -11,12 +11,14 @@ import {
   useAbsencesBySubject,
   useCreateAbsence,
   useDeleteAbsence,
+  useJournals,
 } from "../../hooks/useDashboardQueries";
 
 import { BackButton } from "../navigation/BackButton";
 import { SubjectDetailSkeleton } from "../ui/Skeleton";
 import { Plus, Trash2 } from "lucide-react";
-import type { Subject } from "@dashboard/shared-types";
+import { subjectHealth, type Subject } from "@dashboard/shared-types";
+import { HealthBadge, HealthReasons } from "./SubjectHealth";
 import { PageHeader, Card, StatTile, ProgressBar } from "../ui/PageHeader";
 import { IconButton } from "../ui/IconButton";
 import { Button } from "../ui/Button";
@@ -26,6 +28,7 @@ import {
   toLocalDay,
   formatDay,
   formatDayShort,
+  dueLabel,
   daysUntil,
   todayKey,
 } from "../../lib/format";
@@ -46,6 +49,7 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const { data: tasks = [], isLoading: loadingTasks } = tasksQuery;
   const absencesQuery = useAbsencesBySubject(id);
   const { data: absences = [], isLoading: loadingAbsences } = absencesQuery;
+  const { data: journals = [] } = useJournals();
   const createAbsence = useCreateAbsence();
   const deleteAbsence = useDeleteAbsence();
 
@@ -105,6 +109,11 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
   const gradeAvg = (subject as Subject & { gradeAvg?: number | null }).gradeAvg ?? null;
   const graded = tasks.filter((t) => t.grade != null);
   const pendingTasks = tasks.filter((t) => t.status !== "done");
+  const health = subjectHealth({ subject, absences, tasks, today: todayKey() });
+  const subjectJournals = journals
+    .filter((j) => j.subject_id === id)
+    .sort((a, b) => toLocalDay(b.date).getTime() - toLocalDay(a.date).getTime())
+    .slice(0, 5);
   const sortedAbsences = [...absences].sort(
     (a, b) => toLocalDay(b.date).getTime() - toLocalDay(a.date).getTime(),
   );
@@ -119,17 +128,27 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
           <PageHeader
             back={<BackButton fallback={url("/subjects")} />}
             title={subject.name}
-            badge={
-              <StatusBadge variant={riskVariant}>
-                {riskVariant === "success"
-                  ? "Asistencia al día"
-                  : riskVariant === "warning"
-                    ? "Cerca del límite"
-                    : "Límite superado"}
-              </StatusBadge>
-            }
+            badge={<HealthBadge level={health.level} empty={health.empty} />}
             subtitle={`${subject.track ? (subject.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"} · ${subject.total_classes} clases`}
           />
+
+          {(health.reasons.length > 0 || health.nextTask) && (
+            <div className="mb-6 flex flex-col gap-2">
+              <HealthReasons health={health} />
+              {health.nextTask && (
+                <p className="m-0 text-sm text-theme-text-muted">
+                  Próxima entrega:{" "}
+                  <a
+                    href={url(`/tasks/${health.nextTask.slug || health.nextTask.id}`)}
+                    className="link-accent font-medium"
+                  >
+                    {health.nextTask.title}
+                  </a>{" "}
+                  · {dueLabel(health.nextTask.due_date)}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <StatTile
@@ -321,6 +340,34 @@ export const SubjectDetail: React.FC<Props> = ({ id }) => {
                               : "Pendiente"}
                         </StatusBadge>
                       )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card
+              title="Prácticas"
+              action={
+                <a href={url("/journal")} className="link-accent text-sm font-medium">
+                  Diario
+                </a>
+              }
+            >
+              {subjectJournals.length === 0 ? (
+                <p className="m-0 text-sm text-theme-text-muted">
+                  Todavía no escribiste el diario de esta UC.
+                </p>
+              ) : (
+                <ul className="list-none p-0 m-0" aria-label="Diario de práctica de la UC">
+                  {subjectJournals.map((j) => (
+                    <li key={j.id} className="py-2.5 border-b border-theme-border last:border-b-0">
+                      <span className="block text-xs text-theme-text-muted">
+                        {formatDayShort(j.date)}
+                      </span>
+                      <span className="block text-sm text-theme-text line-clamp-2">
+                        {j.content}
+                      </span>
                     </li>
                   ))}
                 </ul>
