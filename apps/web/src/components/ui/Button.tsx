@@ -31,7 +31,7 @@ export function Button({
   };
 
   const sizes = {
-    sm: "h-9 px-3.5 text-xs",
+    sm: "h-11 px-3.5 text-xs",
     md: "h-11 px-5 text-sm",
     lg: "h-12 px-6 text-base",
   };
