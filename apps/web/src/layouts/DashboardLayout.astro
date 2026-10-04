@@ -70,11 +70,19 @@ const pathname =
     background: var(--theme-bg);
   }
 
+  /* El rail va fijo: reservar su espacio para que al expandirse no empuje el contenido */
+  @media (min-width: 769px) {
+    .app-shell {
+      padding-left: 5.5rem; /* 72px de rail + 1rem de margen */
+    }
+  }
+
   /* ===== SIDEBAR BENTO ===== */
   .app-sidebar {
-    flex-shrink: 0;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
     width: 72px;
-    margin: 1rem 0 1rem 1rem;
     height: calc(100vh - 2rem);
     background: var(--theme-card-bg);
     border: 1px solid var(--theme-border);
@@ -85,14 +93,14 @@ const pathname =
     flex-direction: column;
     gap: 0.25rem;
     overflow: hidden;
-    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    position: sticky;
-    top: 1rem;
+    transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 40;
   }
 
-  .app-sidebar:hover {
-    width: 220px;
+  @media (hover: hover) {
+    .app-sidebar:hover {
+      width: 220px;
+    }
   }
 
   /* Brand */
@@ -135,10 +143,16 @@ const pathname =
       color 0.15s;
   }
 
-  .app-nav-link:hover,
   .app-nav-link.active {
     background: var(--theme-bg);
     color: var(--theme-text);
+  }
+
+  @media (hover: hover) {
+    .app-nav-link:hover {
+      background: var(--theme-bg);
+      color: var(--theme-text);
+    }
   }
 
   .app-nav-link.active {
@@ -162,15 +176,17 @@ const pathname =
     opacity: 0;
     margin-left: 0;
     transition:
-      max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.15s ease,
-      margin-left 0.2s ease;
+      max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .app-sidebar:hover .sidebar-label {
-    max-width: 200px;
-    opacity: 1;
-    margin-left: 0.75rem;
+  @media (hover: hover) {
+    .app-sidebar:hover .sidebar-label {
+      max-width: 200px;
+      opacity: 1;
+      margin-left: 0.75rem;
+    }
   }
 
   /* Bottom */
@@ -180,41 +196,19 @@ const pathname =
     margin-top: auto;
   }
 
-  /* Grid Layout for Expanded Sidebar */
+  /* Acciones siempre en columna: sin cambios de display al expandir (no animables) */
   .sidebar-actions-container {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    transition: all 0.3s ease;
-  }
-
-  .app-sidebar:hover .sidebar-actions-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-  }
-
-  /* Profile button spans 2 columns and is centered */
-  .app-sidebar:hover .profile-btn {
-    grid-column: span 2;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  /* Theme and Logout buttons side by side in expanded state */
-  .app-sidebar:hover .theme-toggle-btn,
-  .app-sidebar:hover .logout-btn {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    padding: 0.75rem 0.5rem;
   }
 
   /* Hide labels for toggle and logout in expanded state */
-  .app-sidebar:hover .theme-toggle-btn .sidebar-label,
-  .app-sidebar:hover .logout-btn .sidebar-label {
-    display: none !important;
+  @media (hover: hover) {
+    .app-sidebar:hover .theme-toggle-btn .sidebar-label,
+    .app-sidebar:hover .logout-btn .sidebar-label {
+      display: none !important;
+    }
   }
 
   /* Sidebar Actions internal button consistency */
@@ -229,21 +223,25 @@ const pathname =
     text-decoration: none;
     color: var(--theme-text-muted);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
     cursor: pointer;
     background: transparent;
     border: none;
   }
 
-  .profile-btn:hover,
-  .logout-btn:hover,
-  .theme-toggle-btn:hover {
-    background: var(--theme-bg);
-    color: var(--theme-text);
-  }
+  @media (hover: hover) {
+    .profile-btn:hover,
+    .logout-btn:hover,
+    .theme-toggle-btn:hover {
+      background: var(--theme-bg);
+      color: var(--theme-text);
+    }
 
-  .logout-btn:hover {
-    color: var(--theme-danger, #ef4444);
+    .logout-btn:hover {
+      color: var(--theme-danger, #ef4444);
+    }
   }
 
   /* ===== MAIN ===== */

@@ -96,7 +96,7 @@
     --theme-danger-light: #fdf3f2;
     --theme-success: #1a7a52;
     --theme-success-light: #f2faf6;
-    --theme-warning: #b37400;
+    --theme-warning: #9a6200; /* AA: 5.1:1 sobre blanco (antes #b37400, 3.88:1) */
     --theme-warning-light: #fff8e1;
     --theme-info: #1d5fa8;
     --theme-info-light: #eef5fd;
@@ -141,4 +141,16 @@
 /* Fix native date picker icon visibility in dark mode */
 [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
+}
+
+/* Respeta la preferencia del sistema sin cambiar los estilos ni los estados finales. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
