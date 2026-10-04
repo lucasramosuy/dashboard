@@ -22,6 +22,7 @@ import {
   useDeleteTask,
 } from "../../hooks/useDashboardQueries";
 import { url } from "@/lib/utils";
+import { Select } from "../ui/Select";
 
 const STATUS_LABELS: Record<Task["status"], string> = {
   todo: "Pendiente",
@@ -231,19 +232,16 @@ export const TaskList: React.FC = () => {
               aria-label="Buscar tareas"
               className="h-10 px-3.5 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm flex-1 min-w-0 sm:w-44 focus:outline-none focus:ring-2 focus:ring-theme-accent/15"
             />
-            <select
+            <Select
               value={subjectFilter}
-              onChange={(e) => setSubjectFilter(e.target.value)}
-              aria-label="Filtrar por UC"
-              className="h-10 px-3 rounded-lg border border-theme-border bg-theme-card-bg text-theme-text text-sm max-w-40 min-w-0"
-            >
-              <option value="">Todas las UC</option>
-              {subjects.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSubjectFilter}
+              ariaLabel="Filtrar por UC"
+              className="w-40 min-w-0 shrink-0"
+              options={[
+                { value: "", label: "Todas las UC" },
+                ...subjects.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
           </div>
         </div>
 
