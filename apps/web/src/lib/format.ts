@@ -2,6 +2,11 @@
  * Utilidades de formato para Uruguay (es-UY).
  * Fechas: DD/MM/YYYY · Moneda: UYU · Separador decimal: coma
  */
+import type { AttendanceInfo } from "@dashboard/shared-types";
+
+export { attendanceInfo } from "@dashboard/shared-types";
+export type { AttendanceInfo } from "@dashboard/shared-types";
+
 const LOCALE = "es-UY";
 
 export function formatDate(date: string | Date): string {
@@ -78,15 +83,19 @@ export function todayKey(): string {
 }
 
 export function formatDay(date: string | Date): string {
-  return new Intl.DateTimeFormat(LOCALE, { day: "2-digit", month: "2-digit", year: "numeric" }).format(
-    toLocalDay(date),
-  );
+  return new Intl.DateTimeFormat(LOCALE, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(toLocalDay(date));
 }
 
 export function formatDayShort(date: string | Date): string {
-  return new Intl.DateTimeFormat(LOCALE, { weekday: "short", day: "numeric", month: "short" }).format(
-    toLocalDay(date),
-  );
+  return new Intl.DateTimeFormat(LOCALE, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(toLocalDay(date));
 }
 
 export function formatDayLong(date: string | Date): string {
@@ -116,24 +125,6 @@ export function dueLabel(date: string | Date): string {
 /* ------------------------------------------------------------------
  * Asistencia CFE: mínimo 75% → máximo de faltas = 25% de las clases.
  * ------------------------------------------------------------------ */
-export interface AttendanceInfo {
-  percentage: number;
-  absences: number;
-  maxAbsences: number;
-  remaining: number;
-  status: "ok" | "warning" | "danger";
-}
-
-export function attendanceInfo(totalClasses: number, absenceValue: number): AttendanceInfo {
-  const maxAbsences = Math.floor(totalClasses * 0.25 * 2) / 2;
-  const remaining = Math.max(0, maxAbsences - absenceValue);
-  const percentage =
-    totalClasses > 0 ? Math.max(0, Math.round(((totalClasses - absenceValue) / totalClasses) * 100)) : 100;
-  const status: AttendanceInfo["status"] =
-    absenceValue >= maxAbsences && totalClasses > 0 ? "danger" : remaining <= 2 && totalClasses > 0 ? "warning" : "ok";
-  return { percentage, absences: absenceValue, maxAbsences, remaining, status };
-}
-
 export function remainingLabel(info: AttendanceInfo): string {
   if (info.status === "danger") return "Superaste el límite de faltas";
   const r = info.remaining;
