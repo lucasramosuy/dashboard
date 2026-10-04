@@ -21,12 +21,12 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/", icon: LayoutDashboard, label: "Inicio" },
   { href: "/subjects", icon: BookOpen, label: "UC" },
   { href: "/tasks", icon: CheckSquare, label: "Tareas" },
   { href: "/planner", icon: Calendar, label: "Planner" },
   { href: "/journal", icon: PenSquare, label: "Práctica" },
   { href: "/schoology", icon: Link2, label: "Schoology" },
   { href: "/analytics", icon: BarChart3, label: "Analíticas" },
-  { href: "/feedback", icon: Bug, label: "Reportar Bug" },
+  { href: "/feedback", icon: Bug, label: "Reportar un bug" },
 ];
