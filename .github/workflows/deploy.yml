@@ -1,6 +1,6 @@
 name: Deploy
 
-# Publica web + API (un solo Worker) en lucasramos.uy/dashboard cada vez que se mergea a prod.
+# Publica web + API (un solo Worker) en lucasramos.uy/panel cada vez que se mergea a prod.
 on:
   push:
     branches: [prod]
@@ -81,7 +81,7 @@ jobs:
       - name: Smoke test contra producción
         env:
           SMOKE_KEY: ${{ secrets.SMOKE_KEY }}
-        run: bash scripts/smoke.sh https://lucasramos.uy/dashboard
+        run: bash scripts/smoke.sh https://lucasramos.uy/panel
 
       # Aviso por Telegram si cualquier paso anterior falló (no depende del checkout)
       - name: Avisar por Telegram
