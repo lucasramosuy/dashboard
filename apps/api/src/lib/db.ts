@@ -154,6 +154,12 @@ export async function initDB() {
       count INTEGER NOT NULL,
       lastRequest INTEGER NOT NULL
     )`,
+      `CREATE TABLE IF NOT EXISTS login_attempt (
+      email TEXT PRIMARY KEY,
+      failures INTEGER NOT NULL DEFAULT 0,
+      locked_until INTEGER,
+      updated_at INTEGER NOT NULL
+    )`,
       `CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
