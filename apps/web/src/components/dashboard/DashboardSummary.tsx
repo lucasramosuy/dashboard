@@ -3,7 +3,7 @@ import { QueryState } from "../ui/QueryState";
 import { readState, firstRunStep } from "../../lib/query-state";
 import React from "react";
 import { Check, ArrowRight } from "lucide-react";
-import type { Task } from "@dashboard/shared-types";
+import { subjectHealth, type Task } from "@dashboard/shared-types";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   useTasks,
@@ -13,7 +13,14 @@ import {
   useUpdateTask,
 } from "../../hooks/useDashboardQueries";
 import { PageHeader, Card, StatTile, ProgressBar, Chip, TextLink } from "../ui/PageHeader";
-import { attendanceInfo, average, daysUntil, dueLabel, toLocalDay } from "../../lib/format";
+import {
+  attendanceInfo,
+  average,
+  daysUntil,
+  dueLabel,
+  toLocalDay,
+  todayKey,
+} from "../../lib/format";
 import { url } from "@/lib/utils";
 
 export const DashboardSummary: React.FC = () => {
@@ -63,7 +70,26 @@ export const DashboardSummary: React.FC = () => {
       return { subject: s, info: attendanceInfo(s.total_classes, value) };
     })
     .sort((a, b) => a.info.remaining - b.info.remaining);
-  const atRisk = attendance.filter((a) => a.info.status !== "ok");
+  const healths = subjects
+    .map((s) => ({
+      subject: s,
+      health: subjectHealth({
+        subject: s,
+        absences: absences.filter((a) => a.subject_id === s.id),
+        tasks: tasks.filter((t) => t.subject_id === s.id),
+        today: todayKey(),
+      }),
+    }))
+    .sort(
+      (a, b) =>
+        ["risk", "attention", "ok"].indexOf(a.health.level) -
+        ["risk", "attention", "ok"].indexOf(b.health.level),
+    );
+  const riskCount = healths.filter((h) => h.health.level === "risk").length;
+  const attentionCount = healths.filter((h) => h.health.level === "attention").length;
+  const worst = healths[0]?.health.reasons[0]
+    ? `${healths[0].subject.name}: ${healths[0].health.reasons[0].text}`
+    : null;
 
   const weekEvents = events
     .filter((e) => {
@@ -156,24 +182,22 @@ export const DashboardSummary: React.FC = () => {
             href={url("/tasks")}
           />
           <StatTile
-            label="03 / Asistencia"
+            label="03 / Salud de las UC"
             value={
-              !subjects.length ? "Sin UC" : atRisk.length ? `${atRisk.length} en riesgo` : "Al día"
+              !subjects.length
+                ? "Sin UC"
+                : riskCount
+                  ? `${riskCount} en riesgo`
+                  : attentionCount
+                    ? `${attentionCount} con atención`
+                    : "Al día"
             }
             hint={
               !subjects.length
-                ? "Creá una UC para seguir la asistencia"
-                : atRisk[0]
-                  ? atRisk[0].subject.name
-                  : "Ninguna UC cerca del límite"
+                ? "Creá una UC para seguir su salud"
+                : (worst ?? "Ninguna UC necesita atención")
             }
-            tone={
-              atRisk.some((a) => a.info.status === "danger")
-                ? "danger"
-                : atRisk.length
-                  ? "warning"
-                  : "default"
-            }
+            tone={riskCount ? "danger" : attentionCount ? "warning" : "default"}
             chip
             href={url("/subjects")}
           />
@@ -287,7 +311,7 @@ export const DashboardSummary: React.FC = () => {
 
             <Card
               title="Esta semana"
-              eyebrow="Planner"
+              eyebrow="Agenda"
               action={
                 <TextLink href={url("/planner")}>
                   Planner <ArrowRight size={14} />

@@ -12,9 +12,10 @@ import { TableSkeleton } from "../ui/Skeleton";
 import { BookOpen, Plus, Pencil, Trash2, ArrowRight } from "lucide-react";
 import { PageHeader, cardCls, ProgressBar, TextLink } from "../ui/PageHeader";
 import { IconButton } from "../ui/IconButton";
-import { attendanceInfo, remainingLabel, average } from "../../lib/format";
+import { attendanceInfo, remainingLabel, average, todayKey } from "../../lib/format";
 import { useToast } from "../../hooks/useToast";
-import type { Subject } from "@dashboard/shared-types";
+import { subjectHealth, type Subject } from "@dashboard/shared-types";
+import { HealthBadge } from "./SubjectHealth";
 import {
   useSubjects,
   useCreateSubject,
@@ -140,6 +141,12 @@ export const SubjectList: React.FC = () => {
                 const info = attendanceInfo(s.total_classes, absValue);
                 const subjectTasks = tasks.filter((t) => t.subject_id === s.id);
                 const pendingCount = subjectTasks.filter((t) => t.status !== "done").length;
+                const health = subjectHealth({
+                  subject: s,
+                  absences: absences.filter((a) => a.subject_id === s.id),
+                  tasks: subjectTasks,
+                  today: todayKey(),
+                });
                 const avg = average(
                   subjectTasks.map((t) => t.grade).filter((g): g is number => g != null),
                 );
@@ -157,6 +164,14 @@ export const SubjectList: React.FC = () => {
                           {s.track ? (s.track === "anual" ? "Anual" : "Semestral") : "Sin régimen"}{" "}
                           · {s.total_classes} clases
                         </span>
+                        <div className="flex flex-col items-start gap-1.5">
+                          <HealthBadge level={health.level} empty={health.empty} />
+                          {health.reasons[0] && (
+                            <span className="text-xs text-theme-text-muted">
+                              {health.reasons[0].text}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 -mr-2 -mt-1">
                         <IconButton
