@@ -1,5 +1,6 @@
 // Verificación de Cloudflare Turnstile para el login y el registro.
 // Si falta TURNSTILE_SECRET_KEY (tests, local, preview) no se verifica nada.
+// Falla cerrado: si Cloudflare no responde o contesta con error, el login se rechaza.
 // El smoke test del deploy no puede resolver el widget: si manda x-smoke-key igual al
 // secret SMOKE_KEY del Worker, se saltea la verificación (el rate limit sigue aplicando).
 import { logger } from "./logger";
@@ -12,6 +13,9 @@ function safeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
+
+const UNAVAILABLE =
+  "No pudimos verificar que no seas un bot en este momento. Probá de nuevo en un minuto.";
 
 export type CaptchaResult = { ok: true } | { ok: false; error: string };
 
@@ -39,15 +43,21 @@ export async function checkCaptcha(headers: Headers): Promise<CaptchaResult> {
   try {
     res = await fetch(SITEVERIFY_URL, { method: "POST", body: form });
   } catch (err) {
-    // Si Cloudflare no responde, no dejamos a nadie afuera: se loguea y sigue
+    // Falla cerrado: sin respuesta de Cloudflare no se puede verificar, así que no se entra
     logger.error("[Turnstile] siteverify no respondió", err);
-    return { ok: true };
+    return { ok: false, error: UNAVAILABLE };
   }
   if (!res.ok) {
     logger.error(`[Turnstile] siteverify respondió ${res.status}`);
-    return { ok: true };
+    return { ok: false, error: UNAVAILABLE };
   }
-  const data = (await res.json()) as { success?: boolean };
+  let data: { success?: boolean };
+  try {
+    data = (await res.json()) as { success?: boolean };
+  } catch (err) {
+    logger.error("[Turnstile] siteverify devolvió algo ilegible", err);
+    return { ok: false, error: UNAVAILABLE };
+  }
   if (!data.success) {
     return {
       ok: false,

@@ -36,6 +36,7 @@ beforeEach(async () => {
     "session",
     "account",
     "verification",
+    "login_attempt",
     "user",
   ];
 
