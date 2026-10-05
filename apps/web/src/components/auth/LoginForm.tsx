@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, KeyRound } from "lucide-react";
 import { TURNSTILE_SITE_KEY } from "../../lib/captcha";
 import "./LoginForm.css";
 import { url } from "../../lib/utils";
 import { resetCaptcha } from "../../lib/captcha";
 import { Turnstile } from "./Turnstile";
+import { authClient } from "../../lib/auth-client";
 export const LoginForm: React.FC = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -39,6 +40,30 @@ export const LoginForm: React.FC = () => {
         err instanceof Error ? err.message : "Ocurrió un error. Por favor verificá tus datos.",
       );
       resetCaptcha();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Entrar con passkey: no pasa por el formulario ni por Turnstile (la passkey se
+  // verifica con el dispositivo). El backend marca la sesión como "con passkey".
+  const handlePasskey = async () => {
+    if (loading) return;
+    setError(null);
+    if (typeof window === "undefined" || !window.PublicKeyCredential) {
+      setError("Este navegador no soporta passkeys. Entrá con tu contraseña.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await authClient.signIn.passkey();
+      if (res?.error) {
+        setError("No se pudo verificar la passkey. Probá de nuevo o entrá con tu contraseña.");
+        return;
+      }
+      window.location.href = url("/");
+    } catch {
+      setError("No se pudo verificar la passkey. Probá de nuevo o entrá con tu contraseña.");
     } finally {
       setLoading(false);
     }
@@ -153,6 +178,23 @@ export const LoginForm: React.FC = () => {
           )}
         </button>
       </form>
+      {!isRegister && (
+        <div className="login-alt">
+          <p className="login-alt-label">
+            <span>o</span>
+          </p>
+          <button
+            type="button"
+            className="login-passkey"
+            onClick={handlePasskey}
+            disabled={loading}
+          >
+            <KeyRound size={17} aria-hidden="true" />
+            Entrar con passkey
+          </button>
+          <p className="login-security-note">Huella, cara o PIN del dispositivo. Sin contraseña.</p>
+        </div>
+      )}
       <p className="login-register">
         {isRegister ? "¿Ya tenés cuenta?" : "¿Tenés código de invitación?"}{" "}
         <button

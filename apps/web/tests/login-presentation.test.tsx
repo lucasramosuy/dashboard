@@ -20,6 +20,7 @@ test("login conserva campos, autocomplete y acceso al registro", async () => {
   expect(html).toContain('autoComplete="current-password"');
   expect(html).toContain("Crear cuenta");
   expect(html).toContain("login-security");
+  expect(html).toContain("Entrar con passkey");
   expect(html).not.toContain('id="name"');
   expect(html).not.toContain('id="inviteCode"');
 });

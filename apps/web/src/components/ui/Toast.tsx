@@ -34,7 +34,7 @@ export const Toast: React.FC<Props> = ({ message, type = "success", onClose }) =
   return (
     <div
       role="alert"
-      className={`fixed bottom-[--mobile-nav-height] md:bottom-8 right-4 md:right-8 z-50 w-full max-w-sm overflow-hidden rounded-xl border flex items-start gap-4 p-4 animate-in slide-in-from-bottom-5 fade-in duration-300 ${styles[type]}`}
+      className={`fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-50 w-full max-w-sm overflow-hidden rounded-xl border flex items-start gap-4 p-4 animate-in slide-in-from-bottom-5 fade-in duration-300 ${styles[type]}`}
       style={{ "--mobile-nav-height": "100px" } as React.CSSProperties}
     >
       {icons[type]}
