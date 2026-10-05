@@ -43,11 +43,21 @@ describe("checkCaptcha", () => {
     expect((await checkCaptcha(new Headers({ "x-captcha-response": "t" }))).ok).toBe(false);
   });
 
-  it("deja pasar si Cloudflare no responde", async () => {
+  it("falla cerrado si Cloudflare no responde", async () => {
     process.env.TURNSTILE_SECRET_KEY = "secreto";
     globalThis.fetch = (async () => {
       throw new Error("sin red");
     }) as unknown as typeof fetch;
-    expect((await checkCaptcha(new Headers({ "x-captcha-response": "t" }))).ok).toBe(true);
+    expect((await checkCaptcha(new Headers({ "x-captcha-response": "t" }))).ok).toBe(false);
+  });
+
+  it("falla cerrado si Cloudflare contesta con error o con basura", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "secreto";
+    globalThis.fetch = (async () =>
+      new Response("boom", { status: 500 })) as unknown as typeof fetch;
+    expect((await checkCaptcha(new Headers({ "x-captcha-response": "t" }))).ok).toBe(false);
+    globalThis.fetch = (async () =>
+      new Response("no es json", { status: 200 })) as unknown as typeof fetch;
+    expect((await checkCaptcha(new Headers({ "x-captcha-response": "t" }))).ok).toBe(false);
   });
 });
