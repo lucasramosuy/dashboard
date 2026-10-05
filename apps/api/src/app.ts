@@ -15,6 +15,7 @@ import { sentryTunnelRouter } from "./routes/sentry_tunnel";
 import { adminRouter } from "./routes/admin";
 import { auth } from "./lib/auth.better";
 import { checkCaptcha } from "./lib/turnstile";
+import { clearFailures, lockedMinutes, recordFailure } from "./lib/login-lock";
 import { z } from "zod";
 
 export const app = new Hono();
@@ -102,6 +103,31 @@ app.use("/api/auth/*", async (c, next) => {
   const result = await checkCaptcha(c.req.raw.headers);
   if (!result.ok) return c.json({ error: result.error, message: result.error }, 403);
   return next();
+});
+
+// Bloqueo por cuenta en el login con contraseña: después de varios intentos fallidos
+// seguidos con el mismo email, se frena un rato (ver lib/login-lock.ts).
+app.use("/api/auth/sign-in/email", async (c, next) => {
+  if (c.req.method !== "POST") return next();
+  let email = "";
+  try {
+    const body = (await c.req.raw.clone().json()) as { email?: unknown };
+    if (typeof body.email === "string") email = body.email;
+  } catch {
+    return next();
+  }
+  if (!email) return next();
+
+  const minutes = await lockedMinutes(email);
+  if (minutes > 0) {
+    const error = `Demasiados intentos fallidos. Probá de nuevo en ${minutes} ${minutes === 1 ? "minuto" : "minutos"}.`;
+    return c.json({ error, message: error }, 429);
+  }
+
+  await next();
+  const status = c.res.status;
+  if (status === 200) await clearFailures(email);
+  else if (status === 401 || status === 400) await recordFailure(email);
 });
 
 // Better Auth handler — captura todas las rutas de /api/auth/* EXCEPTO /register
