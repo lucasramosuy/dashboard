@@ -29,3 +29,8 @@ La API Hono y la web Astro/React comparten tipos en `packages/shared-types`. lib
 - Sesiones autenticadas y secretos protegidos; validación del lado servidor y CORS restringido. Sentry recibe errores; no revelar detalles internos en respuestas de error. La PWA tiene manifest pero no service worker: requiere conexión.
 - Automatización: cron iCal a las 03:00 UTC y resumen a las 10:00 UTC, equivalentes a medianoche y 07:00 de Montevideo en el horario actual. Backup semanal cifrado en artifact y prueba mensual de restore en base temporal; esta prueba no restaura producción.
 - Antes de integrar cambios de comportamiento, ejecutar CI (`bun run test`, `bun run check`, build) y smoke test tras deploy. El deploy a `prod` corre migraciones, build y publicación; un merge a `dev` no es publicación.
+
+
+## CRM fase 6: próxima acción
+
+La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
