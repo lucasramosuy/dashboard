@@ -43,4 +43,16 @@ describe("bloqueo por cuenta", () => {
     expect(await lockedMinutes(email, t0 + 60_000)).toBeGreaterThan(0);
     expect(await lockedMinutes(email, t0 + 16 * 60_000)).toBe(0);
   });
+  it("no pierde fallos simultáneos entre instancias", async () => {
+    const t0 = Date.now();
+    await Promise.all(Array.from({ length: MAX_FAILURES }, () => recordFailure(email, t0)));
+    expect(await lockedMinutes(email, t0)).toBe(15);
+  });
+
+  it("un fallo después de la ventana comienza de cero", async () => {
+    const t0 = Date.now();
+    for (let i = 0; i < MAX_FAILURES; i++) await recordFailure(email, t0);
+    await recordFailure(email, t0 + 16 * 60_000);
+    expect(await lockedMinutes(email, t0 + 16 * 60_000)).toBe(0);
+  });
 });
