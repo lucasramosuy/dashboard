@@ -43,3 +43,7 @@ fail-closed se conservan.
 ## CRM fase 6: próxima acción
 
 La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
+
+## CRM fase 8: feed DB/API
+
+Registro automático y atómico de cambios de UC, tareas, faltas y prácticas. No cuenta ediciones sin cambios ni inventa eventos anteriores a la migración. API autenticada aislada por usuario, ventana hoy/semana calendario Montevideo y límite 1-100 con indicador de recorte. Etiquetas acotadas, sin cuerpos privados. No introduce costos ni servicios nuevos; despliegue requiere la migración idempotente en Turso antes del Worker. La UI no forma parte de este PR de backend.
