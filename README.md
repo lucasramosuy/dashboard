@@ -233,3 +233,12 @@ Con `API_PROXY_URL` en `.dev.vars` la API se reenvía al server de Bun local. Oj
 ## Accesibilidad
 
 La interfaz respeta `prefers-reduced-motion`: elimina las transiciones y animaciones CSS y muestra los gráficos de Analíticas sin animación. Sigue la preferencia del sistema, sin ajuste propio.
+
+## Login: latencia y protección
+
+El login con contraseña navega al Inicio con la cookie emitida por Better Auth, sin
+refetch previo de sesión. La nueva página valida la sesión normalmente. El bloqueo
+por cuenta registra cada fallo con un UPSERT atómico en Turso (5 fallos, 15 minutos),
+sin lectura previa que pueda perder incrementos concurrentes. El reinicio tras un
+login correcto sigue siendo incondicional. El rate limit de Better Auth continúa
+en la base compartida; Turnstile falla cerrado. No se reemplaza por memoria local.
