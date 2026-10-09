@@ -10,7 +10,8 @@
   "workers_dev": false,
   // Sync diario del iCal: 00:00 de Montevideo = 03:00 UTC.
   // Resumen de Telegram: 07:00 de Montevideo = 10:00 UTC (ver apps/api/src/cron.ts).
-  "triggers": { "crons": ["0 3 * * *", "0 10 * * *"] },
+  // Resumen semanal privado en panel: domingo20UY =23UTC.
+  "triggers": { "crons": ["0 3 * * *", "0 10 * * *", "0 23 * * 0"] },
   "vars": {
     "NODE_ENV": "production",
     "BETTER_AUTH_URL": "https://lucasramos.uy",
