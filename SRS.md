@@ -30,6 +30,15 @@ La API Hono y la web Astro/React comparten tipos en `packages/shared-types`. lib
 - Automatización: cron iCal a las 03:00 UTC y resumen a las 10:00 UTC, equivalentes a medianoche y 07:00 de Montevideo en el horario actual. Backup semanal cifrado en artifact y prueba mensual de restore en base temporal; esta prueba no restaura producción.
 - Antes de integrar cambios de comportamiento, ejecutar CI (`bun run test`, `bun run check`, build) y smoke test tras deploy. El deploy a `prod` corre migraciones, build y publicación; un merge a `dev` no es publicación.
 
+## Ajuste de login (PR pendiente)
+
+Sin cambiar las protecciones: no refetchear la sesión antes de la navegación
+posterior al login con contraseña. Registrar fallos por cuenta mediante UPSERT
+atómico compartido, preservando el umbral de 5 y la ventana de 15 minutos. Mantener
+el DELETE incondicional tras un login correcto para limpiar también fallos que
+hayan llegado concurrentemente. El rate limit distribuido en DB y Turnstile
+fail-closed se conservan.
+
 
 ## CRM fase 6: próxima acción
 
