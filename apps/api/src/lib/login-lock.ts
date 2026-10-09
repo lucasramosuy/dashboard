@@ -20,20 +20,29 @@ export async function lockedMinutes(email: string, now = Date.now()): Promise<nu
 
 export async function recordFailure(email: string, now = Date.now()): Promise<void> {
   const key = norm(email);
-  const r = await db.execute({
-    sql: "SELECT failures, locked_until, updated_at FROM login_attempt WHERE email = ?",
-    args: [key],
-  });
-  const row = r.rows[0];
-  // Un bloqueo vencido o un último fallo de hace más que la ventana empieza de cero
-  const stale = !row || now - Number(row.updated_at) > LOCK_MINUTES * 60_000;
-  const failures = (stale ? 0 : Number(row.failures)) + 1;
-  const lockedUntil = failures >= MAX_FAILURES ? now + LOCK_MINUTES * 60_000 : null;
+  // Una sola operación distribuida evita leer y después sobrescribir el contador
+  // de otra instancia. La ventana y el umbral son los mismos que en #117.
   await db.execute({
-    sql: `INSERT INTO login_attempt (email, failures, locked_until, updated_at) VALUES (?, ?, ?, ?)
-          ON CONFLICT(email) DO UPDATE SET failures = excluded.failures,
-            locked_until = excluded.locked_until, updated_at = excluded.updated_at`,
-    args: [key, failures, lockedUntil, now],
+    sql: `INSERT INTO login_attempt (email, failures, locked_until, updated_at)
+          VALUES (?, 1, NULL, ?)
+          ON CONFLICT(email) DO UPDATE SET
+            failures = CASE WHEN ? - login_attempt.updated_at > ? THEN 1
+                            ELSE login_attempt.failures + 1 END,
+            locked_until = CASE
+              WHEN (CASE WHEN ? - login_attempt.updated_at > ? THEN 1
+                         ELSE login_attempt.failures + 1 END) >= ? THEN ?
+              ELSE NULL END,
+            updated_at = excluded.updated_at`,
+    args: [
+      key,
+      now,
+      now,
+      LOCK_MINUTES * 60_000,
+      now,
+      LOCK_MINUTES * 60_000,
+      MAX_FAILURES,
+      now + LOCK_MINUTES * 60_000,
+    ],
   });
 }
 
