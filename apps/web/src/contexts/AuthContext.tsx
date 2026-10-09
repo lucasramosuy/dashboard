@@ -53,7 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, pass: string) => {
     try {
       await api.login(email, pass);
-      await refetch();
+      // LoginForm navega enseguida al inicio: la cookie ya quedó guardada.
+      // La nueva página valida la sesión; no duplicar el viaje antes de navegar.
     } catch (err: unknown) {
       const error = toError(err);
       logger.error("[Auth Error] Error al loguear:", error);
