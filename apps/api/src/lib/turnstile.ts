@@ -15,7 +15,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 const UNAVAILABLE =
-  "No pudimos verificar que no seas un bot en este momento. Probá de nuevo en un minuto.";
+  "No pude verificar que no seas un bot en este momento. Probá de nuevo en un minuto.";
 
 export type CaptchaResult = { ok: true } | { ok: false; error: string };
 
@@ -61,7 +61,7 @@ export async function checkCaptcha(headers: Headers): Promise<CaptchaResult> {
   if (!data.success) {
     return {
       ok: false,
-      error: "No pudimos verificar que no seas un bot. Recargá la página y probá de nuevo.",
+      error: "No pude verificar que no seas un bot. Recargá la página y probá de nuevo.",
     };
   }
   return { ok: true };

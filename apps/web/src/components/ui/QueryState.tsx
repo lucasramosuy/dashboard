@@ -28,7 +28,7 @@ export function QueryState({
         <p className="m-0 mt-2 text-sm text-theme-text-muted">
           {state === "stale"
             ? "Seguís viendo los últimos datos cargados. Pueden estar desactualizados."
-            : "No pudimos leer los datos. Esto no significa que tu cuenta esté vacía."}
+            : "No pude leer los datos. Esto no significa que tu cuenta esté vacía."}
         </p>
       </div>
       <Button variant="secondary" onClick={retry} isLoading={queries.some((q) => q.isFetching)}>
