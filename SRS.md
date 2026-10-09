@@ -38,3 +38,8 @@ atómico compartido, preservando el umbral de 5 y la ventana de 15 minutos. Mant
 el DELETE incondicional tras un login correcto para limpiar también fallos que
 hayan llegado concurrentemente. El rate limit distribuido en DB y Turnstile
 fail-closed se conservan.
+
+
+## CRM fase 7: pipeline de tareas
+
+Vista alternativa a la lista con cuatro columnas: pendiente (`todo`), en curso (`in-progress`), entregada (`done` sin nota) y calificada (`done` con nota, incluido cero). Es una proyección de campos existentes: no agrega estados ni modifica DB/API. Abrir Pipeline selecciona Todas para no ocultar entregadas/calificadas; los filtros de UC, búsqueda y estado siguen disponibles. Abrir lleva a la ficha; Editar usa el formulario existente para estado/nota, sin arrastrar ni cambios automáticos.
