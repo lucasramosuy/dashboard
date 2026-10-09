@@ -3,7 +3,7 @@ import { QueryState } from "../ui/QueryState";
 import { readState, firstRunStep } from "../../lib/query-state";
 import React from "react";
 import { Check, ArrowRight } from "lucide-react";
-import { subjectHealth, type Task } from "@dashboard/shared-types";
+import { subjectHealth, nextAction, type Task } from "@dashboard/shared-types";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   useTasks,
@@ -59,6 +59,7 @@ export const DashboardSummary: React.FC = () => {
     (a, b) => toLocalDay(a.due_date).getTime() - toLocalDay(b.due_date).getTime(),
   );
   const next = upcoming.find((t) => daysUntil(t.due_date) >= 0);
+  const action = nextAction(tasks, subjects, todayKey());
   const grades = tasks.map((t) => t.grade).filter((g): g is number => g != null);
   const avg = average(grades);
 
@@ -162,6 +163,28 @@ export const DashboardSummary: React.FC = () => {
             </ol>
           </Card>
         )}
+        <Card title="Próxima acción" className="mb-6">
+          {action ? (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <p className="m-0 mb-2 text-sm text-theme-text-muted">
+                  {action.reason}
+                  {action.subjectName ? ` · ${action.subjectName}` : ""}
+                  {action.task.status === "in-progress" ? " · En curso" : ""}
+                </p>
+                <p className="m-0 font-semibold break-words">{action.task.title}</p>
+              </div>
+              <TextLink href={url(`/tasks/${action.task.slug || action.task.id}`)}>
+                {action.task.status === "in-progress" ? "Continuar tarea" : "Abrir tarea"}
+                <ArrowRight size={14} />
+              </TextLink>
+            </div>
+          ) : (
+            <p className="m-0 text-sm text-theme-text-muted">
+              Sin tareas pendientes. No hay una acción por entrega para sugerir.
+            </p>
+          )}
+        </Card>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatTile
             label="01 / Pendientes"
