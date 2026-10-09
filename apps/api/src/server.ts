@@ -1,4 +1,5 @@
 import "./instrument";
+import { runWeeklySummary, WEEKLY_CRON_UTC } from "./services/weeklySummary";
 import cron from "node-cron";
 import { app } from "./app";
 import { initDB } from "./lib/db";
@@ -9,6 +10,8 @@ import { logger } from "./lib/logger";
 await initDB();
 
 cron.schedule(ICAL_CRON_UTC, () => void syncAllCalendars(), { timezone: "Etc/UTC" });
+
+cron.schedule(WEEKLY_CRON_UTC, () => void runWeeklySummary().catch((err) => logger.error("[Cron] Resumen semanal falló", err)), { timezone: "Etc/UTC" });
 
 export { app };
 
