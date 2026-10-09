@@ -242,3 +242,8 @@ por cuenta registra cada fallo con un UPSERT atómico en Turso (5 fallos, 15 min
 sin lectura previa que pueda perder incrementos concurrentes. El reinicio tras un
 login correcto sigue siendo incondicional. El rate limit de Better Auth continúa
 en la base compartida; Turnstile falla cerrado. No se reemplaza por memoria local.
+
+
+## CRM fase 7: pipeline de tareas
+
+Vista alternativa a la lista con cuatro columnas: pendiente (`todo`), en curso (`in-progress`), entregada (`done` sin nota) y calificada (`done` con nota, incluido cero). Es una proyección de campos existentes: no agrega estados ni modifica DB/API. Abrir Pipeline selecciona Todas para no ocultar entregadas/calificadas; los filtros de UC, búsqueda y estado siguen disponibles. Abrir lleva a la ficha; Editar usa el formulario existente para estado/nota, sin arrastrar ni cambios automáticos.
