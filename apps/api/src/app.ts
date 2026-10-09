@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
 import { authRouter } from "./routes/auth";
 import { subjectsRouter } from "./routes/subjects";
+import { activityRouter } from "./routes/activity";
 import { tasksRouter } from "./routes/tasks";
 import { practiceJournalsRouter } from "./routes/practice_journals";
 import { absencesRouter } from "./routes/absences";
@@ -177,6 +178,7 @@ app.route("/api/auth", authRouter);
 
 app.route("/api/subjects", subjectsRouter);
 app.route("/api/tasks", tasksRouter);
+app.route("/api/activity", activityRouter);
 app.route("/api/practice-journals", practiceJournalsRouter);
 app.route("/api/absences", absencesRouter);
 app.route("/api/ical", icalRouter);

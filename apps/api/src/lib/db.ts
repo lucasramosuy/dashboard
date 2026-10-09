@@ -160,6 +160,18 @@ export async function initDB() {
       locked_until INTEGER,
       updated_at INTEGER NOT NULL
     )`,
+      // Timeline desde esta migración: sin reconstruir ni inventar actividad pasada.
+      `CREATE TABLE IF NOT EXISTS activity_log (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT NOT NULL,
+        entity TEXT NOT NULL CHECK(entity IN ('subject', 'task', 'absence', 'journal')),
+        entity_id TEXT NOT NULL,
+        action TEXT NOT NULL CHECK(action IN ('created', 'updated', 'deleted')),
+        label TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
+      )`,
+      "CREATE INDEX IF NOT EXISTS idx_activity_user_time ON activity_log(user_id, created_at DESC, id DESC)",
       `CREATE TABLE IF NOT EXISTS subjects (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -385,6 +397,88 @@ export async function initDB() {
   } catch (err) {
     logger.error("[DB] Error arreglando datos en practice_journals:", err);
   }
+
+  // Triggers hacen el registro atómico con cada escritura, también desde servicios.
+  // No se guardan descripciones, comentarios ni contenido del diario.
+  await db.batch([
+    `CREATE TRIGGER IF NOT EXISTS activity_subject_created
+      AFTER INSERT ON subjects
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'subject', NEW.id, 'created', substr(NEW.name, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_subject_updated
+      AFTER UPDATE ON subjects
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id) AND (OLD.name IS NOT NEW.name OR OLD.total_classes IS NOT NEW.total_classes OR OLD.track IS NOT NEW.track OR OLD.duration_weeks IS NOT NEW.duration_weeks)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'subject', NEW.id, 'updated', substr(NEW.name, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_subject_deleted
+      AFTER DELETE ON subjects
+      WHEN OLD.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = OLD.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (OLD.user_id, 'subject', OLD.id, 'deleted', substr(OLD.name, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_task_created
+      AFTER INSERT ON tasks
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'task', NEW.id, 'created', substr(NEW.title, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_task_updated
+      AFTER UPDATE ON tasks
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id) AND (OLD.title IS NOT NEW.title OR OLD.description IS NOT NEW.description OR OLD.status IS NOT NEW.status OR OLD.due_date IS NOT NEW.due_date OR OLD.type IS NOT NEW.type OR OLD.grade IS NOT NEW.grade OR OLD.file_url IS NOT NEW.file_url OR OLD.comments IS NOT NEW.comments OR OLD.is_planner IS NOT NEW.is_planner)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'task', NEW.id, 'updated', substr(NEW.title, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_task_deleted
+      AFTER DELETE ON tasks
+      WHEN OLD.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = OLD.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (OLD.user_id, 'task', OLD.id, 'deleted', substr(OLD.title, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_absence_created
+      AFTER INSERT ON absences
+      WHEN (SELECT user_id FROM subjects WHERE id = NEW.subject_id) IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = (SELECT user_id FROM subjects WHERE id = NEW.subject_id))
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES ((SELECT user_id FROM subjects WHERE id = NEW.subject_id), 'absence', NEW.id, 'created', substr('Falta registrada', 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_absence_deleted
+      AFTER DELETE ON absences
+      WHEN (SELECT user_id FROM subjects WHERE id = OLD.subject_id) IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = (SELECT user_id FROM subjects WHERE id = OLD.subject_id))
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES ((SELECT user_id FROM subjects WHERE id = OLD.subject_id), 'absence', OLD.id, 'deleted', substr('Falta registrada', 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_journal_created
+      AFTER INSERT ON practice_journals
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'journal', NEW.id, 'created', substr('Práctica: ' || NEW.subject_id, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_journal_updated
+      AFTER UPDATE ON practice_journals
+      WHEN NEW.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = NEW.user_id) AND (OLD.content IS NOT NEW.content OR OLD.date IS NOT NEW.date OR OLD.subject_id IS NOT NEW.subject_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (NEW.user_id, 'journal', NEW.id, 'updated', substr('Práctica: ' || NEW.subject_id, 1, 200));
+      END`,
+    `CREATE TRIGGER IF NOT EXISTS activity_journal_deleted
+      AFTER DELETE ON practice_journals
+      WHEN OLD.user_id IS NOT NULL AND EXISTS (SELECT 1 FROM user WHERE id = OLD.user_id)
+      BEGIN
+        INSERT INTO activity_log(user_id, entity, entity_id, action, label)
+        VALUES (OLD.user_id, 'journal', OLD.id, 'deleted', substr('Práctica: ' || OLD.subject_id, 1, 200));
+      END`
+  ], "write");
 
   const config = getDbConfig();
   const location = config.url.startsWith("file::memory:")
