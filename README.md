@@ -247,3 +247,7 @@ en la base compartida; Turnstile falla cerrado. No se reemplaza por memoria loca
 ## CRM fase 6: próxima acción
 
 La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
+
+## CRM fase 8: registro de actividad (backend)
+
+`GET /api/activity?period=today|week&limit=50` devuelve actividad del usuario autenticado (máximo 100, más recientes primero, `has_more` indica recorte). Hoy y semana desde lunes usan días de Montevideo. Registra creación, edición real y borrado de UC, tareas, faltas y diario desde la migración, sin reconstruir historia previa. Triggers SQLite guardan actividad atómicamente con la escritura; una falla del registro revierte también la mutación. Guarda solo etiqueta (200 caracteres), tipo, acción e ID, nunca contenido del diario ni comentarios. El historial conserva etiquetas tras borrar una entidad; se borra al borrar el usuario. Sin UI ni cambios a los endpoints existentes; el timeline visual irá en el siguiente PR.
