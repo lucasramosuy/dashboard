@@ -242,3 +242,8 @@ por cuenta registra cada fallo con un UPSERT atómico en Turso (5 fallos, 15 min
 sin lectura previa que pueda perder incrementos concurrentes. El reinicio tras un
 login correcto sigue siendo incondicional. El rate limit de Better Auth continúa
 en la base compartida; Turnstile falla cerrado. No se reemplaza por memoria local.
+
+
+## CRM fase 6: próxima acción
+
+La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.

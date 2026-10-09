@@ -38,3 +38,8 @@ atómico compartido, preservando el umbral de 5 y la ventana de 15 minutos. Mant
 el DELETE incondicional tras un login correcto para limpiar también fallos que
 hayan llegado concurrentemente. El rate limit distribuido en DB y Turnstile
 fail-closed se conservan.
+
+
+## CRM fase 6: próxima acción
+
+La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
