@@ -6,6 +6,8 @@ import { handle } from "@astrojs/cloudflare/handler";
 import { handleApi, isApiPath } from "./server/api";
 import { runDailySummary, SUMMARY_CRON_UTC, syncAllCalendars } from "../../api/src/cron";
 
+import { runWeeklySummary, WEEKLY_CRON_UTC } from "../../api/src/services/weeklySummary";
+
 type Env = { SENTRY_DSN?: string; [key: string]: unknown };
 
 const handler = {
@@ -14,7 +16,8 @@ const handler = {
     return handle(request as never, env as never, ctx) as never;
   },
   async scheduled(controller: { cron: string }, _env: Env, ctx: ExecutionContext) {
-    if (controller.cron === SUMMARY_CRON_UTC) ctx.waitUntil(runDailySummary());
+    if (controller.cron === WEEKLY_CRON_UTC) ctx.waitUntil(runWeeklySummary());
+    else if (controller.cron === SUMMARY_CRON_UTC) ctx.waitUntil(runDailySummary());
     else ctx.waitUntil(syncAllCalendars());
   },
 };

@@ -160,6 +160,14 @@ export async function initDB() {
       locked_until INTEGER,
       updated_at INTEGER NOT NULL
     )`,
+      `CREATE TABLE IF NOT EXISTS weekly_summary (
+        user_id TEXT NOT NULL,
+        week_start TEXT NOT NULL,
+        generated_at TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        PRIMARY KEY(user_id, week_start),
+        FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
+      )`,
       // Timeline desde esta migración: sin reconstruir ni inventar actividad pasada.
       `CREATE TABLE IF NOT EXISTS activity_log (
         id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),

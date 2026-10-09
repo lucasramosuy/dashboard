@@ -50,3 +50,7 @@ La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Pr
 ## CRM fase 8: feed DB/API
 
 Registro automático y atómico de cambios de UC, tareas, faltas y prácticas. No cuenta ediciones sin cambios ni inventa eventos anteriores a la migración. API autenticada aislada por usuario, ventana hoy/semana calendario Montevideo y límite 1-100 con indicador de recorte. Etiquetas acotadas, sin cuerpos privados. No introduce costos ni servicios nuevos; despliegue requiere la migración idempotente en Turso antes del Worker. La UI no forma parte de este PR de backend.
+
+## CRM fase 9: panel autónomo
+
+Feed visual en home y resumen semanal privado generado por el Worker domingo20UY. Una invocación por semana, mismo criterio de salud que la home/ficha y sin mensajes externos. Snapshot por usuario, sin contaminación entre cuentas, retención12semanas, vacío antes del primer cron, error distinguible de ausencia de datos. Worker y Bun usan0 23 * * 0 UTC; preview conserva crons vacíos. No se cambia el envío diario existente de Telegram.

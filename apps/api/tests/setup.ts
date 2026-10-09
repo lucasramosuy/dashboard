@@ -28,6 +28,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   // Clean up data between tests
   const tables = [
+    "weekly_summary",
     "activity_log",
     "absences",
     "tasks",
