@@ -40,6 +40,9 @@ hayan llegado concurrentemente. El rate limit distribuido en DB y Turnstile
 fail-closed se conservan.
 
 
+## CRM fase 7: pipeline de tareas
+
+Vista alternativa a la lista con cuatro columnas: pendiente (`todo`), en curso (`in-progress`), entregada (`done` sin nota) y calificada (`done` con nota, incluido cero). Es una proyección de campos existentes: no agrega estados ni modifica DB/API. Abrir Pipeline selecciona Todas para no ocultar entregadas/calificadas; los filtros de UC, búsqueda y estado siguen disponibles. Abrir lleva a la ficha; Editar usa el formulario existente para estado/nota, sin arrastrar ni cambios automáticos.
 ## CRM fase 6: próxima acción
 
 La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
