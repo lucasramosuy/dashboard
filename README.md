@@ -233,3 +233,33 @@ Con `API_PROXY_URL` en `.dev.vars` la API se reenvía al server de Bun local. Oj
 ## Accesibilidad
 
 La interfaz respeta `prefers-reduced-motion`: elimina las transiciones y animaciones CSS y muestra los gráficos de Analíticas sin animación. Sigue la preferencia del sistema, sin ajuste propio.
+
+## Login: latencia y protección
+
+El login con contraseña navega al Inicio con la cookie emitida por Better Auth, sin
+refetch previo de sesión. La nueva página valida la sesión normalmente. El bloqueo
+por cuenta registra cada fallo con un UPSERT atómico en Turso (5 fallos, 15 minutos),
+sin lectura previa que pueda perder incrementos concurrentes. El reinicio tras un
+login correcto sigue siendo incondicional. El rate limit de Better Auth continúa
+en la base compartida; Turnstile falla cerrado. No se reemplaza por memoria local.
+
+
+## CRM fase 7: pipeline de tareas
+
+Vista alternativa a la lista con cuatro columnas: pendiente (`todo`), en curso (`in-progress`), entregada (`done` sin nota) y calificada (`done` con nota, incluido cero). Es una proyección de campos existentes: no agrega estados ni modifica DB/API. Abrir Pipeline selecciona Todas para no ocultar entregadas/calificadas; los filtros de UC, búsqueda y estado siguen disponibles. Abrir lleva a la ficha; Editar usa el formulario existente para estado/nota, sin arrastrar ni cambios automáticos.
+## CRM fase 6: próxima acción
+
+La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
+
+## CRM fase 8: registro de actividad (backend)
+
+`GET /api/activity?period=today|week&limit=50` devuelve actividad del usuario autenticado (máximo 100, más recientes primero, `has_more` indica recorte). Hoy y semana desde lunes usan días de Montevideo. Registra creación, edición real y borrado de UC, tareas, faltas y diario desde la migración, sin reconstruir historia previa. Triggers SQLite guardan actividad atómicamente con la escritura; una falla del registro revierte también la mutación. Guarda solo etiqueta (200 caracteres), tipo, acción e ID, nunca contenido del diario ni comentarios. El historial conserva etiquetas tras borrar una entidad; se borra al borrar el usuario. Sin UI ni cambios a los endpoints existentes; el timeline visual irá en el siguiente PR.
+
+## CRM fase 9: actividad y resumen autónomo dentro del panel
+
+La home muestra el feed de Hoy/Esta semana con estados de carga, error y vacío. El resumen semanal se genera solo el domingo a las20:00 de Montevideo (23:00UTC) y queda guardado en la cuenta del usuario; no pasa por Instinct ni envía mensajes de Telegram. Incluye salud porUC desde la lógica compartida, asistencia, promedio, pendientes y cantidad de cambios registrados desde que existe el feed. No afirma conocer actividad anterior. Guarda hasta12semanas por usuario, con UPSERT idempotente por semana. GET /api/weekly-summary devuelve solo el último snapshot propio, o null antes del primer cron; leer la página no fabrica un resumen. Preview no tiene crons, por lo que mostrará el vacío hasta una prueba controlada. Migración idempotente crea weekly_summary antes de desplegar. No servicios/costos nuevos.
+
+
+## Cron consolidado
+
+Cloudflare y Bun usan una sola expresión: `0 3,10,23 * * *`. El despacho usa la hora UTC del evento programado (no la hora de ejecución):03 iCal,10 resumen diario,23 solo domingo resumen semanal privado. Las demás noches no ejecutan trabajo. Preview mantiene crons vacíos; no cambia destinos ni lógica de los resúmenes. Al promover dev a prod, Wrangler reemplaza los tres triggers por uno. Los merges a dev no despliegan producción.

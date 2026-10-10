@@ -29,3 +29,33 @@ La API Hono y la web Astro/React comparten tipos en `packages/shared-types`. lib
 - Sesiones autenticadas y secretos protegidos; validación del lado servidor y CORS restringido. Sentry recibe errores; no revelar detalles internos en respuestas de error. La PWA tiene manifest pero no service worker: requiere conexión.
 - Automatización: cron iCal a las 03:00 UTC y resumen a las 10:00 UTC, equivalentes a medianoche y 07:00 de Montevideo en el horario actual. Backup semanal cifrado en artifact y prueba mensual de restore en base temporal; esta prueba no restaura producción.
 - Antes de integrar cambios de comportamiento, ejecutar CI (`bun run test`, `bun run check`, build) y smoke test tras deploy. El deploy a `prod` corre migraciones, build y publicación; un merge a `dev` no es publicación.
+
+## Ajuste de login (PR pendiente)
+
+Sin cambiar las protecciones: no refetchear la sesión antes de la navegación
+posterior al login con contraseña. Registrar fallos por cuenta mediante UPSERT
+atómico compartido, preservando el umbral de 5 y la ventana de 15 minutos. Mantener
+el DELETE incondicional tras un login correcto para limpiar también fallos que
+hayan llegado concurrentemente. El rate limit distribuido en DB y Turnstile
+fail-closed se conservan.
+
+
+## CRM fase 7: pipeline de tareas
+
+Vista alternativa a la lista con cuatro columnas: pendiente (`todo`), en curso (`in-progress`), entregada (`done` sin nota) y calificada (`done` con nota, incluido cero). Es una proyección de campos existentes: no agrega estados ni modifica DB/API. Abrir Pipeline selecciona Todas para no ocultar entregadas/calificadas; los filtros de UC, búsqueda y estado siguen disponibles. Abrir lleva a la ficha; Editar usa el formulario existente para estado/nota, sin arrastrar ni cambios automáticos.
+## CRM fase 6: próxima acción
+
+La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Prioriza la fecha más antigua: vencidas antes de próximas; a igual fecha, en curso antes de pendiente, luego ID estable. Indica plazo y UC si existe. No usa puntajes inventados ni marca entregas automáticamente. Sin pendientes muestra un estado vacío explícito. Sin cambios de API ni DB.
+
+## CRM fase 8: feed DB/API
+
+Registro automático y atómico de cambios de UC, tareas, faltas y prácticas. No cuenta ediciones sin cambios ni inventa eventos anteriores a la migración. API autenticada aislada por usuario, ventana hoy/semana calendario Montevideo y límite 1-100 con indicador de recorte. Etiquetas acotadas, sin cuerpos privados. No introduce costos ni servicios nuevos; despliegue requiere la migración idempotente en Turso antes del Worker. La UI no forma parte de este PR de backend.
+
+## CRM fase 9: panel autónomo
+
+Feed visual en home y resumen semanal privado generado por el Worker domingo20UY. Una invocación por semana, mismo criterio de salud que la home/ficha y sin mensajes externos. Snapshot por usuario, sin contaminación entre cuentas, retención12semanas, vacío antes del primer cron, error distinguible de ausencia de datos. Worker y Bun usan0 23 * * 0 UTC; preview conserva crons vacíos. No se cambia el envío diario existente de Telegram.
+
+
+## Cron consolidado
+
+Cloudflare y Bun usan una sola expresión: `0 3,10,23 * * *`. El despacho usa la hora UTC del evento programado (no la hora de ejecución):03 iCal,10 resumen diario,23 solo domingo resumen semanal privado. Las demás noches no ejecutan trabajo. Preview mantiene crons vacíos; no cambia destinos ni lógica de los resúmenes. Al promover dev a prod, Wrangler reemplaza los tres triggers por uno. Los merges a dev no despliegan producción.

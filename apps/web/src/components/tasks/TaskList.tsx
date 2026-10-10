@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Modal } from "../ui/Modal";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { EmptyState } from "../ui/EmptyState";
+import { TaskPipeline } from "./TaskPipeline";
 import { TaskForm } from "../tasks/TaskForm";
 import { StatusBadge } from "../ui/StatusBadge";
 import { Toast } from "../ui/Toast";
@@ -61,6 +62,7 @@ export const TaskList: React.FC = () => {
   const [filter, setFilter] = useState<"pending" | "overdue" | "done" | "all">("pending");
   const [subjectFilter, setSubjectFilter] = useState("");
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<"list" | "pipeline">("list");
 
   const loading = loadingTasks || loadingSubjects;
   const tasks = [...unorderedTasks].sort(
@@ -217,6 +219,25 @@ export const TaskList: React.FC = () => {
             }
           />
 
+          <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Vista de tareas">
+            <Button
+              variant={view === "list" ? "primary" : "secondary"}
+              aria-pressed={view === "list"}
+              onClick={() => setView("list")}
+            >
+              Lista
+            </Button>
+            <Button
+              variant={view === "pipeline" ? "primary" : "secondary"}
+              aria-pressed={view === "pipeline"}
+              onClick={() => {
+                setView("pipeline");
+                setFilter("all");
+              }}
+            >
+              Pipeline
+            </Button>
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filtrar tareas">
               {chips.map((c) => (
@@ -275,6 +296,15 @@ export const TaskList: React.FC = () => {
             <div className={`${cardCls} p-8 text-center text-sm text-theme-text-muted`}>
               No hay tareas con este filtro.
             </div>
+          ) : view === "pipeline" ? (
+            <TaskPipeline
+              tasks={visible}
+              subjectName={subjectName}
+              onEdit={(task) => {
+                setEditingTask(task);
+                setModalOpen(true);
+              }}
+            />
           ) : (
             <>
               {/* Desktop: tabla */}
