@@ -4,9 +4,11 @@ import type { ExecutionContext, ExportedHandler } from "@cloudflare/workers-type
 import * as Sentry from "@sentry/cloudflare";
 import { handle } from "@astrojs/cloudflare/handler";
 import { handleApi, isApiPath } from "./server/api";
-import { runDailySummary, SUMMARY_CRON_UTC, syncAllCalendars } from "../../api/src/cron";
+import { runDailySummary, syncAllCalendars } from "../../api/src/cron";
 
-import { runWeeklySummary, WEEKLY_CRON_UTC } from "../../api/src/services/weeklySummary";
+import { runWeeklySummary } from "../../api/src/services/weeklySummary";
+
+import { dispatchCron } from "../../api/src/cron-dispatch";
 
 type Env = { SENTRY_DSN?: string; [key: string]: unknown };
 
@@ -15,10 +17,12 @@ const handler = {
     if (isApiPath(new URL(request.url).pathname)) return handleApi(request, env, ctx);
     return handle(request as never, env as never, ctx) as never;
   },
-  async scheduled(controller: { cron: string }, _env: Env, ctx: ExecutionContext) {
-    if (controller.cron === WEEKLY_CRON_UTC) ctx.waitUntil(runWeeklySummary());
-    else if (controller.cron === SUMMARY_CRON_UTC) ctx.waitUntil(runDailySummary());
-    else ctx.waitUntil(syncAllCalendars());
+  async scheduled(controller: { scheduledTime: number }, _env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(dispatchCron(controller.scheduledTime, {
+      ical: syncAllCalendars,
+      daily: runDailySummary,
+      weekly: runWeeklySummary,
+    }));
   },
 };
 
