@@ -1,17 +1,22 @@
 import "./instrument";
-import { runWeeklySummary, WEEKLY_CRON_UTC } from "./services/weeklySummary";
+import { runWeeklySummary } from "./services/weeklySummary";
+import { dispatchCron, DASHBOARD_CRON_UTC } from "./cron-dispatch";
 import cron from "node-cron";
 import { app } from "./app";
 import { initDB } from "./lib/db";
-import { syncAllCalendars, ICAL_CRON_UTC } from "./cron";
+import { syncAllCalendars, runDailySummary } from "./cron";
 import { logger } from "./lib/logger";
 
 // Server de Bun para desarrollo local y tests. En producción la API corre en el Worker.
 await initDB();
 
-cron.schedule(ICAL_CRON_UTC, () => void syncAllCalendars(), { timezone: "Etc/UTC" });
-
-cron.schedule(WEEKLY_CRON_UTC, () => void runWeeklySummary().catch((err) => logger.error("[Cron] Resumen semanal falló", err)), { timezone: "Etc/UTC" });
+cron.schedule(DASHBOARD_CRON_UTC, () => {
+  void dispatchCron(Date.now(), {
+    ical: syncAllCalendars,
+    daily: runDailySummary,
+    weekly: runWeeklySummary,
+  }).catch((err) => logger.error("[Cron] Falló la tarea programada", err));
+}, { timezone: "Etc/UTC" });
 
 export { app };
 

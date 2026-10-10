@@ -54,3 +54,8 @@ Registro automático y atómico de cambios de UC, tareas, faltas y prácticas. N
 ## CRM fase 9: panel autónomo
 
 Feed visual en home y resumen semanal privado generado por el Worker domingo20UY. Una invocación por semana, mismo criterio de salud que la home/ficha y sin mensajes externos. Snapshot por usuario, sin contaminación entre cuentas, retención12semanas, vacío antes del primer cron, error distinguible de ausencia de datos. Worker y Bun usan0 23 * * 0 UTC; preview conserva crons vacíos. No se cambia el envío diario existente de Telegram.
+
+
+## Cron consolidado
+
+Cloudflare y Bun usan una sola expresión: `0 3,10,23 * * *`. El despacho usa la hora UTC del evento programado (no la hora de ejecución):03 iCal,10 resumen diario,23 solo domingo resumen semanal privado. Las demás noches no ejecutan trabajo. Preview mantiene crons vacíos; no cambia destinos ni lógica de los resúmenes. Al promover dev a prod, Wrangler reemplaza los tres triggers por uno. Los merges a dev no despliegan producción.
