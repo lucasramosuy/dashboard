@@ -61,12 +61,12 @@ export async function syncAllCalendars() {
   );
 }
 
-export async function runDailySummary() {
+export async function runDailySummary(now = new Date()) {
   await Sentry.withMonitor(
     "daily-summary",
     async () => {
       try {
-        await sendDailySummary();
+        await sendDailySummary(now);
       } catch (err) {
         logger.error("[Cron] Falló el resumen diario de Telegram", err);
         throw err;
