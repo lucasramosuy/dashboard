@@ -258,3 +258,8 @@ La home destaca una tarea pendiente (incluido planner) con acceso a su ficha. Pr
 ## CRM fase 9: actividad y resumen autónomo dentro del panel
 
 La home muestra el feed de Hoy/Esta semana con estados de carga, error y vacío. El resumen semanal se genera solo el domingo a las20:00 de Montevideo (23:00UTC) y queda guardado en la cuenta del usuario; no pasa por Instinct ni envía mensajes de Telegram. Incluye salud porUC desde la lógica compartida, asistencia, promedio, pendientes y cantidad de cambios registrados desde que existe el feed. No afirma conocer actividad anterior. Guarda hasta12semanas por usuario, con UPSERT idempotente por semana. GET /api/weekly-summary devuelve solo el último snapshot propio, o null antes del primer cron; leer la página no fabrica un resumen. Preview no tiene crons, por lo que mostrará el vacío hasta una prueba controlada. Migración idempotente crea weekly_summary antes de desplegar. No servicios/costos nuevos.
+
+
+## Cron consolidado
+
+Cloudflare y Bun usan una sola expresión: `0 3,10,23 * * *`. El despacho usa la hora UTC del evento programado (no la hora de ejecución):03 iCal,10 resumen diario,23 solo domingo resumen semanal privado. Las demás noches no ejecutan trabajo. Preview mantiene crons vacíos; no cambia destinos ni lógica de los resúmenes. Al promover dev a prod, Wrangler reemplaza los tres triggers por uno. Los merges a dev no despliegan producción.
