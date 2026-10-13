@@ -27,10 +27,10 @@
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.18.0",
     "@libsql/kysely-libsql": "^0.4.1",
-    "@sentry/bun": "^10.75.3",
-    "@sentry/core": "10.75.3",
+    "@sentry/bun": "^10.76.2",
+    "@sentry/core": "10.76.2",
     "better-auth": "^1.7.7",
-    "hono": "^4.13.12",
+    "hono": "^4.13.13",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
     "zod": "^4.6.5"
