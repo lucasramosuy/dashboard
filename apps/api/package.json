@@ -17,22 +17,22 @@
     "check": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2",
+    "@types/bun": "^1.4.3",
     "@types/node-cron": "^3.0.11",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@better-auth/cli": "^1.4.21",
-    "@better-auth/passkey": "1.7.7",
+    "@better-auth/passkey": "1.7.10",
     "@dashboard/shared-types": "workspace:*",
     "@libsql/client": "^0.18.0",
     "@libsql/kysely-libsql": "^0.4.1",
-    "@sentry/bun": "^10.75.3",
-    "@sentry/core": "10.75.3",
-    "better-auth": "^1.7.7",
-    "hono": "^4.13.12",
+    "@sentry/bun": "^10.76.2",
+    "@sentry/core": "10.76.2",
+    "better-auth": "^1.7.10",
+    "hono": "^4.13.13",
     "kysely": "^0.29.6",
     "node-cron": "^4.6.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   }
 }
