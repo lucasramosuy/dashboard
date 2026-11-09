@@ -8,24 +8,24 @@
     "check": "astro check"
   },
   "dependencies": {
-    "@astrojs/check": "0.9.10",
-    "@astrojs/cloudflare": "14.3.3",
-    "@astrojs/react": "7.0.0",
-    "@better-auth/passkey": "1.7.7",
+    "@astrojs/check": "0.9.12",
+    "@astrojs/cloudflare": "14.4.6",
+    "@astrojs/react": "7.1.4",
+    "@better-auth/passkey": "1.7.18",
     "@dashboard/shared-types": "workspace:*",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@nanostores/react": "^1.1.0",
-    "@sentry/astro": "^10.75.3",
-    "@sentry/cloudflare": "10.75.3",
-    "@sentry/react": "^10.75.3",
-    "@tanstack/react-query": "^5.104.1",
+    "@sentry/astro": "^10.78.0",
+    "@sentry/cloudflare": "10.78.0",
+    "@sentry/react": "^10.78.0",
+    "@tanstack/react-query": "^5.106.1",
     "agentation": "^2.3.3",
-    "astro": "7.3.5",
-    "better-auth": "^1.7.7",
+    "astro": "7.4.7",
+    "better-auth": "^1.7.18",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
-    "nanostores": "^1.5.4",
+    "nanostores": "^1.5.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.10.1",
@@ -33,13 +33,13 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261001.1",
-    "@tailwindcss/vite": "^4.3.3",
+    "@cloudflare/workers-types": "^5.20261106.1",
+    "@tailwindcss/vite": "^4.3.4",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "bun-types": "^1.4.2",
     "tailwindcss": "^4.3.3",
-    "wrangler": "4.147.0",
-    "@cloudflare/vite-plugin": "1.62.5"
+    "wrangler": "4.158.0",
+    "@cloudflare/vite-plugin": "1.67.0"
   }
 }
