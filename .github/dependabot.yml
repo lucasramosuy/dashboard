@@ -34,3 +34,60 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "ci"
+
+  # Las actualizaciones de seguridad se hacen por directorio y no heredan la
+  # entrada de la raíz: cada workspace con package.json necesita su propia
+  # entrada bun, si no Dependabot cae en npm_and_yarn y no puede con bun.lock.
+  - package-ecosystem: "bun"
+    directory: "/apps/web"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Montevideo"
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "bun"
+    directory: "/apps/api"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Montevideo"
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "bun"
+    directory: "/packages/shared-types"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "America/Montevideo"
+    open-pull-requests-limit: 5
+    groups:
+      menores:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
