@@ -31,5 +31,8 @@
     "check": "bun run lint && bun run check:api && bun run check:web",
     "check:api": "cd apps/api && bun run check",
     "check:web": "cd apps/web && bun run check"
+  },
+  "resolutions": {
+    "better-auth": "1.7.23"
   }
 }
